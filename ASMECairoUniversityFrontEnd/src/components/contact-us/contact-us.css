@@ -1,0 +1,142 @@
+.contact-section{
+  padding:80px 10%;
+
+}
+
+.contact-container{
+  display:flex;
+  justify-content:space-between;
+  gap:80px;
+}
+
+/* LEFT SIDE */
+
+.contact-info{
+  flex:1;
+}
+
+.subtitle{
+  color:#6b6b6b;
+  letter-spacing:2px;
+  font-size:14px;
+}
+
+.title{
+  font-size:48px;
+  margin:10px 0 25px;
+}
+
+.hear-text{
+  font-size:22px;
+  margin-bottom:30px;
+}
+
+/* INFO ITEMS */
+
+.info-item{
+  display:flex;
+  gap:15px;
+  margin:20px 0;
+}
+
+.icon img{
+  width:22px;
+  height:22px;
+}
+
+.info-text h4{
+  font-size:14px;
+  letter-spacing:1px;
+  margin-bottom:5px;
+}
+
+.info-text p{
+  color:#555;
+  font-size:15px;
+}
+
+
+/* RIGHT SIDE */
+
+.contact-form{
+  flex:1;
+  margin: 100px 0px 0px 0px;
+  background-color: white;
+  box-shadow: #1A247212 1px 1px 1px 2px;
+  padding: 30px 40px;
+  border: #1A24721F 1px solid;
+  backdrop-filter: blur(15px);
+}
+
+.row{
+  display:flex;
+  gap:20px;
+}
+
+.input-group{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:20px;
+  width:100%;
+
+;
+}
+
+.input-group label{
+  font-size:12px;
+  letter-spacing:1px;
+  margin-bottom:8px;
+
+}
+
+.input-group input,
+.input-group textarea{
+  border:none;
+  border-bottom:1px solid #ccc;
+  padding:8px 5px;
+  font-size:14px;
+  outline:none;
+  background-color: #F8F9FF;
+}
+
+.input-group textarea{
+  resize:none;
+  background-color: #F8F9FF;
+}
+
+/* BUTTON */
+
+.send-btn{
+  margin-top:20px;
+  padding:14px 32px;
+  border:none;
+  background:black;
+  color:white;
+  font-weight:600;
+  letter-spacing:1px;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.send-btn:hover{
+  background:#333;
+}
+
+/* RESPONSIVE */
+
+@media (max-width:900px){
+
+  .contact-container{
+    flex-direction:column;
+    gap:50px;
+  }
+
+  .row{
+    flex-direction:column;
+  }
+
+  .title{
+    font-size:36px;
+  }
+
+}
