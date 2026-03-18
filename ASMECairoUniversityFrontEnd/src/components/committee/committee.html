@@ -1,0 +1,40 @@
+<section class="committee-section">
+
+  <div class="header" data-aos="fade-up">
+    <p class="subtitle"><span>—</span> THE TEAM</p>
+    <h1 class="main-title">OUR COMMITTEE</h1>
+  </div>
+
+  <div class="committees-grid" id="cards-trigger">
+
+          <div class="committee-card"
+         *ngFor="let committee of committees; let i = index"
+          [style.border-left-color]="committee.borderColor"
+          data-aos="fade-up" data-aos-duration="1000"
+          data-aos-anchor="#cards-trigger">
+
+      <div class="card-header" (click)="toggleCommittee(i)">
+        <div class="header-left">
+          <div class="icon-box">{{ committee.icon }}</div>
+          <h3 class="card-title">{{ committee.title }}</h3>
+        </div>
+        <div class="arrow">{{ committee.isExpanded ? '▾' : '▸' }}</div>
+      </div>
+
+      <div class="card-body" *ngIf="committee.isExpanded">
+        <div class="sub-teams-container">
+
+          <div class="sub-team-box" *ngFor="let sub of committee.subTeams">
+            <span class="sub-icon">{{ sub.icon }}</span>
+            <p class="sub-name">{{ sub.name }}</p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+

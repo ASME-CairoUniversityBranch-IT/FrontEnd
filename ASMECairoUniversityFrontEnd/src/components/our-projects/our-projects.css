@@ -1,0 +1,143 @@
+
+.projects-section {
+  background-color: #f8f9fc;
+  padding: 60px 80px;
+  font-family: sans-serif;
+  color: #0b112a;
+}
+
+
+.subtitle {
+  color: #7b8ebd;
+  font-size: 14px;
+  letter-spacing: 2px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.main-title {
+  font-size: 40px;
+  font-weight: 900;
+  margin: 0 0 40px 0;
+  color: #0b112a;
+}
+
+
+.tabs-container {
+  margin-bottom: 30px;
+}
+
+.tabs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 30px;
+}
+
+.tabs li {
+  color: #a3b1d1;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  padding-bottom: 10px;
+}
+
+.tabs li.active {
+  color: #0b112a;
+  border-bottom: 3px solid #0b112a;
+}
+
+.tabs-line {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin-top: -2px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+
+.card {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card-image-box {
+  background: linear-gradient(to bottom, #112240, #1a3673);
+  height: 180px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-image-box .icon {
+  font-size: 50px;
+}
+
+
+.card-content {
+  padding: 25px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 15px 0;
+  color: #0b112a;
+}
+
+.card-description {
+  font-size: 14px;
+  color: #7b8ebd;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.card-date {
+  font-size: 13px;
+  color: #a3b1d1;
+  font-weight: bold;
+  margin: 0;
+}
+
+
+.action-container {
+  text-align: center;
+}
+
+.view-all-btn {
+  background-color: transparent;
+  color: #0b112a;
+  border: 2px solid #0b112a;
+  padding: 15px 30px;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.view-all-btn:hover {
+  background-color: #0b112a;
+  color: white;
+}
+
+@media (max-width: 900px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

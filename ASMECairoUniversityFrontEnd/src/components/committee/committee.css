@@ -1,0 +1,118 @@
+
+.committee-section {
+  background-color: #f8f9fc;
+  padding: 60px 80px;
+  font-family: sans-serif;
+  color: #0b112a;
+}
+
+.subtitle {
+  color: #7b8ebd;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.main-title {
+  font-size: 40px;
+  font-weight: 900;
+  margin: 0 0 40px 0;
+}
+
+
+.committees-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+
+.committee-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  border-left: 4px solid #ccc;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+
+.card-header {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+
+.icon-box {
+  background-color: #f0f4f8;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.arrow {
+  color: #7b8ebd;
+  font-weight: bold;
+}
+
+
+.card-body {
+  padding: 0 20px 20px 20px;
+}
+
+.sub-teams-container {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.sub-team-box {
+  background-color: #f8f9fc;
+  border: 1px solid #eef1f6;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 120px;
+  flex: 1;
+}
+
+.sub-icon {
+  font-size: 24px;
+}
+
+.sub-name {
+  font-size: 11px;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+  color: #0b112a;
+}
+
+
+@media (max-width: 768px) {
+  .committees-grid {
+    grid-template-columns: 1fr;
+  }
+}

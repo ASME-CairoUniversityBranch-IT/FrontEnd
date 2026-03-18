@@ -1,0 +1,25 @@
+
+<section class="about-section">
+
+  <div class="left-side" data-aos="fade-right" data-aos-duration="1000">
+    <p class="who-we-are"><span>—</span> WHO WE ARE</p>
+    <h1 class="main-title">ABOUT ASME<br>CAIRO UNIVERSIT</h1>
+
+    <div class="organization-box">
+      <h4 class="org-title">THE ORGANIZATION</h4>
+      <p>ASME (American Society of Mechanical Engineers) is a globally recognized professional society serving over 100,000 members in 140+ countries. Founded in 1880, ASME facilitates collaboration, knowledge sharing, career enrichment, and skills development across all engineering disciplines.</p>
+      <br>
+      <p>The Cairo University student branch, one of Egypt's most active chapters, bridges academic learning with real-world engineering practice — equipping members with technical expertise, leadership skills, and professional networks.</p>
+    </div>
+  </div>
+
+  <div class="right-side">
+    <div class="info-card" *ngFor="let card of cardsData" data-aos="fade-up" data-aos-duration="1000">
+      <h3 class="card-title">
+        <span class="icon">{{ card.icon }}</span> {{ card.title }}
+      </h3>
+      <p class="card-description">{{ card.description }}</p>
+    </div>
+  </div>
+
+</section>

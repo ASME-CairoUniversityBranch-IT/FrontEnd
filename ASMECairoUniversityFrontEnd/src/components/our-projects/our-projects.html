@@ -1,0 +1,36 @@
+<section class="projects-section">
+
+  <div class="header">
+    <p class="subtitle"><span>—</span> WHAT WE DO</p>
+    <h1 class="main-title">OUR PROJECTS</h1>
+  </div>
+
+  <div class="tabs-container">
+    <ul class="tabs">
+      <li class="active">EVENTS</li>
+      <li>WORKSHOPS</li>
+      <li>FIELD TRIPS</li>
+    </ul>
+    <hr class="tabs-line">
+  </div>
+
+  <div class="cards-grid">
+    <div class="card" *ngFor="let project of projectsData" data-aos="fade-up" data-aos-duration="700">
+      <div class="card-image-box">
+        <span class="icon">{{ project.icon }}</span>
+      </div>
+
+      <div class="card-content">
+        <h3 class="card-title">{{ project.title }}</h3>
+        <p class="card-description">{{ project.description }}</p>
+        <p class="card-date">{{ project.date }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-container">
+    <button class="view-all-btn">VIEW ALL EVENTS &rarr;</button>
+  </div>
+
+</section>
+
