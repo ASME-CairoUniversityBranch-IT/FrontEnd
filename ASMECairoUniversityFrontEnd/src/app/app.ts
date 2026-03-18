@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ContactUs } from './components/contact-us/contact-us';
+import { ContactUs } from '../components/contact-us/contact-us';
 import { Committee } from '../components/committee/committee';
 import { OurProject } from '../components/our-projects/our-projects';
 import { AboutAsme } from '../components/about-asme/about-asme';
