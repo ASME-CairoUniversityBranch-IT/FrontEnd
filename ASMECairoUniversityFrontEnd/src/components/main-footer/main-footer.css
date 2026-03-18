@@ -1,0 +1,30 @@
+.text-center{
+  background-color: #0D1540;
+}
+.footerText{
+  color:white;
+      display: flex;
+    font-family: cursive;
+}
+.footerlinks{
+  width: 30px;
+  height: 30px;
+  background-color:#0D1540 ;
+      display: flex;
+    justify-content: center;
+
+    flex-direction: row-reverse;
+        margin: 10px 0px 0px 500px;
+
+
+
+}
+.container{
+  display: flex;
+    justify-content: flex-start;
+    flex-direction: row;
+}
+.footerPhotos{
+    padding: 0px 50px 0px;
+}
+
