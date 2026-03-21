@@ -21,10 +21,10 @@
         <div class="arrow">{{ committee.isExpanded ? '▾' : '▸' }}</div>
       </div>
 
-      <div class="card-body" *ngIf="committee.isExpanded">
-        <div class="sub-teams-container">
+      <div class="card-body" *ngIf="committee.isExpanded" >
+        <div class="sub-teams-container" data-aos="fade-up" data-aos-duration="1000">
 
-          <div class="sub-team-box" *ngFor="let sub of committee.subTeams">
+          <div class="sub-team-box" *ngFor="let sub of committee.subTeams" >
             <span class="sub-icon">{{ sub.icon }}</span>
             <p class="sub-name">{{ sub.name }}</p>
           </div>
