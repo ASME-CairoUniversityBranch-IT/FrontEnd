@@ -6,11 +6,11 @@
   </div>
 
   <div class="tabs-container">
-    <ul class="tabs">
-      <li class="active">EVENTS</li>
-      <li>WORKSHOPS</li>
-      <li>FIELD TRIPS</li>
-    </ul>
+  <ul class="tabs">
+    <li [class.active]="activeTab === 'EVENTS'"      (click)="switchTab('EVENTS')">EVENTS</li>
+    <li [class.active]="activeTab === 'WORKSHOPS'"   (click)="switchTab('WORKSHOPS')">WORKSHOPS</li>
+    <li [class.active]="activeTab === 'FIELD TRIPS'" (click)="switchTab('FIELD TRIPS')">FIELD TRIPS</li>
+  </ul>
     <hr class="tabs-line">
   </div>
 
