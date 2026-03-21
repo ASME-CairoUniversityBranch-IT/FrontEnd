@@ -242,7 +242,12 @@
   transition: transform var(--t), box-shadow var(--t);
   cursor: default;
 }
+.achievement-card:hover{
+  background-color: #0d1540;
+  color: white;
+  transition: background-color 0.3s ease, color 0.3s ease;
 
+}
 .achievement-accent {
   position: absolute;
   left: 0;
