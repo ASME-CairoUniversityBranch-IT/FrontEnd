@@ -40,16 +40,5 @@
   </div>
   </div>
 
-  <div class="hero-stats">
-    <ng-container *ngFor="let stat of HERO_CONTENT.stats; let last = last">
-      <div class="stat-item">
-        <div class="stat-row">
-          <span class="stat-num" [attr.data-target]="stat.target">0</span>
-          <span class="stat-suffix" *ngIf="stat.suffix">{{ stat.suffix }}</span>
-        </div>
-        <span class="stat-label">{{ stat.label }}</span>
-      </div>
-      <div class="stat-divider" *ngIf="!last"></div>
-    </ng-container>
-  </div>
+<app-hero-stats [stats]="HERO_CONTENT.stats" />
 </section>

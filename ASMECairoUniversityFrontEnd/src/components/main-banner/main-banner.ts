@@ -1,7 +1,7 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HeroStats } from '../main-banner-statistics/main-banner-statistics';
 
-// ─── Component-scoped constants ───────────────────────────────────────────────
 const HERO_CONTENT = {
   badge: 'American Society of Mechanical Engineers',
   titleLines: ['ASME', 'Cairo', 'University'],
@@ -17,34 +17,25 @@ const HERO_CONTENT = {
     { target: 8,   suffix: '',  label: 'Years Active' },
   ],
 } as const;
-// ──────────────────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-main-banner',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HeroStats],
   templateUrl: './main-banner.html',
   styleUrl: './main-banner.css',
 })
 export class MainBanner implements AfterViewInit, OnDestroy {
-  /** Expose to template */
   readonly HERO_CONTENT = HERO_CONTENT;
 
-  private statsAnimated = false;
-  private statsObserver?: IntersectionObserver;
-  private counterObserver?: IntersectionObserver;
+  private particlesContainer?: HTMLElement;
 
   ngAfterViewInit(): void {
     this.spawnParticles();
-    this.initCounters();
   }
 
-  ngOnDestroy(): void {
-    this.statsObserver?.disconnect();
-    this.counterObserver?.disconnect();
-  }
+  ngOnDestroy(): void {}
 
-  // ── Floating particles ──────────────────────────────────────────────────────
   private spawnParticles(): void {
     const container = document.getElementById('heroBannerParticles');
     if (!container) return;
@@ -64,35 +55,5 @@ export class MainBanner implements AfterViewInit, OnDestroy {
       ].join(';');
       container.appendChild(p);
     }
-  }
-
-  // ── Animated counters ───────────────────────────────────────────────────────
-  private initCounters(): void {
-    const els = document.querySelectorAll<HTMLElement>('.stat-num');
-    this.counterObserver = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0].isIntersecting || this.statsAnimated) return;
-        this.statsAnimated = true;
-        els.forEach((el) => {
-          const target = parseInt(el.dataset['target'] ?? '0', 10);
-          this.animateCount(el, 0, target, 1800);
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    const bar = document.querySelector('.hero-stats');
-    if (bar) this.counterObserver.observe(bar);
-  }
-
-  private animateCount(el: HTMLElement, start: number, end: number, ms: number): void {
-    const t0 = performance.now();
-    const tick = (now: number) => {
-      const p  = Math.min((now - t0) / ms, 1);
-      const ep = 1 - Math.pow(1 - p, 3);
-      el.textContent = String(Math.floor(start + (end - start) * ep));
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
   }
 }
