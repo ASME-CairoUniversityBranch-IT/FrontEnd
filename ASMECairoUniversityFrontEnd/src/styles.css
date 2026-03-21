@@ -1,3 +1,7 @@
 body{
   background:#F4F6FB;
 }
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}

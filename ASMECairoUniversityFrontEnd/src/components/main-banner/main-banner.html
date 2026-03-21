@@ -1,0 +1,55 @@
+<section id="home" class="hero-section">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-particles" id="heroBannerParticles"></div>
+
+  <div class="hero-content">
+    <div class="hero-text-col">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      {{ HERO_CONTENT.badge }}
+    </div>
+
+    <h1 class="hero-title">
+      <span
+        *ngFor="let line of HERO_CONTENT.titleLines; let i = index"
+        class="title-line"
+        [class.accent]="i === 1"
+        [style.animation-delay]="(0.5 + i * 0.15) + 's'">
+        {{ line }}
+      </span>
+    </h1>
+
+    <p class="hero-subtitle">{{ HERO_CONTENT.subtitle }}</p>
+
+    <div class="hero-actions">
+      <a [href]="HERO_CONTENT.ctaPrimary.href" class="btn-primary">
+        <span>{{ HERO_CONTENT.ctaPrimary.label }}</span>
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </a>
+      <!-- a [href]="HERO_CONTENT.ctaSecondary.href" class="btn-secondary">
+        {{ HERO_CONTENT.ctaSecondary.label }}
+      </a -->
+    </div>
+    </div>
+    <div class="hero-image-col">
+    <div class="hero-img-frame">
+      <img src="images/team.jpg" alt="ASME Cairo team" />
+    </div>
+  </div>
+  </div>
+
+  <div class="hero-stats">
+    <ng-container *ngFor="let stat of HERO_CONTENT.stats; let last = last">
+      <div class="stat-item">
+        <div class="stat-row">
+          <span class="stat-num" [attr.data-target]="stat.target">0</span>
+          <span class="stat-suffix" *ngIf="stat.suffix">{{ stat.suffix }}</span>
+        </div>
+        <span class="stat-label">{{ stat.label }}</span>
+      </div>
+      <div class="stat-divider" *ngIf="!last"></div>
+    </ng-container>
+  </div>
+</section>
