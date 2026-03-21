@@ -1,0 +1,74 @@
+<!-- ═══════════════ CAROUSEL ═══════════════ -->
+<section class="carousel-section" id="featured">
+  <div class="carousel-header">
+    <span class="section-label">Featured Highlights</span>
+    <div class="carousel-nav-btns">
+      <button class="carousel-btn" (click)="prevSlide()" aria-label="Previous">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="carousel-btn" (click)="nextSlide()" aria-label="Next">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="carousel-viewport"
+    (mouseenter)="onCarouselEnter()"
+    (mouseleave)="onCarouselLeave()">
+    <div class="carousel-slides" id="activityCarouselSlides">
+      <div
+        *ngFor="let slide of ACTIVITY_CONTENT.slides"
+        class="carousel-slide"
+        [style.background]="slide.bg">
+        <div class="slide-mesh"></div>
+        <div class="slide-deco" [innerHTML]="slide.decoSvg"></div>
+        <div class="slide-content">
+          <span class="slide-tag">{{ slide.tag }}</span>
+          <h3 class="slide-title">{{ slide.title }}</h3>
+          <p class="slide-desc">{{ slide.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="carousel-dots">
+    <button
+      *ngFor="let slide of ACTIVITY_CONTENT.slides; let i = index"
+      class="dot"
+      [class.active]="currentSlide === i"
+      (click)="goTo(i)"
+      [attr.aria-label]="'Go to slide ' + (i + 1)">
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════ ACHIEVEMENTS ═══════════════ -->
+<section id="achievements" class="achievements-section">
+  <div class="section-header">
+    <span class="section-eyebrow">Our Track Record</span>
+    <h2 class="section-title">Achievements &amp; Milestones</h2>
+  </div>
+
+  <div class="achievements-grid">
+    <div
+      class="achievement-card"
+      *ngFor="let a of ACTIVITY_CONTENT.achievements">
+      <div class="achievement-accent"></div>
+      <div class="achievement-icon">
+        <svg viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="20" stroke="#7ea8f8" stroke-width="1.5"/>
+          <path
+            d="M24 12L28 20L37 21L31 27L32 36L24 32L16 36L17 27L11 21L20 20Z"
+            stroke="#7ea8f8" stroke-width="1.5" fill="none"/>
+        </svg>
+      </div>
+      <h3 class="achievement-title">{{ a.title }}</h3>
+      <p class="achievement-desc">{{ a.desc }}</p>
+    </div>
+  </div>
+</section>

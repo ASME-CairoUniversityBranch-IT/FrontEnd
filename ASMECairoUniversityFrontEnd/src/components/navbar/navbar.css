@@ -1,0 +1,208 @@
+/* ═══════════════════════════════════════════
+   NAVBAR COMPONENT
+   ═══════════════════════════════════════════ */
+
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: rgba(13, 21, 64, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 2px 32px rgba(0, 0, 0, 0.4);
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar.scrolled .nav-inner {
+  padding: 14px 32px;
+}
+
+.nav-inner {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* ← add this */
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
+  /* no margin-right: auto */
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.logo-asme {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: #fff;
+}
+
+.logo-cu {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #7ea8f8;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ── Links — sit on the right due to logo's margin-right: auto ── */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-link {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  transition:
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  background: #7ea8f8;
+  border-radius: 2px;
+  transition:
+    left  0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #fff;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  left: 14px;
+  right: 14px;
+}
+
+.nav-cta {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #0d1540;
+  background: #7ea8f8;
+  padding: 10px 22px;
+  border-radius: 6px;
+  text-decoration: none;
+  margin-left: 12px;
+  white-space: nowrap;
+  transition:
+    transform  0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-cta:hover {
+  background: #a0c0ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(126, 168, 248, 0.4);
+}
+
+/* ── Hamburger ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: auto;
+}
+
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: 0.3s;
+}
+
+.hamburger.open span:nth-child(1) { transform: rotate(45deg)  translate(5px, 5px);  }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0);               }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hamburger { display: flex; }
+
+  .nav-links {
+    position: fixed;
+    top: 0; left: -100%; bottom: 0;
+    width: 280px;
+    background: rgba(7, 16, 48, 0.98);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 80px 32px 40px;
+    gap: 8px;
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid rgba(126, 168, 248, 0.1);
+    z-index: 99;
+  }
+
+  .nav-links.open { left: 0; }
+
+  .nav-link {
+    font-size: 16px;
+    padding: 12px 0;
+    width: 100%;
+  }
+
+  .nav-cta {
+    margin-left: 0;
+    margin-top: 16px;
+  }
+  .navbar {
+    background: rgb(13, 21, 64); /* fully opaque, no transparency */
+    backdrop-filter: none;
+  }
+  .hamburger { display: flex; }
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain; /* ← add this so the image scales properly */
+}

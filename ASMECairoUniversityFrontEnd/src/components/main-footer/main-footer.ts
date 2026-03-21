@@ -11,10 +11,9 @@ export class MainFooter {
   imageIcons: string[];
   constructor() {
     this.imageIcons = [
-      "https://img.icons8.com/color/48/email.png",
-      "https://img.icons8.com/3d-fluency/94/facebook-logo.png",
-      "https://img.icons8.com/3d-fluency/94/instagram-logo.png",
-      "https://img.icons8.com/color/48/linkedin.png",
+      "icons/icons8-facebook-logo-50.png",
+      "icons/instagram-logo.png",
+      "icons/icons8-linkedin-50.png",
     ];
   }
 }

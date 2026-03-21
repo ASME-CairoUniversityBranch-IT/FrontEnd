@@ -1,0 +1,33 @@
+<nav class="navbar" [class.scrolled]="isScrolled">
+  <div class="nav-inner">
+
+    <a href="#home" class="nav-logo" (click)="closeMenu()">
+      <div class="logo-icon">
+        <img src="logo/ASME LOGO WHITE.png" alt="ASME Cairo University" class="logo-icon" >
+      </div>
+      <div class="logo-text">
+        <span class="logo-asme">ASME</span>
+        <span class="logo-cu">Cairo University</span>
+      </div>
+    </a>
+
+    <button
+      class="hamburger"
+      [class.open]="isMenuOpen"
+      (click)="toggleMenu()"
+      aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="nav-links" [class.open]="isMenuOpen">
+      <a href="#home"         class="nav-link" (click)="closeMenu()">Home</a>
+      <a href="#about"        class="nav-link" (click)="closeMenu()">About</a>
+      <a href="#featured" class="nav-link" (click)="closeMenu()">Featured</a>
+      <a href="#achievements" class="nav-link" (click)="closeMenu()">Achievements</a>
+      <a href="#projects"     class="nav-link" (click)="closeMenu()">Projects</a>
+      <a href="#committees"   class="nav-link" (click)="closeMenu()">Committees</a>
+      <a href="#contact"      class="nav-link" (click)="closeMenu()">Contact</a>
+    </div>
+
+  </div>
+</nav>
