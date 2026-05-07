@@ -1,0 +1,441 @@
+<!-- create-event.component.html -->
+
+<div class="page-wrapper">
+
+  <!-- TOP NAV -->
+  <header class="top-nav">
+    <div class="nav-brand">ASME CU</div>
+    <div class="nav-breadcrumb">ADMIN PANEL > CREATE EVENT</div>
+    <div class="nav-right">
+      <div class="avatar">AA</div>
+      <div class="admin-name">Ahmed Admin</div>
+      <button class="btn-events-list">← EVENTS LIST</button>
+    </div>
+  </header>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-label">CONTENT</div>
+      <button class="sidebar-item active">+ CREATE EVENT</button>
+    </aside>
+
+    <!-- FORM AREA -->
+    <main class="form-area">
+
+      <!-- HEADER -->
+      <div class="form-header">
+        <div>
+          <div class="breadcrumb-sub">DASHBOARD > EVENTS > NEW EVENT</div>
+          <h1 class="page-title">CREATE NEW EVENT</h1>
+          <p class="page-subtitle">Fill in the details below.</p>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-draft-top" (click)="onSaveDraft()">
+            SAVE DRAFT
+          </button>
+          <button
+            class="btn-publish-top"
+            (click)="onPublish()"
+            [disabled]="requiredRemaining > 0"
+            [class.disabled]="requiredRemaining > 0"
+          >
+            PUBLISH EVENT →
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 1: EVENT TYPE -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">1</div>
+          <div class="section-title">EVENT TYPE</div>
+          <div class="section-hint">Choose what kind of activity this is</div>
+        </div>
+
+        <div class="type-grid">
+          <!-- Dynamic Event Types based on TS array -->
+          <button
+            type="button"
+            class="type-card"
+            *ngFor="let type of eventTypes"
+            [class.selected]="eventType === type.value"
+            (click)="eventType = type.value"
+          >
+            <span class="check-mark" *ngIf="eventType === type.value">✓</span>
+            <div class="type-emoji">{{ type.emoji }}</div>
+            <div class="type-label">{{ type.label }}</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- SECTION 2: BASIC INFORMATION -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">2</div>
+          <div class="section-title">BASIC INFORMATION</div>
+          <div class="section-hint">Core details shown on the event card</div>
+        </div>
+
+        <!-- TITLE -->
+        <div class="form-group">
+          <label class="field-label">
+            EVENT TITLE <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            class="form-input"
+            placeholder="e.g. Spring Opening Ceremony 2025"
+            [(ngModel)]="title"
+            name="title"
+          >
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="form-group">
+          <label class="field-label">
+            SHORT DESCRIPTION <span class="req">*</span>
+          </label>
+          <textarea
+            class="form-textarea"
+            placeholder="1-2 sentences shown on the event card..."
+            [(ngModel)]="shortDescription"
+            name="shortDescription"
+          ></textarea>
+        </div>
+
+         <div class="form-group">
+          <label class="field-label">
+            LONG DESCRIPTION <span class="req">*</span>
+          </label>
+          <textarea
+            class="form-textarea"
+            placeholder="Detailed description shown on event page..."
+            [(ngModel)]="longDescription"
+            name="longDescription"
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- SECTION 3: DATE & LOCATION -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">3</div>
+          <div class="section-title">DATE & LOCATION</div>
+        </div>
+
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="field-label">
+              DATE <span class="req">*</span>
+            </label>
+            <input
+              type="date"
+              class="form-input"
+              [(ngModel)]="date"
+              name="date"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">TIME</label>
+            <input
+              type="time"
+              class="form-input"
+              [(ngModel)]="time"
+              name="time"
+            >
+          </div>
+        </div>
+
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="field-label">
+              LOCATION / VENUE <span class="req">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="e.g. Faculty of Engineering, Hall A"
+              [(ngModel)]="location"
+              name="location"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">ORGANISING COMMITTEE</label>
+            <select
+              class="form-select"
+              [(ngModel)]="organisingCommittee"
+              name="committee"
+            >
+              <option value="">Select committee</option>
+              <option *ngFor="let comm of committees" [value]="comm.value">
+                {{ comm.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: DETAILS & SETTINGS -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">4</div>
+          <div class="section-title">DETAILS & SETTINGS</div>
+        </div>
+
+        <div class="form-row three-col">
+          <div class="form-group">
+            <label class="field-label">CAPACITY</label>
+            <input
+              type="number"
+              class="form-input"
+              placeholder="e.g. 80"
+              [(ngModel)]="capacity"
+              name="capacity"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">REGISTRATION DEADLINE</label>
+            <input
+              type="date"
+              class="form-input"
+              [(ngModel)]="registrationDeadline"
+              name="registrationDeadline"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">STATUS</label>
+            <select
+              class="form-select"
+              [(ngModel)]="status"
+              name="status"
+            >
+              <option value="upcoming">Upcoming</option>
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TAGS -->
+        <div class="form-group">
+          <label class="field-label">TAGS</label>
+          <input
+            type="text"
+            class="form-input"
+            placeholder="Type a tag and press Enter..."
+            [(ngModel)]="tagInput"
+            name="tagInput"
+            (keyup.enter)="addTag($event)"
+          >
+          <!-- Display Tags -->
+          <div class="tags-list" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;" *ngIf="tags.length > 0">
+            <span class="tag" *ngFor="let tag of tags; let i = index" style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 14px; border: 1px solid #e2e8f0;">
+              {{ tag }}
+              <span style="cursor:pointer; margin-left:6px; color: #ef4444; font-weight: bold;" (click)="removeTag(i)">✕</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="form-group">
+          <label class="field-label">COVER IMAGE</label>
+          <div
+            class="dropzone"
+            (dragover)="onDragOver($event)"
+            (drop)="onDrop($event)"
+            [class.drag-over]="isDragOver"
+            style="position: relative;"
+          >
+            <!-- No Image State -->
+            <ng-container *ngIf="!coverPreview">
+              <div class="dz-icon">🖼️</div>
+              <div class="dz-label">Drop image here or browse</div>
+              <div class="dz-hint">PNG, JPG up to 5MB</div>
+            </ng-container>
+
+            <!-- Image Preview State -->
+            <div *ngIf="coverPreview" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <img [src]="coverPreview" alt="Cover" style="max-height: 150px; border-radius: 8px; object-fit: cover;" />
+              <button type="button" class="btn-x-entry" style="position: absolute; top: 10px; right: 10px; background: white;" (click)="removeImage($event)">✕</button>
+            </div>
+
+            <input
+              type="file"
+              hidden
+              #fileInput
+              (change)="onFileSelected($event)"
+              accept="image/png, image/jpeg"
+            >
+            <button
+              *ngIf="!coverPreview"
+              type="button"
+              class="btn-draft-top"
+              style="margin-top: 15px;"
+              (click)="fileInput.click()"
+            >
+              Upload Image
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: SPEAKERS, PARTNERS & SPONSORS -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">5</div>
+          <div class="section-title">SPEAKERS, PARTNERS & SPONSORS</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+          <button
+            type="button"
+            class="tab"
+            [class.active]="activeTab === 'speakers'"
+            (click)="activeTab = 'speakers'"
+          >
+            🎤 SPEAKERS
+          </button>
+          <button
+            type="button"
+            class="tab"
+            [class.active]="activeTab === 'partners'"
+            (click)="activeTab = 'partners'"
+          >
+            🤝 PARTNERS
+          </button>
+          <button
+            type="button"
+            class="tab"
+            [class.active]="activeTab === 'sponsors'"
+            (click)="activeTab = 'sponsors'"
+          >
+            🏆 SPONSORS
+          </button>
+        </div>
+
+        <!-- TAB CONTENT: SPEAKERS -->
+        <ng-container *ngIf="activeTab === 'speakers'">
+          <div class="person-entry" *ngFor="let speaker of speakers; let i = index">
+            <div class="person-entry-header">
+              <div class="person-avatar-sm">👤</div>
+              <div class="person-entry-meta" (click)="toggleExpand('speaker', i)" style="cursor: pointer; flex-grow: 1;">
+                <div class="person-entry-name">{{ speaker.fullName || 'Unnamed Speaker' }}</div>
+                <div class="person-entry-role">{{ speaker.role || 'NO ROLE SET' }}</div>
+              </div>
+              <button type="button" class="btn-x-entry" (click)="removeSpeaker(i)">✕</button>
+            </div>
+
+            <!-- Expandable Fields -->
+            <div class="person-fields" *ngIf="expandedType === 'speaker' && expandedIndex === i">
+              <div class="form-row two-col">
+                <div class="form-group">
+                  <label class="field-label">FULL NAME</label>
+                  <input type="text" class="form-input" placeholder="e.g. Dr. Layla Hassan" [(ngModel)]="speaker.fullName" [name]="'speakerName' + i">
+                </div>
+                <div class="form-group">
+                  <label class="field-label">ROLE / TITLE</label>
+                  <input type="text" class="form-input" placeholder="e.g. Keynote Speaker" [(ngModel)]="speaker.role" [name]="'speakerRole' + i">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="field-label">SHORT BIO</label>
+                <textarea class="form-textarea" placeholder="One-line summary shown on card" [(ngModel)]="speaker.shortBio" [name]="'speakerBio' + i"></textarea>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-add-entry" (click)="addSpeaker()">+ ADD SPEAKER</button>
+        </ng-container>
+
+        <!-- TAB CONTENT: PARTNERS -->
+        <ng-container *ngIf="activeTab === 'partners'">
+          <div class="person-entry" *ngFor="let partner of partners; let i = index">
+            <div class="person-entry-header">
+              <div class="person-avatar-sm">🤝</div>
+              <div class="person-entry-meta" (click)="toggleExpand('partner', i)" style="cursor: pointer; flex-grow: 1;">
+                <div class="person-entry-name">{{ partner.name || 'Unnamed Partner' }}</div>
+                <div class="person-entry-role">{{ partner.role || 'NO ROLE SET' }}</div>
+              </div>
+              <button type="button" class="btn-x-entry" (click)="removePartner(i)">✕</button>
+            </div>
+
+            <div class="person-fields" *ngIf="expandedType === 'partner' && expandedIndex === i">
+              <div class="form-row two-col">
+                <div class="form-group">
+                  <label class="field-label">PARTNER NAME</label>
+                  <input type="text" class="form-input" placeholder="e.g. Tech Corp" [(ngModel)]="partner.name" [name]="'partnerName' + i">
+                </div>
+                <div class="form-group">
+                  <label class="field-label">ROLE</label>
+                  <input type="text" class="form-input" placeholder="e.g. Media Partner" [(ngModel)]="partner.role" [name]="'partnerRole' + i">
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-add-entry" (click)="addPartner()">+ ADD PARTNER</button>
+        </ng-container>
+
+        <!-- TAB CONTENT: SPONSORS -->
+        <ng-container *ngIf="activeTab === 'sponsors'">
+          <div class="person-entry" *ngFor="let sponsor of sponsors; let i = index">
+            <div class="person-entry-header">
+              <div class="person-avatar-sm">🏆</div>
+              <div class="person-entry-meta" (click)="toggleExpand('sponsor', i)" style="cursor: pointer; flex-grow: 1;">
+                <div class="person-entry-name">{{ sponsor.name || 'Unnamed Sponsor' }}</div>
+                <div class="person-entry-role">{{ sponsor.tier || 'NO TIER SET' }}</div>
+              </div>
+              <button type="button" class="btn-x-entry" (click)="removeSponsor(i)">✕</button>
+            </div>
+
+            <div class="person-fields" *ngIf="expandedType === 'sponsor' && expandedIndex === i">
+              <div class="form-row two-col">
+                <div class="form-group">
+                  <label class="field-label">SPONSOR NAME</label>
+                  <input type="text" class="form-input" placeholder="e.g. Global Bank" [(ngModel)]="sponsor.name" [name]="'sponsorName' + i">
+                </div>
+                <div class="form-group">
+                  <label class="field-label">TIER</label>
+                  <select class="form-select" [(ngModel)]="sponsor.tier" [name]="'sponsorTier' + i">
+                    <option value="">Select Tier</option>
+                    <option value="Platinum">Platinum</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Silver">Silver</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-add-entry" (click)="addSponsor()">+ ADD SPONSOR</button>
+        </ng-container>
+
+      </section>
+
+       <!-- ── STICKY FOOTER BAR ── -->
+      <div class="sticky-bar">
+        <span class="remaining-hint" *ngIf="requiredRemaining > 0">
+          <span class="dot orange"></span>
+          {{ requiredRemaining }} required field{{ requiredRemaining > 1 ? 's' : '' }} remaining
+        </span>
+        <span class="remaining-hint success" *ngIf="requiredRemaining === 0">
+          <span class="dot green"></span> All required fields filled
+        </span>
+        <div class="bar-actions">
+          <button type="button" class="btn-clear" (click)="clearForm()">✕ CLEAR FORM</button>
+          <button type="button" class="btn-draft-bar" (click)="onSaveDraft()">SAVE DRAFT</button>
+          <button type="button" class="btn-publish-bar" (click)="onPublish()" [disabled]="requiredRemaining > 0">
+            ✓ PUBLISH EVENT
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
