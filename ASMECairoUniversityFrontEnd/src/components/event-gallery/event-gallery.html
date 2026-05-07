@@ -1,0 +1,21 @@
+<div class="gallery-card">
+  <div class="gallery-header">
+    <div class="header-icon">
+      <i class="fa-solid fa-images"></i>
+    </div>
+    <h2>GALLERY</h2>
+  </div>
+
+  <div class="gallery-grid">
+    <div *ngFor="let photo of photos; let i = index"
+          [class]="'photo-item photo-' + (i + 1)">
+
+      <div class="image-overlay">
+        <i class="fa-solid fa-rocket rocket-icon"></i>
+        <span>{{ photo.title }}</span>
+      </div>
+
+      <img [src]="photo.url" [alt]="photo.title">
+    </div>
+  </div>
+</div>

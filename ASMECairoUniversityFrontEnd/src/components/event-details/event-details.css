@@ -1,0 +1,145 @@
+.details-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: 'Arial', sans-serif;
+  width: 100%;
+  margin: 0;
+}
+
+.details-card, .share-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.card-title {
+  font-size: 11px;
+  color: #8898aa;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.icon-wrapper {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+
+.item-date .icon-wrapper { background-color: #e0f2fe; color: #0ea5e9; } /* أزرق فاتح */
+.item-venue .icon-wrapper { background-color: #fce7f3; color: #ec4899; } /* بينك/أحمر فاتح */
+.item-org .icon-wrapper { background-color: #e0e7ff; color: #6366f1; } /* كحلي فاتح */
+.item-cap .icon-wrapper { background-color: #f3e8ff; color: #a855f7; } /* موف فاتح */
+.item-deadline .icon-wrapper { background-color: #fee2e2; color: #ef4444; } /* أحمر فاتح */
+
+.text-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 10px;
+  color: #8898aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.main-text {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.sub-text {
+  font-size: 13px;
+  color: #64748b;
+}
+
+
+.share-card .card-title {
+  margin-bottom: 15px;
+}
+
+.copy-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.copy-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.link-icon {
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+.btn-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-btn-text {
+  font-size: 10px;
+  color: #8898aa;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.sub-btn-text {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 700;
+}
