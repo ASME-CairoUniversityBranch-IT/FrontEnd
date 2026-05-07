@@ -9,10 +9,12 @@ import { OurValues } from '../components/our-values/our-values';
 import { Navbar } from '../components/navbar/navbar';
 import { ActivitiesAchievements } from '../components/activities-achievements/activities-achievements';
 import { MainBanner } from '../components/main-banner/main-banner';
+import { CreateEventComponent } from "../components/create-event/create-event";
 
 @Component({
   selector: 'app-root',
-  imports: [ContactUs, RouterOutlet, OurProject, Committee, AboutAsme, MainFooter, OurValues, Navbar, ActivitiesAchievements, MainBanner],
+  standalone: true,
+  imports: [ContactUs, RouterOutlet, OurProject, Committee, AboutAsme, MainFooter, OurValues, Navbar, ActivitiesAchievements, MainBanner, CreateEventComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
