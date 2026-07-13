@@ -1,0 +1,77 @@
+<div class="details-container" *ngIf="project as p">
+
+  <div class="details-card">
+    <h3 class="card-title">DETAILS</h3>
+
+    <div class="details-list">
+
+      <div class="detail-item item-date">
+        <div class="icon-wrapper"><i class="fa-regular fa-calendar"></i></div>
+        <div class="text-content">
+          <span class="label">DATE & TIME</span>
+          <span class="main-text">{{ p.mainDateAndTime | date:'fullDate' }}</span>
+          <span class="sub-text">{{ p.mainDateAndTime | date:'shortTime' }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item item-venue">
+        <div class="icon-wrapper"><i class="fa-solid fa-location-dot"></i></div>
+        <div class="text-content">
+          <span class="label">LOCATION</span>
+          <span class="main-text">{{ p.location }}</span>
+        </div>
+      </div>
+
+      <!-- Workshop-specific -->
+      <div class="detail-item" *ngIf="p.type === ProjectType.Workshop">
+        <div class="icon-wrapper"><i class="fa-solid fa-chalkboard-user"></i></div>
+        <div class="text-content">
+          <span class="label">SESSIONS</span>
+          <span class="main-text">{{ p.numberOfSessions }} sessions</span>
+          <span class="sub-text">{{ p.startDate | date }} – {{ p.endDate | date }}</span>
+        </div>
+      </div>
+
+      <!-- FieldTrip-specific -->
+      <ng-container *ngIf="p.type === ProjectType.FieldTrip">
+        <div class="detail-item">
+          <div class="icon-wrapper"><i class="fa-solid fa-bus"></i></div>
+          <div class="text-content">
+            <span class="label">DESTINATION</span>
+            <span class="main-text">{{ p.destinationName }}</span>
+            <span class="sub-text">{{ p.transportationDetails }}</span>
+          </div>
+        </div>
+        <div class="detail-item">
+          <div class="icon-wrapper"><i class="fa-solid fa-user-group"></i></div>
+          <div class="text-content">
+            <span class="label">CAPACITY</span>
+            <span class="main-text">{{ p.capacity }} seats total</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Competition-specific -->
+      <div class="detail-item" *ngIf="p.type === ProjectType.Competition">
+        <div class="icon-wrapper"><i class="fa-solid fa-people-group"></i></div>
+        <div class="text-content">
+          <span class="label">TEAM SIZE</span>
+          <span class="main-text">Up to {{ p.maxParticipantsPerTeam }} participants</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="share-card">
+    <h3 class="card-title">SHARE THIS PAGE</h3>
+    <button class="copy-btn" (click)="copyLink()">
+      <div class="link-icon"><i class="fa-solid fa-link"></i></div>
+      <div class="btn-text">
+        <span class="main-btn-text">COPY LINK</span>
+        <span class="sub-btn-text">Click to copy URL</span>
+      </div>
+    </button>
+  </div>
+
+</div>

@@ -1,0 +1,9 @@
+<div class="hero" *ngIf="project as p" [style.backgroundImage]="p.coverImageUrl ? 'url(' + p.coverImageUrl + ')' : null">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <a routerLink="/projects" class="hero-back-link">← Back to Projects</a>
+    <div class="hero-type-tag">{{ typeLabel }}</div>
+    <h1 class="hero-title">{{ p.title }}</h1>
+    <p class="hero-desc">{{ p.shortDescription }}</p>
+  </div>
+</div>

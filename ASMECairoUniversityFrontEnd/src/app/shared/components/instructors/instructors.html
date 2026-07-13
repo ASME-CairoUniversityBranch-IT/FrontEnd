@@ -1,0 +1,19 @@
+<div class="instructors-card" *ngIf="instructors.length">
+  <div class="card-header">
+    <div class="icon-container">🧑‍🏫</div>
+    <h2>INSTRUCTORS</h2>
+  </div>
+
+  <div class="instructors-grid">
+    <div class="instructor-card" *ngFor="let i of instructors">
+      <div class="instructor-photo">
+        <img *ngIf="i.profileImagePath" [src]="i.profileImagePath" [alt]="i.fullName">
+        <div *ngIf="!i.profileImagePath" class="instructor-photo-placeholder">{{ initials(i.fullName) }}</div>
+      </div>
+      <div class="instructor-name">{{ i.fullName }}</div>
+      <div class="instructor-title" *ngIf="i.title">{{ i.title }}</div>
+      <div class="instructor-specialization" *ngIf="i.specialization">{{ i.specialization }}</div>
+      <a *ngIf="i.linkedInUrl" [href]="i.linkedInUrl" target="_blank" rel="noopener" class="instructor-linkedin">LinkedIn ↗</a>
+    </div>
+  </div>
+</div>

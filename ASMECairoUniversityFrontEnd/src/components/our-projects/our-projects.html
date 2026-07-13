@@ -6,31 +6,42 @@
   </div>
 
   <div class="tabs-container">
-  <ul class="tabs">
-    <li [class.active]="activeTab === 'EVENTS'"      (click)="switchTab('EVENTS')">EVENTS</li>
-    <li [class.active]="activeTab === 'WORKSHOPS'"   (click)="switchTab('WORKSHOPS')">WORKSHOPS</li>
-    <li [class.active]="activeTab === 'FIELD TRIPS'" (click)="switchTab('FIELD TRIPS')">FIELD TRIPS</li>
-  </ul>
+    <ul class="tabs">
+      <li *ngFor="let t of tabs" [class.active]="activeTab === t" (click)="switchTab(t)">
+        {{ projectTypeLabel(t) }}
+      </li>
+    </ul>
     <hr class="tabs-line">
   </div>
 
-  <div class="cards-grid">
-    <div class="card" *ngFor="let project of projectsData" data-aos="fade-up" data-aos-duration="700">
-      <div class="card-image-box">
-        <span class="icon">{{ project.icon }}</span>
-      </div>
+  <ng-container *ngIf="vm$ | async as vm">
+    <p class="loading-msg" *ngIf="vm.status === 'loading'">
+      <span class="spinner"></span>
+      Loading projects...
+    </p>
 
-      <div class="card-content">
-        <h3 class="card-title">{{ project.title }}</h3>
-        <p class="card-description">{{ project.description }}</p>
-        <p class="card-date">{{ project.date }}</p>
-      </div>
+    <div class="cards-grid" *ngIf="vm.status === 'loaded'">
+      <ng-container *ngIf="projectsForTab(vm.projects) as filtered">
+        <a class="card" *ngFor="let project of filtered" [routerLink]="projectDetailPath(project)"
+           data-aos="fade-up" data-aos-duration="700">
+          <div class="card-image-box">
+            <img *ngIf="project.coverImageUrl" [src]="project.coverImageUrl" [alt]="project.title">
+            <span *ngIf="!project.coverImageUrl" class="icon">{{ projectTypeIcon(project.type) }}</span>
+          </div>
+
+          <div class="card-content">
+            <h3 class="card-title">{{ project.title }}</h3>
+            <p class="card-description">{{ project.shortDescription }}</p>
+            <p class="card-date">📅 {{ project.mainDateAndTime | date:'mediumDate' }}</p>
+          </div>
+        </a>
+        <p class="empty-msg" *ngIf="filtered.length === 0">No {{ projectTypeLabel(activeTab) | lowercase }}s yet — check back soon.</p>
+      </ng-container>
     </div>
-  </div>
+  </ng-container>
 
   <div class="action-container">
-    <!--button class="view-all-btn">VIEW ALL EVENTS &rarr;</button-->
+    <a routerLink="/projects" class="view-all-btn">VIEW ALL PROJECTS &rarr;</a>
   </div>
 
 </section>
-

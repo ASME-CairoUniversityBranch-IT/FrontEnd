@@ -1,0 +1,341 @@
+<div class="page-wrapper">
+
+  <header class="top-nav">
+    <div class="nav-brand">ASME CU</div>
+    <div class="nav-breadcrumb">ADMIN PANEL &gt; CREATE PROJECT</div>
+    <div class="nav-right">
+      <button class="btn-events-list" routerLink="/projects">← PROJECTS LIST</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-label">CONTENT</div>
+      <button class="sidebar-item active">+ CREATE PROJECT</button>
+    </aside>
+
+    <main class="form-area">
+
+      <div class="form-header">
+        <div>
+          <div class="breadcrumb-sub">DASHBOARD &gt; PROJECTS &gt; NEW</div>
+          <h1 class="page-title">CREATE NEW PROJECT</h1>
+          <p class="page-subtitle">Fill in the details below.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-publish-top" (click)="onPublish()" [disabled]="requiredRemaining > 0 || submitting">
+            {{ submitting ? 'PUBLISHING…' : 'PUBLISH →' }}
+          </button>
+        </div>
+      </div>
+
+      <p class="submit-error" *ngIf="submitError">{{ submitError }}</p>
+
+      <!-- 1: PROJECT TYPE -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">1</div>
+          <div class="section-title">PROJECT TYPE</div>
+          <div class="section-hint">Choose what kind of activity this is</div>
+        </div>
+        <div class="type-grid">
+          <button type="button" class="type-card" *ngFor="let t of types"
+                  [class.selected]="selectedType === t" (click)="selectedType = t">
+            <span class="check-mark" *ngIf="selectedType === t">✓</span>
+            <div class="type-emoji">{{ projectTypeIcon(t) }}</div>
+            <div class="type-label">{{ projectTypeLabel(t) }}</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- 2: BASIC INFORMATION -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">2</div>
+          <div class="section-title">BASIC INFORMATION</div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">TITLE <span class="req">*</span></label>
+          <input type="text" class="form-input" [(ngModel)]="title" name="title">
+        </div>
+        <div class="form-group">
+          <label class="field-label">SHORT DESCRIPTION <span class="req">*</span></label>
+          <textarea class="form-textarea" [(ngModel)]="shortDescription" name="shortDescription"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="field-label">LONG DESCRIPTION <span class="opt">(Markdown supported)</span></label>
+          <div class="md-tabs">
+            <button type="button" class="md-tab" [class.active]="descriptionView === 'write'" (click)="descriptionView = 'write'">Write</button>
+            <button type="button" class="md-tab" [class.active]="descriptionView === 'preview'" (click)="descriptionView = 'preview'">Preview</button>
+          </div>
+          <textarea *ngIf="descriptionView === 'write'" class="form-textarea" rows="8"
+                    [(ngModel)]="longDescription" name="longDescription"
+                    placeholder="Supports Markdown: **bold**, _italic_, # headings, - lists, [links](url)..."></textarea>
+          <div class="md-preview-box" *ngIf="descriptionView === 'preview'">
+            <markdown *ngIf="longDescription.trim(); else noPreview" class="markdown-body" [data]="longDescription"></markdown>
+            <ng-template #noPreview><p class="md-preview-empty">Nothing to preview yet — switch back to Write.</p></ng-template>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3: DATE & LOCATION -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">3</div>
+          <div class="section-title">DATE & LOCATION</div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="field-label">DATE <span class="req">*</span></label>
+            <input type="date" class="form-input" [(ngModel)]="date" name="date">
+          </div>
+          <div class="form-group">
+            <label class="field-label">TIME</label>
+            <input type="time" class="form-input" [(ngModel)]="time" name="time">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">LOCATION <span class="req">*</span></label>
+          <input type="text" class="form-input" [(ngModel)]="location" name="location">
+        </div>
+
+        <!-- Workshop-specific dates -->
+        <div class="form-row two-col" *ngIf="selectedType === ProjectType.Workshop">
+          <div class="form-group">
+            <label class="field-label">START DATE</label>
+            <input type="date" class="form-input" [(ngModel)]="startDate" name="startDate">
+          </div>
+          <div class="form-group">
+            <label class="field-label">END DATE</label>
+            <input type="date" class="form-input" [(ngModel)]="endDate" name="endDate">
+          </div>
+        </div>
+
+        <!-- FieldTrip-specific dates -->
+        <div class="form-row two-col" *ngIf="selectedType === ProjectType.FieldTrip">
+          <div class="form-group">
+            <label class="field-label">DEPARTURE TIME</label>
+            <input type="datetime-local" class="form-input" [(ngModel)]="departureTime" name="departureTime">
+          </div>
+          <div class="form-group">
+            <label class="field-label">RETURN TIME</label>
+            <input type="datetime-local" class="form-input" [(ngModel)]="returnTime" name="returnTime">
+          </div>
+        </div>
+      </section>
+
+      <!-- 4: IMAGES -->
+      <section class="section-card">
+        <div class="section-head">
+          <div class="section-num">4</div>
+          <div class="section-title">IMAGES</div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">COVER IMAGE</label>
+          <div class="dropzone" (dragover)="onDragOver($event)" (drop)="onDrop($event)" [class.drag-over]="isDragOver">
+            <ng-container *ngIf="!coverPreview">
+              <div class="dz-icon">🖼️</div>
+              <div class="dz-label">Drop image here or browse</div>
+              <div class="dz-hint">PNG, JPG up to 5MB</div>
+            </ng-container>
+            <div *ngIf="coverPreview">
+              <img [src]="coverPreview" alt="Cover" class="cover-preview">
+              <button type="button" class="btn-remove-img" (click)="removeImage($event)">✕ Remove</button>
+            </div>
+            <input type="file" hidden #fileInput (change)="onFileSelected($event)" accept="image/png, image/jpeg">
+            <button *ngIf="!coverPreview" type="button" class="btn-draft-top" style="margin-top:15px" (click)="fileInput.click()">Upload Image</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">GALLERY IMAGES</label>
+          <input type="file" multiple accept="image/png, image/jpeg" (change)="onGallerySelected($event)">
+          <div class="gallery-preview-grid" *ngIf="galleryPreviews.length">
+            <div class="gallery-preview-item" *ngFor="let src of galleryPreviews; let i = index">
+              <img [src]="src" alt="Gallery preview">
+              <button type="button" class="btn-x-entry" (click)="removeGalleryImage(i)">✕</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5: TYPE-SPECIFIC DETAILS -->
+      <section class="section-card" *ngIf="selectedType === ProjectType.Event">
+        <div class="section-head">
+          <div class="section-num">5</div>
+          <div class="section-title">EVENT DETAILS</div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="field-label">TICKET PRICE</label>
+            <input type="number" class="form-input" [(ngModel)]="ticketPrice" name="ticketPrice">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">SCHEDULE NOTES</label>
+          <textarea class="form-textarea" [(ngModel)]="scheduleNotes" name="scheduleNotes"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="field-label">COMMENT</label>
+          <textarea class="form-textarea" [(ngModel)]="comment" name="comment"></textarea>
+        </div>
+
+        <div class="tabs">
+          <button type="button" class="tab" [class.active]="activeTab === 'speakers'" (click)="activeTab = 'speakers'">🎤 SPEAKERS</button>
+          <button type="button" class="tab" [class.active]="activeTab === 'partners'" (click)="activeTab = 'partners'">🤝 PARTNERS</button>
+          <button type="button" class="tab" [class.active]="activeTab === 'sponsors'" (click)="activeTab = 'sponsors'">🏆 SPONSORS</button>
+        </div>
+
+        <ng-container *ngIf="activeTab === 'speakers'">
+          <div class="person-entry" *ngFor="let s of speakers; let i = index">
+            <div class="form-row two-col">
+              <input type="text" class="form-input" placeholder="Name" [(ngModel)]="s.name" [name]="'speakerName'+i">
+              <input type="text" class="form-input" placeholder="Title (e.g. AI Research Engineer)" [(ngModel)]="s.title" [name]="'speakerTitle'+i">
+            </div>
+            <input type="text" class="form-input" placeholder="Short bio (optional)" [(ngModel)]="s.shortBio" [name]="'speakerBio'+i">
+            <button type="button" class="btn-x-entry" (click)="removeSpeaker(i)">✕ Remove</button>
+          </div>
+          <button type="button" class="btn-add-entry" (click)="addSpeaker()">+ ADD SPEAKER</button>
+        </ng-container>
+
+        <ng-container *ngIf="activeTab === 'partners'">
+          <div class="person-entry" *ngFor="let p of partners; let i = index">
+            <div class="form-row two-col">
+              <input type="text" class="form-input" placeholder="Partner name" [(ngModel)]="p.name" [name]="'partnerName'+i">
+              <input type="text" class="form-input" placeholder="Type (e.g. Academic)" [(ngModel)]="p.partnerType" [name]="'partnerType'+i">
+            </div>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="p.isMainPartner" [name]="'partnerMain'+i"> Main partner
+            </label>
+            <button type="button" class="btn-x-entry" (click)="removePartner(i)">✕ Remove</button>
+          </div>
+          <button type="button" class="btn-add-entry" (click)="addPartner()">+ ADD PARTNER</button>
+        </ng-container>
+
+        <ng-container *ngIf="activeTab === 'sponsors'">
+          <div class="person-entry" *ngFor="let s of sponsors; let i = index">
+            <div class="form-row two-col">
+            <input type="text" class="form-input" placeholder="Sponsor name" [(ngModel)]="s.name" [name]="'sponsorName'+i">
+            <select class="form-select" [(ngModel)]="s.sponsorshipTier" [name]="'sponsorTier'+i">
+              <option [ngValue]="SponsorshipTier.Strategic">Strategic</option>
+              <option [ngValue]="SponsorshipTier.Platinum">Platinum</option>
+              <option [ngValue]="SponsorshipTier.Gold">Gold</option>
+              <option [ngValue]="SponsorshipTier.Silver">Silver</option>
+              <option [ngValue]="SponsorshipTier.Bronze">Bronze</option>
+            </select>
+            </div>
+            <button type="button" class="btn-x-entry" (click)="removeSponsor(i)">✕ Remove</button>
+          </div>
+          <button type="button" class="btn-add-entry" (click)="addSponsor()">+ ADD SPONSOR</button>
+        </ng-container>
+      </section>
+
+      <section class="section-card" *ngIf="selectedType === ProjectType.Workshop">
+        <div class="section-head">
+          <div class="section-num">5</div>
+          <div class="section-title">WORKSHOP DETAILS</div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">NUMBER OF SESSIONS</label>
+          <input type="number" class="form-input" [(ngModel)]="numberOfSessions" name="numberOfSessions">
+        </div>
+
+        <div class="person-entry" *ngFor="let ins of instructors; let i = index">
+          <div class="form-row two-col">
+            <input type="text" class="form-input" placeholder="Full Name" [(ngModel)]="ins.fullName" [name]="'insFullName'+i">
+            <input type="text" class="form-input" placeholder="Title" [(ngModel)]="ins.title" [name]="'insTitle'+i">
+          </div>
+          <div class="form-row two-col">
+            <input type="text" class="form-input" placeholder="Specialization" [(ngModel)]="ins.specialization" [name]="'insSpecialization'+i">
+            <input type="text" class="form-input" placeholder="Email" [(ngModel)]="ins.email" [name]="'insEmail'+i">
+          </div>
+          <input type="text" class="form-input" placeholder="Short bio" [(ngModel)]="ins.bio" [name]="'insBio'+i">
+          <input type="text" class="form-input" placeholder="LinkedIn URL (optional)" [(ngModel)]="ins.linkedInUrl" [name]="'insLinkedIn'+i">
+          <button type="button" class="btn-x-entry" (click)="removeInstructor(i)">✕ Remove</button>
+        </div>
+        <button type="button" class="btn-add-entry" (click)="addInstructor()">+ ADD INSTRUCTOR</button>
+      </section>
+
+      <section class="section-card" *ngIf="selectedType === ProjectType.FieldTrip">
+        <div class="section-head">
+          <div class="section-num">5</div>
+          <div class="section-title">FIELD TRIP DETAILS</div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">DESTINATION NAME</label>
+          <input type="text" class="form-input" [(ngModel)]="destinationName" name="destinationName">
+        </div>
+        <div class="form-group">
+          <label class="field-label">MEETING POINT</label>
+          <input type="text" class="form-input" [(ngModel)]="meetingPoint" name="meetingPoint">
+        </div>
+        <div class="form-group">
+          <label class="field-label">TRANSPORTATION DETAILS</label>
+          <textarea class="form-textarea" [(ngModel)]="transportationDetails" name="transportationDetails"></textarea>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="field-label">CAPACITY</label>
+            <input type="number" class="form-input" [(ngModel)]="capacity" name="capacity">
+          </div>
+          <div class="form-group">
+            <label class="field-label">PRICE</label>
+            <input type="number" class="form-input" [(ngModel)]="price" name="price">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">REGISTRATION URL</label>
+          <input type="text" class="form-input" [(ngModel)]="registrationUrl" name="registrationUrl">
+        </div>
+        <div class="form-group">
+          <label class="field-label">REQUIREMENTS</label>
+          <textarea class="form-textarea" [(ngModel)]="requirements" name="requirements"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="field-label">NOTES</label>
+          <textarea class="form-textarea" [(ngModel)]="notes" name="notes"></textarea>
+        </div>
+      </section>
+
+      <section class="section-card" *ngIf="selectedType === ProjectType.Competition">
+        <div class="section-head">
+          <div class="section-num">5</div>
+          <div class="section-title">COMPETITION DETAILS</div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="field-label">PRIZE</label>
+            <input type="number" class="form-input" [(ngModel)]="prize" name="prize">
+          </div>
+          <div class="form-group">
+            <label class="field-label">CURRENCY</label>
+            <select class="form-select" [(ngModel)]="prizeCurrency" name="prizeCurrency">
+              <option [ngValue]="PrizeCurrency.EGP">EGP</option>
+              <option [ngValue]="PrizeCurrency.USD">USD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">MAX PARTICIPANTS PER TEAM</label>
+          <input type="number" class="form-input" [(ngModel)]="maxParticipantsPerTeam" name="maxParticipantsPerTeam">
+        </div>
+      </section>
+
+      <div class="sticky-bar">
+        <span class="remaining-hint" *ngIf="requiredRemaining > 0">
+          <span class="dot orange"></span>{{ requiredRemaining }} required field{{ requiredRemaining > 1 ? 's' : '' }} remaining
+        </span>
+        <span class="remaining-hint success" *ngIf="requiredRemaining === 0">
+          <span class="dot green"></span> All required fields filled
+        </span>
+        <div class="bar-actions">
+          <button type="button" class="btn-publish-bar" (click)="onPublish()" [disabled]="requiredRemaining > 0 || submitting">
+            {{ submitting ? 'PUBLISHING…' : '✓ PUBLISH PROJECT' }}
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>

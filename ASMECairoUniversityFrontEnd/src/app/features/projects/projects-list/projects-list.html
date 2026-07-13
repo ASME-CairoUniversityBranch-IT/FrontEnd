@@ -1,0 +1,55 @@
+<section class="projects-list-page">
+
+  <div class="header">
+    <p class="subtitle"><span>—</span> BROWSE</p>
+    <h1 class="main-title">ALL PROJECTS</h1>
+  </div>
+
+  <div class="controls">
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Search by title or description..."
+      [(ngModel)]="searchTerm"
+      name="search"
+    />
+
+    <div class="filter-pills">
+      <button class="pill" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">All</button>
+      <button class="pill" *ngFor="let t of types" [class.active]="activeFilter === t" (click)="setFilter(t)">
+        {{ projectTypeIcon(t) }} {{ projectTypeLabel(t) }}
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="vm$ | async as vm">
+    <div class="state-msg loading-msg" *ngIf="vm.status === 'loading'">
+      <span class="spinner"></span>
+      <p>Loading projects...</p>
+    </div>
+
+    <div class="state-msg" *ngIf="vm.status === 'error'">Couldn't load projects — please try again later.</div>
+
+    <ng-container *ngIf="vm.status === 'loaded'">
+      <ng-container *ngIf="filteredProjects(vm.projects) as filtered">
+        <div class="state-msg" *ngIf="filtered.length === 0">No projects match your search.</div>
+
+        <div class="cards-grid" *ngIf="filtered.length > 0">
+          <a class="card" *ngFor="let p of filtered" [routerLink]="projectDetailPath(p)">
+            <div class="card-image-box">
+              <img *ngIf="p.coverImageUrl" [src]="p.coverImageUrl" [alt]="p.title">
+              <span *ngIf="!p.coverImageUrl" class="icon">{{ projectTypeIcon(p.type) }}</span>
+            </div>
+            <div class="card-content">
+              <span class="card-type-pill">{{ projectTypeLabel(p.type) }}</span>
+              <h3 class="card-title">{{ p.title }}</h3>
+              <p class="card-description">{{ p.shortDescription }}</p>
+              <p class="card-date">📅 {{ p.mainDateAndTime | date:'mediumDate' }}</p>
+            </div>
+          </a>
+        </div>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+
+</section>

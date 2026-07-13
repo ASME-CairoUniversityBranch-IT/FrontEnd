@@ -1,0 +1,29 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="loading-msg" *ngIf="vm.status === 'loading'">
+    <span class="spinner"></span>
+    <p>Loading competition...</p>
+  </div>
+
+  <div class="error-msg" *ngIf="vm.status === 'notFound'">Competition not found.</div>
+
+  <ng-container *ngIf="vm.status === 'loaded'">
+    <app-project-hero [project]="vm.project" typeLabel="Competition"></app-project-hero>
+
+    <div class="project-page-container">
+      <div class="main-content">
+        <div class="about-card">
+          <h2>About This Competition</h2>
+          <markdown class="markdown-body" [data]="vm.project.longDescription"></markdown>
+        </div>
+
+        <app-project-gallery [imageUrls]="vm.project.galleryImageUrls"></app-project-gallery>
+      </div>
+
+      <div class="right-sidebar">
+        <app-prize-highlight [competition]="vm.project"></app-prize-highlight>
+        <app-reservation [project]="vm.project"></app-reservation>
+        <app-project-details [project]="vm.project"></app-project-details>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>

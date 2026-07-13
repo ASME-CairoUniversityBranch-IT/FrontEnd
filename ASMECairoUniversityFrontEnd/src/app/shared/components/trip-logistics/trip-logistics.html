@@ -1,0 +1,37 @@
+<div class="logistics-card" *ngIf="trip as t">
+  <div class="card-header">
+    <div class="icon-container">🚌</div>
+    <h2>TRIP LOGISTICS</h2>
+  </div>
+
+  <div class="logistics-list">
+    <div class="logistics-item">
+      <span class="label">DEPARTURE</span>
+      <span class="value">{{ t.departureTime | date:'medium' }}</span>
+    </div>
+    <div class="logistics-item">
+      <span class="label">RETURN</span>
+      <span class="value">{{ t.returnTime | date:'medium' }}</span>
+    </div>
+    <div class="logistics-item">
+      <span class="label">MEETING POINT</span>
+      <span class="value">{{ t.meetingPoint }}</span>
+    </div>
+    <div class="logistics-item">
+      <span class="label">TRANSPORTATION</span>
+      <span class="value">{{ t.transportationDetails }}</span>
+    </div>
+    <div class="logistics-item" *ngIf="t.requirements">
+      <span class="label">REQUIREMENTS</span>
+      <span class="value">{{ t.requirements }}</span>
+    </div>
+    <div class="logistics-item" *ngIf="t.notes">
+      <span class="label">NOTES</span>
+      <span class="value">{{ t.notes }}</span>
+    </div>
+    <div class="logistics-item">
+      <span class="label">PRICE</span>
+      <span class="value">{{ t.price }} EGP</span>
+    </div>
+  </div>
+</div>

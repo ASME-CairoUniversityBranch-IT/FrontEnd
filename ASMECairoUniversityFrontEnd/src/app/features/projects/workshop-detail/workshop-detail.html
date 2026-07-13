@@ -1,0 +1,29 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="loading-msg" *ngIf="vm.status === 'loading'">
+    <span class="spinner"></span>
+    <p>Loading workshop...</p>
+  </div>
+
+  <div class="error-msg" *ngIf="vm.status === 'notFound'">Workshop not found.</div>
+
+  <ng-container *ngIf="vm.status === 'loaded'">
+    <app-project-hero [project]="vm.project" typeLabel="Workshop"></app-project-hero>
+
+    <div class="project-page-container">
+      <div class="main-content">
+        <div class="about-card">
+          <h2>About This Workshop</h2>
+          <markdown class="markdown-body" [data]="vm.project.longDescription"></markdown>
+        </div>
+
+        <app-instructors [instructors]="vm.project.instructors"></app-instructors>
+        <app-project-gallery [imageUrls]="vm.project.galleryImageUrls"></app-project-gallery>
+      </div>
+
+      <div class="right-sidebar">
+        <app-reservation [project]="vm.project"></app-reservation>
+        <app-project-details [project]="vm.project"></app-project-details>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>

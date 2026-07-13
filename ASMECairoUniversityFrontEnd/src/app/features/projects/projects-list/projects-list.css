@@ -1,0 +1,39 @@
+.projects-list-page { max-width: 1200px; margin: 40px auto; padding: 0 24px; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+.header { text-align: center; margin-bottom: 28px; }
+.subtitle { color: #6b21a8; font-weight: 700; letter-spacing: 2px; font-size: .8rem; margin-bottom: 6px; }
+.main-title { font-size: 2rem; font-weight: 800; color: #0d1540; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.search-input { flex: 1; min-width: 240px; padding: 12px 16px; border: 1px solid #d0d4e0; border-radius: 8px; font-size: .95rem; }
+.search-input:focus { outline: none; border-color: #1a2472; }
+
+.filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { padding: 8px 16px; border-radius: 20px; border: 1px solid #d0d4e0; background: #fff; cursor: pointer; font-size: .82rem; font-weight: 600; color: #4a5480; transition: all .15s; }
+.pill:hover { border-color: #1a2472; }
+.pill.active { background: #1a2472; border-color: #1a2472; color: #fff; }
+
+.state-msg { text-align: center; color: #8896b8; padding: 40px 0; }
+.loading-msg { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.loading-msg .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(26, 36, 114, .12);
+  border-top-color: #1a2472;
+  border-radius: 50%;
+  animation: projects-list-spin .7s linear infinite;
+}
+.loading-msg p { margin: 0; }
+@keyframes projects-list-spin { to { transform: rotate(360deg); } }
+
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; }
+.card { display: block; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.06); text-decoration: none; color: inherit; transition: transform .15s, box-shadow .15s; }
+.card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(26,36,114,.15); }
+.card-image-box { height: 140px; background: linear-gradient(135deg,#e8ecff,#c7d0f5); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.card-image-box img { width: 100%; height: 100%; object-fit: cover; }
+.card-image-box .icon { font-size: 2.4rem; }
+.card-content { padding: 16px 18px; }
+.card-type-pill { display: inline-block; font-size: .65rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1a2472; background: rgba(26,36,114,.08); padding: 3px 10px; border-radius: 4px; margin-bottom: 8px; }
+.card-title { font-size: 1.05rem; font-weight: 700; color: #0d1540; margin-bottom: 6px; }
+.card-description { font-size: .85rem; color: #4a5480; line-height: 1.5; margin-bottom: 10px; }
+.card-date { font-size: .78rem; color: #8896b8; }

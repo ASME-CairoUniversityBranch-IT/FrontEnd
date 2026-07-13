@@ -1,23 +1,14 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ContactUs } from '../components/contact-us/contact-us';
-import { Committee } from '../components/committee/committee';
-import { OurProject } from '../components/our-projects/our-projects';
-import { AboutAsme } from '../components/about-asme/about-asme';
-import { MainFooter } from '../components/main-footer/main-footer';
-import { OurValues } from '../components/our-values/our-values';
 import { Navbar } from '../components/navbar/navbar';
-import { ActivitiesAchievements } from '../components/activities-achievements/activities-achievements';
-import { MainBanner } from '../components/main-banner/main-banner';
-import { EventsPageComponent } from '../components/projectss-page/events-page';
-import { CreateEventComponent } from "../components/create-event/create-event";
+import { MainFooter } from '../components/main-footer/main-footer';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ContactUs, RouterOutlet, OurProject, Committee, AboutAsme, MainFooter, OurValues, Navbar, ActivitiesAchievements, MainBanner, CreateEventComponent, EventsPageComponent],
+  imports: [RouterOutlet, Navbar, MainFooter],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class App {
   protected readonly title = signal('ASMECairoUniversityFrontEnd');
