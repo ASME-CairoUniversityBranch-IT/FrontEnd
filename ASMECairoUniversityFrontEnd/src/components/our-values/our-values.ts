@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as AOS from 'aos';
+import { ContentService } from '../../app/core/services/content.service';
 
-
-interface ValueCard {
-  id: string;
+/** A value card plus the client-only UI state (isOpen) that content.json doesn't need to know about. */
+interface ValueCardVM {
   tag: string;
   title: string;
   overlayBody1: string;
@@ -19,51 +19,41 @@ interface ValueCard {
   templateUrl: '../our-values/our-values.html',
   styleUrls: ['../our-values/our-values.css']
 })
-export class OurValues {
-  cards: ValueCard[] = [
-    {
-      id: 'card-1',
-      tag: 'One Team',
-      title: 'One Goal',
-      overlayBody1: 'We move as one. Every decision, every effort, every win — shared across the entire team. No silos, no solo missions. When one of us succeeds, all of us succeed.',
-      overlayBody2: 'Our unity is our greatest competitive advantage.',
-      isOpen: false
-    },
-    {
-      id: 'card-2',
-      tag: 'Grow',
-      title: 'Together',
-      overlayBody1: 'Growth is not a solo sport. We invest in each other\'s development, share knowledge openly, and lift each other higher. Real progress is collective progress.',
-      overlayBody2: 'We celebrate every step forward — big or small.',
-      isOpen: false
-    },
-    {
-      id: 'card-3',
-      tag: 'Drive Change',
-      title: 'With Ownership',
-      overlayBody1: 'We don\'t wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn\'t a rule — it\'s a mindset.',
-      overlayBody2: 'Act like an owner. Think long-term. Deliver.',
-      isOpen: false
-    },
-     {
-      id: 'card-4',
-      tag: 'Shape What\'s',
-      title: 'NEXT',
-      overlayBody1: 'We don\'t wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn\'t a rule — it\'s a mindset.',
-      overlayBody2: 'Act like an owner. Think long-term. Deliver.',
-      isOpen: false
-    }
+export class OurValues implements OnInit {
+  /** Non-card section copy, populated from content.json. */
+  sectionLabel = '';
+  sectionTitle = '';
 
-  ];
+  /** Cards, each augmented with local `isOpen` UI state. Variable length — driven entirely by content.json. */
+  cards: ValueCardVM[] = [];
 
-  openCard(card: ValueCard): void {
+  loaded = false;
+
+  constructor(
+    private contentService: ContentService,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  openCard(card: ValueCardVM): void {
     card.isOpen = true;
   }
 
-  closeCard(card: ValueCard): void {
+  closeCard(card: ValueCardVM): void {
     card.isOpen = false;
   }
+
   ngOnInit(): void {
     AOS.init();
+
+    this.contentService.getContent().subscribe((data) => {
+      this.sectionLabel = data.ourValues.sectionLabel;
+      this.sectionTitle = data.ourValues.sectionTitle;
+      this.cards = data.ourValues.cards.map((card) => ({ ...card, isOpen: false }));
+      this.loaded = true;
+      // Cards are rendered via *ngFor once content arrives, so AOS needs to
+      // re-scan the DOM for the data-aos elements that just appeared.
+      this.cdr.detectChanges();
+      AOS.refreshHard();
+    });
   }
 }

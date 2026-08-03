@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { ActivitiesAchievements } from './activities-achievements';
 
@@ -8,7 +10,8 @@ describe('ActivitiesAchievements', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ActivitiesAchievements]
+      imports: [ActivitiesAchievements],
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     })
     .compileComponents();
 

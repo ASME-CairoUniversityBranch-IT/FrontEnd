@@ -1,22 +1,8 @@
-import { Component, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, OnInit, ChangeDetectorRef} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeroStats } from '../main-banner-statistics/main-banner-statistics';
-
-const HERO_CONTENT = {
-  badge: 'American Society of Mechanical Engineers',
-  titleLines: ['ASME', 'Cairo', 'University'],
-  subtitle:
-    "Cairo University's premier engineering society — where innovation meets excellence. " +
-    "Building tomorrow's engineers through projects, competitions, and community.",
-  ctaPrimary:   { label: 'Explore Projects', href: '#projects' },
-  ctaSecondary: { label: 'Join ASME',        href: '#contact'  },
-  stats: [
-    { target: 500, suffix: '+', label: 'Members'      },
-    { target: 40,  suffix: '+', label: 'Projects'     },
-    { target: 120, suffix: '+', label: 'Events'       },
-    { target: 8,   suffix: '',  label: 'Years Active' },
-  ],
-} as const;
+import { ContentService } from '../../app/core/services/content.service';
+import { MainBannerContent } from '../../app/core/models/site-content.model';
 
 @Component({
   selector: 'app-main-banner',
@@ -25,12 +11,22 @@ const HERO_CONTENT = {
   templateUrl: './main-banner.html',
   styleUrl: './main-banner.css',
 })
-export class MainBanner implements AfterViewInit, OnDestroy {
-  readonly HERO_CONTENT = HERO_CONTENT;
+export class MainBanner implements OnInit, AfterViewInit, OnDestroy {
+  /** Populated from content.json; the template gates on this being non-null. */
+  heroContent: MainBannerContent | null = null;
 
-  private particlesContainer?: HTMLElement;
+  constructor(private contentService: ContentService, private cdr: ChangeDetectorRef) {}
+
+  ngOnInit(): void {
+    this.contentService.getContent().subscribe((content) => {
+      this.heroContent = content.mainBanner;
+      this.cdr.detectChanges();
+    });
+  }
 
   ngAfterViewInit(): void {
+    // The particle background is purely decorative and doesn't depend on
+    // content.json, so it can be spawned immediately regardless of load timing.
     this.spawnParticles();
   }
 

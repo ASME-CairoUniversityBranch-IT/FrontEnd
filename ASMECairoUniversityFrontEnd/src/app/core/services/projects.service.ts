@@ -48,11 +48,24 @@ export class ProjectsService {
 
   /** The API already returns absolute URLs (e.g. "https://localhost:7033/uploads/...").
    *  This only kicks in as a safety net if a relative path ever comes back instead. */
-  private resolveImageUrl(path: string | null | undefined): string {
-    if (!path) return '';
-    if (/^https?:\/\//i.test(path)) return path;
-    return `${environment.apiUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+private resolveImageUrl(path: string | null | undefined): string {
+  if (!path) return '';
+
+  const apiUrl = environment.apiUrl.replace(/\/+$/, '');
+  const cleanPath = path.trim();
+
+  // Already a full URL
+  if (/^https?:\/\//i.test(cleanPath)) {
+    return cleanPath;
   }
+
+  // Fix URLs accidentally stored without protocol
+  if (/^[a-z0-9.-]+\.[a-z]{2,}\/.+/i.test(cleanPath)) {
+    return `https://${cleanPath}`;
+  }
+
+  return `${apiUrl}/${cleanPath.replace(/^\/+/, '')}`;
+}
 
   /** ProjectSummaryDTO uses "Type" (not "ProjectType" like the detail DTO) — different endpoint, different shape. */
   private mapSummary(raw: any): ProjectSummary {

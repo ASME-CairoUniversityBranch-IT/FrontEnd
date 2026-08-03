@@ -1,0 +1,151 @@
+{
+  "mainBanner": {
+    "badge": "American Society of Mechanical Engineers",
+    "titleLines": ["ASME", "Cairo", "University"],
+    "subtitle": "Cairo University's premier engineering society — where innovation meets excellence. Building tomorrow's engineers through projects, competitions, and community.",
+    "ctaPrimary": { "label": "Explore Projects", "href": "#projects" },
+    "ctaSecondary": { "label": "Join ASME", "href": "#contact" },
+    "stats": [
+      { "target": 500, "suffix": "+", "label": "Members" },
+      { "target": 40, "suffix": "+", "label": "Projects" },
+      { "target": 120, "suffix": "+", "label": "Events" },
+      { "target": 8, "suffix": "", "label": "Years Active" }
+    ]
+  },
+
+  "aboutAsme": {
+    "eyebrow": "WHO WE ARE",
+    "titleLine1": "ABOUT ASME",
+    "titleLine2": "CAIRO UNIVERSITY",
+    "organizationTitle": "THE ORGANIZATION",
+    "organizationParagraphs": [
+      "ASME (American Society of Mechanical Engineers) is a globally recognized professional society serving over 100,000 members in 140+ countries. Founded in 1880, ASME facilitates collaboration, knowledge sharing, career enrichment, and skills development across all engineering disciplines.",
+      "The Cairo University student branch, one of Egypt's most active chapters, bridges academic learning with real-world engineering practice — equipping members with technical expertise, leadership skills, and professional networks."
+    ],
+    "cards": [
+      {
+        "icon": "🌐",
+        "title": "GLOBAL VISION",
+        "description": "ASME's vision is to be the essential resource for mechanical engineers and other technical professionals worldwide to develop their skills, knowledge, and professional practices across emerging and traditional engineering frontiers."
+      },
+      {
+        "icon": "🎯",
+        "title": "OUR BRANCH MISSION",
+        "description": "Empowering engineering students with hands-on learning, industry exposure, and leadership development to connect academia with the real world."
+      },
+      {
+        "icon": "⭐",
+        "title": "BRANCH VISION",
+        "description": "To be a top student organization promoting innovation, technical excellence, and leadership for future professionals."
+      }
+    ]
+  },
+
+  "ourValues": {
+    "sectionLabel": "What Drives Us",
+    "sectionTitle": "Our Values",
+    "cards": [
+      {
+        "tag": "One Team",
+        "title": "One Goal",
+        "overlayBody1": "We move as one. Every decision, every effort, every win — shared across the entire team. No silos, no solo missions. When one of us succeeds, all of us succeed.",
+        "overlayBody2": "Our unity is our greatest competitive advantage."
+      },
+      {
+        "tag": "Grow",
+        "title": "Together",
+        "overlayBody1": "Growth is not a solo sport. We invest in each other's development, share knowledge openly, and lift each other higher. Real progress is collective progress.",
+        "overlayBody2": "We celebrate every step forward — big or small."
+      },
+      {
+        "tag": "Drive Change",
+        "title": "With Ownership",
+        "overlayBody1": "We don't wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn't a rule — it's a mindset.",
+        "overlayBody2": "Act like an owner. Think long-term. Deliver."
+      },
+      {
+        "tag": "Shape What's",
+        "title": "NEXT",
+        "overlayBody1": "We don't wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn't a rule — it's a mindset.",
+        "overlayBody2": "Act like an owner. Think long-term. Deliver."
+      }
+    ]
+  },
+
+  "activitiesAchievements": {
+    "featuredHighlightsLabel": "Featured Highlights",
+    "slides": [
+      {
+        "tag": "Competition",
+        "title": "ASME E-Fest Middle East & Africa 2024",
+        "desc": "Our team secured top positions in multiple engineering challenges, representing Cairo University on the international stage.",
+        "bg": "linear-gradient(135deg,#0d1540 0%,#1a2472 50%,#0a3d7a 100%)",
+        "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><circle cx=\"100\" cy=\"100\" r=\"80\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"55\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"30\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/><path d=\"M100 20L100 180M20 100L180 100\" stroke=\"rgba(126,168,248,0.08)\" stroke-width=\"1\"/></svg>"
+      },
+      {
+        "tag": "Innovation",
+        "title": "Autonomous Robotics Project 2024",
+        "desc": "Our Robotics Committee unveiled an autonomous navigation system combining mechanical engineering with cutting-edge AI algorithms.",
+        "bg": "linear-gradient(135deg,#071030 0%,#0d2060 50%,#163580 100%)",
+        "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><rect x=\"30\" y=\"30\" width=\"140\" height=\"140\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><rect x=\"60\" y=\"60\" width=\"80\" height=\"80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" transform=\"rotate(45 100 100)\"/><circle cx=\"100\" cy=\"100\" r=\"20\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/></svg>"
+      },
+      {
+        "tag": "Community",
+        "title": "Engineering for Society Initiative",
+        "desc": "ASME Cairo partnered with local NGOs to design low-cost water purification solutions for rural communities.",
+        "bg": "linear-gradient(135deg,#050e28 0%,#102060 50%,#0e2855 100%)",
+        "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><polygon points=\"100,20 180,70 180,130 100,180 20,130 20,70\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\" fill=\"none\"/><polygon points=\"100,50 155,80 155,120 100,150 45,120 45,80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" fill=\"none\"/><circle cx=\"100\" cy=\"100\" r=\"15\" stroke=\"rgba(126,168,248,0.25)\" stroke-width=\"1\"/></svg>"
+      }
+    ],
+    "achievementsEyebrow": "Our Track Record",
+    "achievementsTitle": "Achievements & Milestones",
+    "achievements": [
+      {
+        "title": "Regional Champions 2024",
+        "desc": "First place in the ASME Human Powered Vehicle Challenge — MENA Region, outperforming 14 competing universities."
+      },
+      {
+        "title": "ISO-Certified Workshop",
+        "desc": "Established the first ISO-certified student-run mechanical workshop in Cairo University."
+      },
+      {
+        "title": "Best Student Chapter 2023",
+        "desc": "Recognized by ASME International as the Best Student Chapter in Africa & the Middle East."
+      }
+    ]
+  },
+
+  "committee": {
+    "subtitle": "THE TEAM",
+    "title": "OUR COMMITTEES",
+    "committees": [
+      {
+        "title": "OPERATIONS",
+        "icon": "⚙️",
+        "borderColor": "#1e3a8a",
+        "subTeams": [
+          { "name": "EXTERNAL RELATIONS", "icon": "🤝" },
+          { "name": "OC & LOGISTICS", "icon": "📦" }
+        ]
+      },
+      {
+        "title": "QUALITY",
+        "icon": "🔬",
+        "borderColor": "#10b981",
+        "subTeams": [
+          { "name": "EVALUATION", "icon": "📊" },
+          { "name": "MONITORING", "icon": "👁️" }
+        ]
+      },
+      {
+        "title": "BRANDING",
+        "icon": "📣",
+        "borderColor": "#ef4444",
+        "subTeams": [
+          { "name": "SOCIAL MEDIA", "icon": "📱" },
+          { "name": "DESIGN", "icon": "🎨" }
+        ]
+      }
+    ]
+  }
+}

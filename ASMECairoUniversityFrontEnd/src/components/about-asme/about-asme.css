@@ -45,6 +45,10 @@
   margin: 0;
 }
 
+.organization-box p + p {
+  margin-top: 15px;
+}
+
 
 .right-side {
   display: flex;
