@@ -1,6 +1,0 @@
-<div class="prize-card" *ngIf="competition as c">
-  <div class="prize-icon">🏆</div>
-  <div class="prize-label">PRIZE POOL</div>
-  <div class="prize-amount">{{ c.prize | number }} {{ c.prizeCurrency === PrizeCurrency.EGP ? 'EGP' : 'USD' }}</div>
-  <div class="prize-sub">Max {{ c.maxParticipantsPerTeam }} participants per team</div>
-</div>

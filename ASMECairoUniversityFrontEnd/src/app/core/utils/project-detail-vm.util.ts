@@ -19,7 +19,7 @@ export type ProjectDetailVM<T> =
  *   snapshot read), so navigating from one project straight to another of the same type works too.
  * - `startWith({status:'loading'})` makes the loading state part of the stream itself, instead of
  *   a field that has to be manually reset to `false` in every `next`/`error` callback.
- * - `isMatch` narrows `Project` to the specific subtype (Event/Workshop/FieldTrip/Competition) —
+ * - `isMatch` narrows `Project` to the specific subtype (Event/Workshop/FieldTrip/SchoolVisit) —
  *   if the id resolves to the wrong project type, we treat it as not-found (wrong route prefix).
  */
 export function buildProjectDetailVM<T extends Project>(

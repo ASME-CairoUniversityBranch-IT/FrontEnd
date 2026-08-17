@@ -1,4 +1,5 @@
 <div class="gallery-card">
+
   <div class="gallery-header">
     <div class="header-icon">
       <i class="fa-solid fa-images"></i>
@@ -7,15 +8,39 @@
   </div>
 
   <div class="gallery-grid">
-    <div *ngFor="let photo of photos; let i = index"
-          [class]="'photo-item photo-' + (i + 1)">
-
-      <div class="image-overlay">
-        <i class="fa-solid fa-rocket rocket-icon"></i>
-        <span>{{ photo.title }}</span>
-      </div>
-
-      <img [src]="photo.url" [alt]="photo.title">
+    <div
+      class="photo-item"
+      *ngFor="let photo of photos; let i = index"
+      [class]="'photo-' + (i + 1)"
+      (click)="openImage(photo)"
+    >
+      <img
+        [src]="photo.url"
+        [alt]="photo.title"
+      />
     </div>
   </div>
+
+</div>
+
+<!-- Image Popup -->
+<div
+  class="image-modal"
+  *ngIf="selectedPhoto"
+  (click)="closeImage()"
+>
+  <button
+    class="modal-close"
+    (click)="closeImage(); $event.stopPropagation()"
+    aria-label="Close image"
+  >
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <img
+    class="modal-image"
+    [src]="selectedPhoto.url"
+    [alt]="selectedPhoto.title"
+    (click)="$event.stopPropagation()"
+  />
 </div>

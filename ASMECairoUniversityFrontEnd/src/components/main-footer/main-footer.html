@@ -4,10 +4,19 @@
     <div class="container"><h1 class="footerText">ASME CU</h1>
    <div class="footerlinks">
 
-     @for (photo of imageIcons; track $index) {
-       <img [src]="photo" class="footerPhotos"  />
-     }
-
+@for (item of imageIcons; track $index) {
+  <a
+    [href]="item.link"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      [src]="item.icon"
+      class="footerPhotos"
+      [alt]="item.name"
+    />
+  </a>
+}
   </div>
 </div>
   </div>

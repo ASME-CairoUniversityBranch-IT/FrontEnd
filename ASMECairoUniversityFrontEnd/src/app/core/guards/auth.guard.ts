@@ -3,11 +3,11 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Only meant to guard the project-creation route. Anonymous visitors and
- * expired-token visitors get bounced to /login with a returnUrl; everywhere
- * else in the app should NOT use this guard, since admins with an invalid/
- * expired token should still be able to browse the site normally — they
- * should just never be forced onto the login form outside of creating a project.
+ * Guards every /admin/* route (dashboard, projects, create-project, update-project).
+ * Anonymous visitors and expired-token visitors get bounced to /login with a returnUrl;
+ * everywhere else in the app should NOT use this guard, since admins with an invalid/
+ * expired token should still be able to browse the public site normally — they should
+ * just never be able to reach the admin section without signing in first.
  */
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);

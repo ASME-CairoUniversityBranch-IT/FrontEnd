@@ -9,3 +9,4 @@
 .partner-item.main-partner { border-color:rgba(249,200,70,.35); }
 .partner-name { font-weight:700; color:#dde2ff; font-size:.9rem; text-align:center; }
 .partner-type { font-size:.65rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#f9c846; }
+.partner-logo { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: #fff; }

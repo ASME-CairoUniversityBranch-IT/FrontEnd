@@ -23,17 +23,46 @@
     (mouseleave)="onCarouselLeave()">
     <div class="carousel-slides" id="activityCarouselSlides">
       <div
-        *ngFor="let slide of ACTIVITY_CONTENT.slides"
-        class="carousel-slide"
-        [style.background]="slide.bg">
-        <div class="slide-mesh"></div>
-        <div class="slide-deco" [innerHTML]="slide.decoSvg"></div>
-        <div class="slide-content">
-          <span class="slide-tag">{{ slide.tag }}</span>
-          <h3 class="slide-title">{{ slide.title }}</h3>
-          <p class="slide-desc">{{ slide.desc }}</p>
-        </div>
-      </div>
+  class="carousel-slide"
+  *ngFor="let slide of ACTIVITY_CONTENT.slides"
+  [style.background]="slide.bg"
+>
+
+  <!-- Background mesh -->
+  <div class="slide-mesh"></div>
+
+  <!-- Decorative SVG -->
+  <div
+    class="slide-deco"
+    [innerHTML]="slide.decoSvg">
+  </div>
+
+  <!-- LEFT: Text -->
+  <div class="slide-content">
+
+    <span class="slide-tag">
+      {{ slide.tag }}
+    </span>
+
+    <h2 class="slide-title">
+      {{ slide.title }}
+    </h2>
+
+    <p class="slide-desc">
+      {{ slide.desc }}
+    </p>
+
+  </div>
+
+  <!-- RIGHT: Image -->
+  <div class="slide-image">
+    <img
+      [src]="slide.image"
+      [alt]="slide.title"
+    />
+  </div>
+
+</div>
     </div>
   </div>
 
@@ -55,22 +84,25 @@
     <h2 class="section-title">{{ ACTIVITY_CONTENT.achievementsTitle }}</h2>
   </div>
 
-  <div class="achievements-grid">
-    <div
-      class="achievement-card"
-      *ngFor="let a of ACTIVITY_CONTENT.achievements">
-      <div class="achievement-accent"></div>
-      <div class="achievement-icon">
-        <svg viewBox="0 0 48 48" fill="none">
-          <circle cx="24" cy="24" r="20" stroke="#7ea8f8" stroke-width="1.5"/>
-          <path
-            d="M24 12L28 20L37 21L31 27L32 36L24 32L16 36L17 27L11 21L20 20Z"
-            stroke="#7ea8f8" stroke-width="1.5" fill="none"/>
-        </svg>
-      </div>
-      <h3 class="achievement-title">{{ a.title }}</h3>
-      <p class="achievement-desc">{{ a.desc }}</p>
+<div class="achievements-grid">
+  <div
+    class="achievement-card"
+    *ngFor="let a of ACTIVITY_CONTENT.achievements">
+
+    <div class="achievement-accent"></div>
+
+    <div class="achievement-icon">
+      <img
+        [src]="a.image"
+        [alt]="a.title"
+      />
     </div>
+
+    <h3 class="achievement-title">{{ a.title }}</h3>
+
+    <p class="achievement-desc">{{ a.desc }}</p>
+
   </div>
+</div>
 </section>
 </ng-container>

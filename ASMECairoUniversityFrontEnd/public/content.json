@@ -6,10 +6,10 @@
     "ctaPrimary": { "label": "Explore Projects", "href": "#projects" },
     "ctaSecondary": { "label": "Join ASME", "href": "#contact" },
     "stats": [
-      { "target": 500, "suffix": "+", "label": "Members" },
-      { "target": 40, "suffix": "+", "label": "Projects" },
-      { "target": 120, "suffix": "+", "label": "Events" },
-      { "target": 8, "suffix": "", "label": "Years Active" }
+      { "target": 9, "suffix": "+", "label": "ASME Global recognizations" },
+      { "target": 19, "suffix": "", "label": "Years Active" },
+      { "target": 41, "suffix": "+", "label": "Projects" },
+      { "target": 25, "suffix": "+", "label": "Workshops" }
     ]
   },
 
@@ -74,78 +74,118 @@
 
   "activitiesAchievements": {
     "featuredHighlightsLabel": "Featured Highlights",
-    "slides": [
-      {
-        "tag": "Competition",
-        "title": "ASME E-Fest Middle East & Africa 2024",
-        "desc": "Our team secured top positions in multiple engineering challenges, representing Cairo University on the international stage.",
-        "bg": "linear-gradient(135deg,#0d1540 0%,#1a2472 50%,#0a3d7a 100%)",
-        "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><circle cx=\"100\" cy=\"100\" r=\"80\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"55\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"30\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/><path d=\"M100 20L100 180M20 100L180 100\" stroke=\"rgba(126,168,248,0.08)\" stroke-width=\"1\"/></svg>"
-      },
-      {
-        "tag": "Innovation",
-        "title": "Autonomous Robotics Project 2024",
-        "desc": "Our Robotics Committee unveiled an autonomous navigation system combining mechanical engineering with cutting-edge AI algorithms.",
-        "bg": "linear-gradient(135deg,#071030 0%,#0d2060 50%,#163580 100%)",
-        "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><rect x=\"30\" y=\"30\" width=\"140\" height=\"140\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><rect x=\"60\" y=\"60\" width=\"80\" height=\"80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" transform=\"rotate(45 100 100)\"/><circle cx=\"100\" cy=\"100\" r=\"20\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/></svg>"
-      },
-      {
-        "tag": "Community",
-        "title": "Engineering for Society Initiative",
-        "desc": "ASME Cairo partnered with local NGOs to design low-cost water purification solutions for rural communities.",
-        "bg": "linear-gradient(135deg,#050e28 0%,#102060 50%,#0e2855 100%)",
-        "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><polygon points=\"100,20 180,70 180,130 100,180 20,130 20,70\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\" fill=\"none\"/><polygon points=\"100,50 155,80 155,120 100,150 45,120 45,80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" fill=\"none\"/><circle cx=\"100\" cy=\"100\" r=\"15\" stroke=\"rgba(126,168,248,0.25)\" stroke-width=\"1\"/></svg>"
-      }
-    ],
-    "achievementsEyebrow": "Our Track Record",
-    "achievementsTitle": "Achievements & Milestones",
-    "achievements": [
-      {
-        "title": "Regional Champions 2024",
-        "desc": "First place in the ASME Human Powered Vehicle Challenge — MENA Region, outperforming 14 competing universities."
-      },
-      {
-        "title": "ISO-Certified Workshop",
-        "desc": "Established the first ISO-certified student-run mechanical workshop in Cairo University."
-      },
-      {
-        "title": "Best Student Chapter 2023",
-        "desc": "Recognized by ASME International as the Best Student Chapter in Africa & the Middle East."
-      }
-    ]
+"slides": [
+    {
+      "tag": "Volunteering",
+      "title": "Resala Volunteering",
+      "desc": "Our team participated in a community outreach initiative with Resala Charity Organization for Eid Al-Fitr, supporting over 500 underprivileged families with clothing, food supplies, and joyful activities for children.",
+      "image": "images/featured-highlights/Resala.jpeg",
+      "bg": "linear-gradient(135deg,#0d1540 0%,#1a2472 50%,#0a3d7a 100%)",
+      "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><circle cx=\"100\" cy=\"100\" r=\"80\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"55\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"30\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/><path d=\"M100 20L100 180M20 100L180 100\" stroke=\"rgba(126,168,248,0.08)\" stroke-width=\"1\"/></svg>"
+    },
+    {
+      "tag": "Community",
+      "title": "Alomran Language Schools Visit",
+      "desc": "Helpeing students, raising their awareness, and introducing them to the world of engineering and volunteering.",
+      "image": "images/featured-highlights/Al-Omran-School-Visit.jpeg",
+      "bg": "linear-gradient(135deg,#071030 0%,#0d2060 50%,#163580 100%)",
+      "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><rect x=\"30\" y=\"30\" width=\"140\" height=\"140\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><rect x=\"60\" y=\"60\" width=\"80\" height=\"80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" transform=\"rotate(45 100 100)\"/><circle cx=\"100\" cy=\"100\" r=\"20\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/></svg>"
+    },
+    {
+      "tag": "Achievement",
+      "title": "Awarded Distinguished Student Section",
+      "desc": "Recognized as the Distinguished Student Section for Season 2025/2026 among 300+ sections across Africa & the Middle East.",
+      "image": "images/featured-highlights/distinguished-student-section.png",
+      "bg": "linear-gradient(135deg,#050e28 0%,#102060 50%,#0e2855 100%)",
+      "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><polygon points=\"100,20 180,70 180,130 100,180 20,130 20,70\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\" fill=\"none\"/><polygon points=\"100,50 155,80 155,120 100,150 45,120 45,80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" fill=\"none\"/><circle cx=\"100\" cy=\"100\" r=\"15\" stroke=\"rgba(126,168,248,0.25)\" stroke-width=\"1\"/></svg>"
+    }
+  ],
+"achievementsEyebrow": "Our Track Record",
+"achievementsTitle": "Achievements & Milestones",
+"achievements": [
+  {
+    "title": "Distinguished Student Section",
+    "desc": "Recognized as a Distinguished Student Section by ASME International 6 times, reflecting our continued commitment to excellence, student engagement, and professional development.",
+    "image": "images/achievements/distinguished-student-section.png"
+  },
+  {
+    "title": "Engagement Award",
+    "desc": "Received the ASME Student Section Engagement Award 2 times, recognizing our efforts in creating meaningful activities and opportunities for the engineering community.",
+    "image": "images/achievements/engagement-award.png"
+  },
+  {
+    "title": "Best Section Globally",
+    "desc": "Recognized as the Best Student Section Globally by ASME International, marking a major achievement for ASME Cairo University on the international stage.",
+    "image": "images/achievements/best-section-globally.png"
+  }
+]
   },
 
-  "committee": {
-    "subtitle": "THE TEAM",
-    "title": "OUR COMMITTEES",
-    "committees": [
-      {
-        "title": "OPERATIONS",
-        "icon": "⚙️",
-        "borderColor": "#1e3a8a",
-        "subTeams": [
-          { "name": "EXTERNAL RELATIONS", "icon": "🤝" },
-          { "name": "OC & LOGISTICS", "icon": "📦" }
-        ]
-      },
-      {
-        "title": "QUALITY",
-        "icon": "🔬",
-        "borderColor": "#10b981",
-        "subTeams": [
-          { "name": "EVALUATION", "icon": "📊" },
-          { "name": "MONITORING", "icon": "👁️" }
-        ]
-      },
-      {
-        "title": "BRANDING",
-        "icon": "📣",
-        "borderColor": "#ef4444",
-        "subTeams": [
-          { "name": "SOCIAL MEDIA", "icon": "📱" },
-          { "name": "DESIGN", "icon": "🎨" }
-        ]
-      }
-    ]
-  }
+"committee": {
+  "subtitle": "THE TEAM",
+  "title": "OUR COMMITTEES",
+  "committees": [
+    {
+      "title": "OPERATIONS",
+      "icon": "⚙️",
+      "borderColor": "#1e3a8a",
+      "subTeams": [
+        {
+          "name": "EXTERNAL RELATIONS",
+          "icon": "🤝",
+          "description": "Connect ASME CU with the world beyond our team. Build relationships with companies, partners, and industry professionals to support our projects and events, create new opportunities, and open doors for our members. Be the bridge that turns connections into impact."
+        },
+        {
+          "name": "OC & LOGISTICS",
+          "icon": "🚚",
+          "description": "Turn ideas into unforgettable events. From planning to execution, you'll help organize every detail behind ASME CU's activities and ensure every event runs smoothly from start to finish."
+        }
+      ]
+    },
+    {
+      "title": "QUALITY",
+      "icon": "🎯",
+      "borderColor": "#10b981",
+      "subTeams": [
+        {
+          "name": "HR",
+          "icon": "👥",
+          "description": "Empower people to reach their full potential. Support member development, organize engaging activities, and help create a positive culture where every member can grow and succeed."
+        },
+        {
+          "name": "Supply Chain",
+          "icon": "📦",
+          "description": "Drive smarter decisions behind the scenes. Help coordinate projects, analyze data, and improve workflows while gaining hands-on experience in operations, documentation, and process improvement."
+        },
+        {
+          "name": "IT",
+          "icon": "💻",
+          "description": "Build the digital face of ASME CU. Help develop and maintain our website, improve user experience, and create a platform that keeps students connected with everything happening in the chapter."
+        }
+      ]
+    },
+    {
+      "title": "BRANDING",
+      "icon": "🎨",
+      "borderColor": "#ef4444",
+      "subTeams": [
+        {
+          "name": "Photography & Videography",
+          "icon": "📸",
+          "description": "Tell the ASME CU story through your lens. Capture the moments that define us and turn them into engaging content that showcases our people, energy, and spirit."
+        },
+        {
+          "name": "Graphic Design",
+          "icon": "🖌️",
+          "description": "Bring ideas to life through creativity. Design eye-catching visuals that shape ASME CU's identity, promote events, and make every campaign stand out."
+        },
+        {
+          "name": "Marketing",
+          "icon": "📢",
+          "description": "Tell the story that inspires others. Create campaigns, promote events, and produce engaging content that connects students with ASME CU and amplifies our impact."
+        }
+      ]
+    }
+  ]
+}
 }

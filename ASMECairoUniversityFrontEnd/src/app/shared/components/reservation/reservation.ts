@@ -13,13 +13,23 @@ export class ReservationComponent implements OnChanges, OnDestroy {
   @Input() project: Project | null = null;
 
   countdownText = '';
+  hasStarted = false;
+
   private timer?: ReturnType<typeof setInterval>;
 
   ngOnChanges(): void {
     clearInterval(this.timer);
+
+    this.hasStarted = false;
+    this.countdownText = '';
+
     if (this.project?.mainDateAndTime) {
       this.tick();
-      this.timer = setInterval(() => this.tick(), 1000);
+
+      // Don't start a timer if the event has already started
+      if (!this.hasStarted) {
+        this.timer = setInterval(() => this.tick(), 1000);
+      }
     }
   }
 
@@ -28,12 +38,12 @@ export class ReservationComponent implements OnChanges, OnDestroy {
   }
 
   get externalRegistrationUrl(): string | null {
-    return this.project?.type === ProjectType.FieldTrip ? this.project.registrationUrl || null : null;
+    return this.project?.type === ProjectType.FieldTrip
+      ? this.project.registrationUrl || null
+      : null;
   }
 
   onRegister(): void {
-    // No generic registration endpoint exists in the API yet for Events/Workshops/Competitions —
-    // wire this up once the backend exposes one. FieldTrips already use `externalRegistrationUrl` above.
     alert('Registration flow not yet available for this project type.');
   }
 
@@ -42,15 +52,26 @@ export class ReservationComponent implements OnChanges, OnDestroy {
   }
 
   private tick(): void {
-    const diff = new Date(this.project!.mainDateAndTime).getTime() - Date.now();
+    if (!this.project?.mainDateAndTime) {
+      return;
+    }
+
+    const diff =
+      new Date(this.project.mainDateAndTime).getTime() - Date.now();
+
     if (diff <= 0) {
+      this.hasStarted = true;
       this.countdownText = 'Started';
       clearInterval(this.timer);
       return;
     }
+
+    this.hasStarted = false;
+
     const d = Math.floor(diff / 86400000);
     const h = Math.floor((diff % 86400000) / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
+
     this.countdownText = `${d}d ${h}h ${m}m`;
   }
 }

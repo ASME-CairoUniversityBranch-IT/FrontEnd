@@ -6,118 +6,9 @@
   padding: 0;
 }
 
-.page-wrapper {
-  min-height: 100vh;
-  background: #f0f2f7;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  color: #1a2340;
-}
-
-/* ── TOP NAV ── */
-.top-nav {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  background: #0f1729;
-  padding: 0 28px;
-  height: 52px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.nav-brand {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #fff;
-}
-.nav-breadcrumb {
-  font-size: 12px;
-  color: #7a8aaa;
-  letter-spacing: 0.04em;
-}
-.nav-right {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #3a4fd0;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.admin-name {
-  font-size: 13px;
-  color: #c8d0e0;
-}
-.btn-events-list {
-  background: transparent;
-  border: 1px solid #3a4060;
-  color: #c8d0e0;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  transition:
-    border-color 0.2s,
-    color 0.2s;
-}
-.btn-events-list:hover {
-  border-color: #fff;
-  color: #fff;
-}
-
-/* ── LAYOUT ── */
-.layout {
-  display: flex;
-  min-height: calc(100vh - 52px);
-}
-
-/* ── SIDEBAR ── */
-.sidebar {
-  width: 220px;
-  background: #0f1729;
-  padding: 24px 16px;
-  flex-shrink: 0;
-}
-.sidebar-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #4a5a7a;
-  margin-bottom: 10px;
-  padding-left: 8px;
-}
-.sidebar-item {
-  width: 100%;
-  text-align: left;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: none;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  background: transparent;
-  color: #8090b0;
-  transition:
-    background 0.2s,
-    color 0.2s;
-}
-.sidebar-item.active {
-  background: #1e2d50;
-  color: #fff;
-}
+/* NOTE: .page-wrapper / .top-nav / .layout / .sidebar styles now live in
+ * shared/components/admin-nav/admin-nav.css — this component only renders the
+ * <main class="form-area"> content projected into <app-admin-nav>. */
 
 /* ── FORM AREA ── */
 .form-area {
@@ -819,11 +710,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
   .sticky-bar {
+    /* Sidebar (see admin-nav.css) hides itself at this same breakpoint, so drop the sticky
+     * bar's matching left offset too, or it'd leave a gap where the sidebar used to be. */
     left: 0;
     padding: 12px 16px;
-  }
-  .sidebar {
-    display: none;
   }
 }
 
@@ -834,3 +724,114 @@
 .gallery-preview-item .btn-x-entry { position: absolute; top: 4px; right: 4px; }
 .submit-error { color: #e53e3e; font-weight: 600; margin: -8px 0 12px; }
 .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: .82rem; color: #4a5480; margin: 6px 0; }
+
+/* ── LOADING / ERROR STATE (edit mode fetch) ── */
+.state-msg { text-align: center; color: #8896b8; padding: 60px 0; font-size: .95rem; }
+.loading-msg { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.loading-msg .spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(26, 35, 64, .12);
+  border-top-color: #1a2340;
+  border-radius: 50%;
+  animation: create-project-spin .7s linear infinite;
+}
+@keyframes create-project-spin { to { transform: rotate(360deg); } }
+
+/* ── LOCKED TYPE CARD (edit mode — type can't change) ── */
+.type-card.locked,
+.type-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.type-card.locked:hover {
+  border-color: #e4e7f0;
+}
+.type-card.selected.locked {
+  opacity: 1;
+}
+
+/* ── PERSON ENTRY: photo upload + fields side-by-side ── */
+.person-entry-body {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  align-items: flex-start;
+}
+.person-fields {
+  flex: 1;
+  padding: 0;
+  border-top: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.person-fields > * { margin-bottom: 0; }
+
+.photo-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 96px;
+  flex-shrink: 0;
+}
+.photo-preview {
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f0f2f7;
+  border: 1.5px dashed #d0d4e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #b0b8d0;
+}
+.photo-preview:not(.empty) { border-style: solid; border-color: #e4e7f0; }
+.photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.btn-photo-pick,
+.btn-photo-clear {
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 0;
+  font-family: inherit;
+}
+.btn-photo-pick { color: #1a2340; }
+.btn-photo-pick:hover { text-decoration: underline; }
+.btn-photo-clear { color: #e53e3e; }
+.btn-photo-clear:hover { text-decoration: underline; }
+
+.person-entry > .btn-x-entry {
+  width: auto;
+  height: auto;
+  padding: 8px 16px;
+  margin: 0 16px 14px auto;
+  display: flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-top: 1.5px solid #e4e7f0;
+  border-radius: 0 0 8px 8px;
+  justify-content: center;
+}
+
+/* ── EXISTING GALLERY: marked-for-removal state ── */
+.gallery-preview-item.marked-removed { opacity: 0.4; }
+.gallery-preview-item.marked-removed img { filter: grayscale(1); }
+.btn-restore-entry {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: rgba(26, 35, 64, 0.6);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}

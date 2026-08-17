@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterLink } from "@angular/router";
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-main-footer',
@@ -8,12 +8,30 @@ import { RouterLink } from "@angular/router";
   styleUrl: './main-footer.css',
 })
 export class MainFooter {
-  imageIcons: string[];
+
+  imageIcons: {
+    icon: string;
+    link: string;
+    name: string;
+  }[];
+
   constructor() {
     this.imageIcons = [
-      "icons/icons8-facebook-logo-50.png",
-      "icons/instagram-logo.png",
-      "icons/icons8-linkedin-50.png",
+      {
+        icon: 'icons/icons8-facebook-logo-50.png',
+        link: 'https://www.facebook.com/share/1D14yes9jK/',
+        name: 'Facebook'
+      },
+      {
+        icon: 'icons/instagram-logo.png',
+        link: 'https://www.instagram.com/asme_cairo?igsh=aXBlbzhjdW9m',
+        name: 'Instagram'
+      },
+      {
+        icon: 'icons/icons8-linkedin-50.png',
+        link: 'https://www.linkedin.com/company/asme-cairo-university/',
+        name: 'LinkedIn'
+      }
     ];
   }
 }

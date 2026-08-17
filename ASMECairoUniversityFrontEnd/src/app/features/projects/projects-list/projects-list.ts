@@ -35,7 +35,7 @@ export class ProjectsListComponent {
   readonly projectDetailPath = projectDetailPath;
 
   constructor(projectsService: ProjectsService) {
-    this.vm$ = projectsService.getAll().pipe(
+    this.vm$ = projectsService.getAllPublished().pipe(
       map((projects): ProjectsListVM => ({ status: 'loaded', projects })),
       startWith<ProjectsListVM>({ status: 'loading' }),
       catchError(() => of<ProjectsListVM>({ status: 'error' })),

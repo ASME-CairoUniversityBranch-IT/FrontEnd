@@ -6,9 +6,10 @@
 
   <div class="speakers-grid">
     <div class="speaker-card" *ngFor="let s of speakers">
-      <div class="speaker-photo">
-        <div class="speaker-photo-placeholder">{{ initials(s.name) }}</div>
-      </div>
+    <div class="speaker-photo">
+      <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.name">
+      <div class="speaker-photo-placeholder" *ngIf="!s.photoUrl">{{ initials(s.name) }}</div>
+    </div>
       <div class="speaker-info">
         <div class="speaker-name">{{ s.name }}</div>
         <div class="speaker-role">{{ s.title }}</div>
@@ -16,4 +17,4 @@
       </div>
     </div>
   </div>
-</div>
+</div>  

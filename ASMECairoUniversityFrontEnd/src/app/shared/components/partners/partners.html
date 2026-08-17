@@ -5,9 +5,10 @@
   </div>
 
   <div class="partners-grid">
-    <div class="partner-item" [class.main-partner]="p.isMainPartner" *ngFor="let p of partners">
-      <span class="partner-name">{{ p.name }}</span>
-      <span class="partner-type">{{ p.partnerType }}</span>
-    </div>
+  <div class="partner-item" [class.main-partner]="p.isMainPartner" *ngFor="let p of partners">
+    <img *ngIf="p.photoUrl" class="partner-logo" [src]="p.photoUrl" [alt]="p.name">
+    <span class="partner-name">{{ p.name }}</span>
+    <span class="partner-type">{{ p.partnerType }}</span>
+  </div>
   </div>
 </div>

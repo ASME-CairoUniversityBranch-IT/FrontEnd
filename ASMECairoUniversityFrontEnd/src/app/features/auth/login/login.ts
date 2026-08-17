@@ -18,9 +18,9 @@ export class LoginComponent {
   submitting = false;
   errorMessage = '';
 
-  /** Where to send the admin back to once they're authenticated. Defaults to the create-project page,
-   *  since that's the only place this form is ever linked from. */
-  private returnUrl = '/projects/create';
+  /** Where to send the admin back to once they're authenticated. Defaults to the admin dashboard;
+   *  every guarded /admin/* route overrides this via a `returnUrl` query param when it redirects here. */
+  private returnUrl = '/admin/dashboard';
 
   constructor(
     private authService: AuthService,

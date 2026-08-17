@@ -1,0 +1,86 @@
+<app-admin-nav active="projects">
+  <main class="admin-projects-content">
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb-sub">ADMIN &gt; PROJECTS</div>
+        <h1 class="page-title">MANAGE PROJECTS</h1>
+        <p class="page-subtitle">Every project, its own view stats, and quick status/edit controls.</p>
+      </div>
+      <button class="btn-create" routerLink="/admin/create-project">+ NEW PROJECT</button>
+    </div>
+
+    <div class="controls">
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Search by title or description..."
+        [(ngModel)]="searchTerm"
+        name="search"
+      />
+      <div class="filter-pills">
+        <button class="pill" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">All</button>
+        <button class="pill" *ngFor="let t of types" [class.active]="activeFilter === t" (click)="setFilter(t)">
+          {{ projectTypeIcon(t) }} {{ projectTypeLabel(t) }}
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="vm$ | async as vm">
+      <div class="state-msg loading-msg" *ngIf="vm.status === 'loading'">
+        <span class="spinner"></span>
+        <p>Loading projects...</p>
+      </div>
+
+      <div class="state-msg" *ngIf="vm.status === 'error'">Couldn't load projects — please try again later.</div>
+
+      <ng-container *ngIf="vm.status === 'loaded'">
+        <ng-container *ngIf="filteredCards(vm.cards) as filtered">
+          <div class="state-msg" *ngIf="filtered.length === 0">No projects match your search.</div>
+
+          <div class="cards-grid" *ngIf="filtered.length > 0">
+            <div class="admin-card" *ngFor="let card of filtered" [class.busy]="card.busy">
+              <a class="card-image-box" [routerLink]="projectDetailPath(card.summary)">
+                <img *ngIf="card.summary.coverImageUrl" [src]="card.summary.coverImageUrl" [alt]="card.summary.title" />
+                <span *ngIf="!card.summary.coverImageUrl" class="icon">{{ projectTypeIcon(card.summary.type) }}</span>
+              </a>
+
+              <div class="card-content">
+                <div class="card-top-row">
+                  <span class="card-type-pill">{{ projectTypeLabel(card.summary.type) }}</span>
+                  <select
+                    class="status-select"
+                    [class.published]="card.summary.status === 1"
+                    [class.draft]="card.summary.status === 0"
+                    [class.closed]="card.summary.status === 2"
+                    [disabled]="card.busy"
+                    (change)="changeStatus(card, +$any($event.target).value)"
+                  >
+                    <option *ngFor="let s of statuses" [value]="s" [selected]="s === card.summary.status">
+                      {{ statusLabel(s) }}
+                    </option>
+                  </select>
+                </div>
+
+                <h3 class="card-title">{{ card.summary.title }}</h3>
+                <p class="card-description">{{ card.summary.shortDescription }}</p>
+                <p class="card-date">📅 {{ card.summary.mainDateAndTime | date: 'mediumDate' }}</p>
+
+                <div class="card-analytics" *ngIf="card.analytics as a">
+                  <span>👁️ {{ a.totalViews }} views</span>
+                  <span>👤 {{ a.uniqueViews }} unique</span>
+                </div>
+
+                <div class="card-actions">
+                  <button class="btn-edit" [routerLink]="['/admin/update-project', card.summary.id]" [disabled]="card.busy">
+                    ✎ Edit
+                  </button>
+                  <button class="btn-delete" (click)="deleteProject(card)" [disabled]="card.busy">🗑 Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+    </ng-container>
+  </main>
+</app-admin-nav>

@@ -5,13 +5,14 @@
   max-width: 1300px;
   padding: 60px 40px;
   margin: 0 auto;
+  color: darkgrey;
 }
 
 .section-label {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -69,17 +70,16 @@
 }
 
 .card-tag {
-  font-size: 10px;
+  font-size: 37px;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
   color: #8a9ab5;
   margin-bottom: 10px;
 }
 
 .card-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: clamp(26px, 2.5vw, 34px);
+  font-size: clamp(26px, 2.5vw, 37px);
   font-weight: 700;
   color: #1a2a4a;
   text-transform: uppercase;

@@ -33,7 +33,7 @@
       </div>
 
       <!-- FieldTrip-specific -->
-      <ng-container *ngIf="p.type === ProjectType.FieldTrip">
+      <!-- <ng-container *ngIf="p.type === ProjectType.FieldTrip">
         <div class="detail-item">
           <div class="icon-wrapper"><i class="fa-solid fa-bus"></i></div>
           <div class="text-content">
@@ -49,16 +49,27 @@
             <span class="main-text">{{ p.capacity }} seats total</span>
           </div>
         </div>
-      </ng-container>
+      </ng-container> -->
 
-      <!-- Competition-specific -->
-      <div class="detail-item" *ngIf="p.type === ProjectType.Competition">
-        <div class="icon-wrapper"><i class="fa-solid fa-people-group"></i></div>
-        <div class="text-content">
-          <span class="label">TEAM SIZE</span>
-          <span class="main-text">Up to {{ p.maxParticipantsPerTeam }} participants</span>
+      <!-- SchoolVisit-specific -->
+      <ng-container *ngIf="p.type === ProjectType.SchoolVisit">
+        <div class="detail-item">
+          <div class="icon-wrapper"><i class="fa-solid fa-school"></i></div>
+          <div class="text-content">
+            <span class="label">SCHOOL</span>
+            <span class="main-text">{{ p.schoolName }}</span>
+            <span class="sub-text" *ngIf="p.educationalStage">{{ p.educationalStage }} stage</span>
+          </div>
         </div>
-      </div>
+        <div class="detail-item" *ngIf="p.contactPersonName">
+          <div class="icon-wrapper"><i class="fa-solid fa-user"></i></div>
+          <div class="text-content">
+            <span class="label">CONTACT</span>
+            <span class="main-text">{{ p.contactPersonName }}</span>
+            <span class="sub-text" *ngIf="p.contactPersonPhone">{{ p.contactPersonPhone }}</span>
+          </div>
+        </div>
+      </ng-container>
 
     </div>
   </div>

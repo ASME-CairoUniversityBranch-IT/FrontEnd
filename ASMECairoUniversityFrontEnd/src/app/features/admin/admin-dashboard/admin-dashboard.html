@@ -1,0 +1,115 @@
+<app-admin-nav active="dashboard">
+  <main class="dashboard-content">
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb-sub">ADMIN &gt; DASHBOARD</div>
+        <h1 class="page-title">ANALYTICS DASHBOARD</h1>
+        <p class="page-subtitle">Site-wide project and traffic overview.</p>
+      </div>
+    </div>
+
+    <ng-container *ngIf="vm$ | async as vm">
+      <div class="state-msg loading-msg" *ngIf="vm.status === 'loading'">
+        <span class="spinner"></span>
+        <p>Loading analytics...</p>
+      </div>
+
+      <div class="state-msg banner" *ngIf="vm.status === 'forbidden'">
+        Your account doesn't have superadmin access, so analytics aren't available here.
+      </div>
+
+      <div class="state-msg banner" *ngIf="vm.status === 'error'">
+        Couldn't load analytics right now — please try again shortly.
+      </div>
+
+      <ng-container *ngIf="vm.status === 'loaded'">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">{{ vm.dashboard.totalProjects }}</div>
+            <div class="stat-label">Total Projects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ vm.dashboard.publishedProjects }}</div>
+            <div class="stat-label">Published</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ vm.dashboard.draftProjects }}</div>
+            <div class="stat-label">Draft</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ vm.dashboard.closedProjects }}</div>
+            <div class="stat-label">Closed</div>
+          </div>
+        </div>
+
+        <div class="stat-grid five">
+          <div class="stat-card accent">
+            <div class="stat-value">{{ vm.dashboard.totalViews }}</div>
+            <div class="stat-label">Total Views</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-value">{{ vm.dashboard.totalUniqueViews }}</div>
+            <div class="stat-label">Unique Views</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-value">{{ vm.dashboard.viewsToday }}</div>
+            <div class="stat-label">Today</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-value">{{ vm.dashboard.viewsLast7Days }}</div>
+            <div class="stat-label">Last 7 Days</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-value">{{ vm.dashboard.viewsLast30Days }}</div>
+            <div class="stat-label">Last 30 Days</div>
+          </div>
+        </div>
+
+        <div class="panels-row">
+          <section class="panel-card">
+            <h2 class="panel-title">PROJECTS BY TYPE</h2>
+            <div class="type-row" *ngFor="let entry of typeCountEntries(vm.dashboard)">
+              <span class="type-icon">{{ iconFor(entry.label) }}</span>
+              <span class="type-name">{{ entry.label }}</span>
+              <span class="type-count">{{ entry.count }}</span>
+            </div>
+          </section>
+
+          <section class="panel-card">
+            <h2 class="panel-title">MOST VIEWED</h2>
+            <a
+              class="most-viewed"
+              *ngIf="vm.dashboard.mostViewedProject as top; else noViews"
+              [routerLink]="detailPath(top.projectId, top.type)"
+            >
+              <span class="most-viewed-icon">{{ iconFor(top.type) }}</span>
+              <span>
+                <div class="most-viewed-title">{{ top.title }}</div>
+                <div class="most-viewed-meta">{{ top.type }} · {{ top.viewCount }} views</div>
+              </span>
+            </a>
+            <ng-template #noViews>
+              <p class="state-msg">No views recorded yet.</p>
+            </ng-template>
+          </section>
+        </div>
+
+        <section class="panel-card">
+          <h2 class="panel-title">TOP PROJECTS</h2>
+          <p class="state-msg" *ngIf="vm.topProjects.length === 0">No views recorded yet.</p>
+          <a
+            class="top-row"
+            *ngFor="let p of vm.topProjects; let i = index"
+            [routerLink]="detailPath(p.projectId, p.type)"
+          >
+            <span class="top-rank">{{ i + 1 }}</span>
+            <span class="top-icon">{{ iconFor(p.type) }}</span>
+            <span class="top-title">{{ p.title }}</span>
+            <span class="top-type">{{ p.type }}</span>
+            <span class="top-views">{{ p.viewCount }} views</span>
+          </a>
+        </section>
+      </ng-container>
+    </ng-container>
+  </main>
+</app-admin-nav>

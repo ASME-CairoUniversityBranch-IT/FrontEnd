@@ -1,26 +1,36 @@
 <ng-container *ngIf="vm$ | async as vm">
   <div class="loading-msg" *ngIf="vm.status === 'loading'">
     <span class="spinner"></span>
-    <p>Loading competition...</p>
+    <p>Loading school visit...</p>
   </div>
 
-  <div class="error-msg" *ngIf="vm.status === 'notFound'">Competition not found.</div>
+  <div class="error-msg" *ngIf="vm.status === 'notFound'">School visit not found.</div>
 
   <ng-container *ngIf="vm.status === 'loaded'">
-    <app-project-hero [project]="vm.project" typeLabel="Competition"></app-project-hero>
+    <app-project-hero [project]="vm.project" typeLabel="School Visit"></app-project-hero>
 
     <div class="project-page-container">
       <div class="main-content">
         <div class="about-card">
-          <h2>About This Competition</h2>
+          <h2>About This Visit</h2>
           <markdown class="markdown-body" [data]="vm.project.longDescription"></markdown>
+        </div>
+
+        <div class="about-card" *ngIf="vm.project.objective">
+          <h2>Objective</h2>
+          <p>{{ vm.project.objective }}</p>
+        </div>
+
+        <div class="about-card" *ngIf="vm.project.requirements">
+          <h2>Requirements</h2>
+          <p>{{ vm.project.requirements }}</p>
         </div>
 
         <app-project-gallery [imageUrls]="vm.project.galleryImageUrls"></app-project-gallery>
       </div>
 
       <div class="right-sidebar">
-        <app-prize-highlight [competition]="vm.project"></app-prize-highlight>
+        <app-school-visit-highlight [visit]="vm.project"></app-school-visit-highlight>
         <app-reservation [project]="vm.project"></app-reservation>
         <app-project-details [project]="vm.project"></app-project-details>
       </div>

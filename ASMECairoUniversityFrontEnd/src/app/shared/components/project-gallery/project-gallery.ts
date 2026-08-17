@@ -14,10 +14,25 @@ interface GalleryPhoto {
   styleUrls: ['./project-gallery.css'],
 })
 export class ProjectGalleryComponent {
+
   photos: GalleryPhoto[] = [];
 
-  /** Backend gallery URLs — mapped into display photos as they arrive. */
+  selectedPhoto: GalleryPhoto | null = null;
+
   @Input() set imageUrls(urls: string[] | null | undefined) {
-    this.photos = (urls ?? []).map((url, i) => ({ url, title: `PHOTO ${i + 1}` }));
+    this.photos = (urls ?? []).map((url, i) => ({
+      url,
+      title: `PHOTO ${i + 1}`
+    }));
+  }
+
+  openImage(photo: GalleryPhoto): void {
+    this.selectedPhoto = photo;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeImage(): void {
+    this.selectedPhoto = null;
+    document.body.style.overflow = '';
   }
 }

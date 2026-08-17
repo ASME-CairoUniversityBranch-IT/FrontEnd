@@ -4,13 +4,19 @@ import { RouterModule } from '@angular/router';
 import * as AOS from 'aos';
 import { ContentService } from '../../app/core/services/content.service';
 
+interface SubTeamVM {
+  name: string;
+  icon: string;
+  description: string;
+}
+
 /** A committee plus the client-only UI state (isExpanded) that content.json doesn't need to know about. */
 interface CommitteeVM {
   title: string;
   icon: string;
   borderColor: string;
   isExpanded: boolean;
-  subTeams: { name: string; icon: string }[];
+  subTeams: SubTeamVM[];
 }
 
 @Component({
@@ -27,6 +33,9 @@ export class Committee implements OnInit {
   committees: CommitteeVM[] = [];
 
   loaded = false;
+
+  /** Sub-team currently shown in the popup, or null when the popup is closed. */
+  selectedSubTeam: SubTeamVM | null = null;
 
   constructor(
     private contentService: ContentService,
@@ -50,5 +59,14 @@ export class Committee implements OnInit {
 
   toggleCommittee(index: number) {
     this.committees[index].isExpanded = !this.committees[index].isExpanded;
+  }
+
+  openTeamModal(sub: SubTeamVM, event: MouseEvent) {
+    event.stopPropagation();
+    this.selectedSubTeam = sub;
+  }
+
+  closeTeamModal() {
+    this.selectedSubTeam = null;
   }
 }

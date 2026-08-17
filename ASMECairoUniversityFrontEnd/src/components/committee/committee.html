@@ -7,11 +7,11 @@
 
   <div class="committees-grid" id="cards-trigger">
 
-          <div class="committee-card"
+    <div class="committee-card"
          *ngFor="let committee of committees; let i = index"
-          [style.border-left-color]="committee.borderColor"
-          data-aos="fade-up" data-aos-duration="1000"
-          data-aos-anchor="#cards-trigger">
+         [style.border-left-color]="committee.borderColor"
+         data-aos="fade-up" data-aos-duration="1000"
+         data-aos-anchor="#cards-trigger">
 
       <div class="card-header" (click)="toggleCommittee(i)">
         <div class="header-left">
@@ -21,10 +21,12 @@
         <div class="arrow">{{ committee.isExpanded ? '▾' : '▸' }}</div>
       </div>
 
-      <div class="card-body" *ngIf="committee.isExpanded" >
+      <div class="card-body" *ngIf="committee.isExpanded">
         <div class="sub-teams-container" data-aos="fade-up" data-aos-duration="1000">
 
-          <div class="sub-team-box" *ngFor="let sub of committee.subTeams" >
+          <div class="sub-team-box"
+               *ngFor="let sub of committee.subTeams"
+               (click)="openTeamModal(sub, $event)">
             <span class="sub-icon">{{ sub.icon }}</span>
             <p class="sub-name">{{ sub.name }}</p>
           </div>
@@ -36,5 +38,13 @@
 
   </div>
 
-</section>
+  <div class="modal-overlay" *ngIf="selectedSubTeam" (click)="closeTeamModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeTeamModal()">×</button>
+      <div class="modal-icon">{{ selectedSubTeam.icon }}</div>
+      <h3 class="modal-title">{{ selectedSubTeam.name }}</h3>
+      <p class="modal-description">{{ selectedSubTeam.description }}</p>
+    </div>
+  </div>
 
+</section>

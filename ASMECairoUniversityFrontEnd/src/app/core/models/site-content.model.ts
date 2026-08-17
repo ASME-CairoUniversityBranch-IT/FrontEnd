@@ -70,11 +70,13 @@ export interface ActivitySlide {
   bg: string;
   /** Raw decorative SVG markup rendered behind the slide text. */
   decoSvg: string;
+  image: string;
 }
 
 export interface AchievementItem {
   title: string;
   desc: string;
+  image: string;
 }
 
 export interface ActivitiesAchievementsContent {
@@ -88,6 +90,7 @@ export interface ActivitiesAchievementsContent {
 export interface SubTeam {
   name: string;
   icon: string;
+  description: string;
 }
 
 export interface CommitteeItem {

@@ -1,0 +1,19 @@
+<div class="visit-card" *ngIf="visit as v">
+  <div class="visit-icon">🎓</div>
+  <div class="visit-label">SCHOOL</div>
+  <div class="visit-school">{{ v.schoolName }}</div>
+  <div class="visit-stage" *ngIf="v.educationalStage">{{ v.educationalStage }} stage</div>
+
+  <div class="visit-stats">
+    <div class="visit-stat" *ngIf="v.numberOfStudents">
+      <span class="stat-value">{{ v.numberOfStudents }}</span>
+      <span class="stat-label">Students</span>
+    </div>
+  </div>
+
+  <div class="visit-contact" *ngIf="v.contactPersonName">
+    <div class="contact-label">CONTACT</div>
+    <div class="contact-name">{{ v.contactPersonName }}</div>
+    <div class="contact-phone" *ngIf="v.contactPersonPhone">{{ v.contactPersonPhone }}</div>
+  </div>
+</div>

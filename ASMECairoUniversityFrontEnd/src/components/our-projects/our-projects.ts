@@ -30,7 +30,7 @@ export class OurProject implements OnInit {
   activeTab: ProjectType = ProjectType.Event;
 
   constructor(private projectsService: ProjectsService) {
-    this.vm$ = this.projectsService.getAll().pipe(
+    this.vm$ = this.projectsService.getAllPublished().pipe(
       map((projects): OurProjectsVM => ({ status: 'loaded', projects })),
       startWith<OurProjectsVM>({ status: 'loading' }),
       // If the request fails here, fail quietly to an empty loaded state — this is a homepage
