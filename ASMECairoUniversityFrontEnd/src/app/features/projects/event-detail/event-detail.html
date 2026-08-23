@@ -16,9 +16,10 @@
           <markdown class="markdown-body" [data]="vm.project.longDescription"></markdown>
         </div>
 
+         <app-sponsers [sponsors]="vm.project.sponsors"></app-sponsers>
         <app-speakers [speakers]="vm.project.speakers"></app-speakers>
         <app-partners [partners]="vm.project.partners"></app-partners>
-        <app-sponsers [sponsors]="vm.project.sponsors"></app-sponsers>
+       
         <app-project-gallery [imageUrls]="vm.project.galleryImageUrls"></app-project-gallery>
       </div>
 

@@ -1,3 +1,33 @@
+/* ── SHARED DESIGN TOKENS ──
+ * Single source of truth for the home page. Change a value here and every
+ * section that references it updates together. */
+:root {
+  --navy: #0d1540;
+  --navy-deep: #07102e;
+  --blue: #1a2472;
+  --accent: #7ea8f8;
+  --off-white: #f4f6fb;
+  --text-body: #2a3458;
+
+  --shadow-hover: 0 12px 48px rgba(13, 21, 64, 0.22);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --t: 0.3s;
+
+  --font-h: 'Bebas Neue', sans-serif;
+  --font-b: 'Barlow', sans-serif;
+  --font-c: 'Barlow Condensed', sans-serif;
+
+  /* Heading system */
+  --heading-eyebrow-size: 14px;
+  --heading-eyebrow-weight: 700;
+  --heading-eyebrow-tracking: 2px;
+  --heading-eyebrow-font: var(--font-b);
+
+  --heading-title-size: 40px;
+  --heading-title-weight: 900;
+  --heading-title-font: var(--font-c);
+}
+
 body{
   background:#F4F6FB;
 }

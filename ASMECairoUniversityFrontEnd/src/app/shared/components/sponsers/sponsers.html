@@ -12,13 +12,19 @@
         <span class="line"></span>
       </div>
 
-      <div class="sponsors-grid">
-      <div class="sponsor-item" *ngFor="let sponsor of group.sponsors">
-        <img *ngIf="sponsor.photoUrl; else sponsorNameOnly" class="sponsor-logo" [src]="sponsor.photoUrl" [alt]="sponsor.name">
-        <ng-template #sponsorNameOnly>
-          <span class="sponsor-name">{{ sponsor.name }}</span>
-        </ng-template>
-      </div>
+      <div class="sponsors-grid" [class]="'tier-' + group.tierName.toLowerCase()">
+        <div class="sponsor-item" *ngFor="let sponsor of group.sponsors">
+          <img
+            *ngIf="sponsor.photoUrl; else sponsorNameOnly"
+            class="sponsor-logo"
+            [src]="sponsor.photoUrl"
+            [alt]="sponsor.name"
+          >
+
+          <ng-template #sponsorNameOnly>
+            <span class="sponsor-name">{{ sponsor.name }}</span>
+          </ng-template>
+        </div>
       </div>
     </div>
   </div>

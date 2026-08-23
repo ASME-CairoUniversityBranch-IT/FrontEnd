@@ -1,25 +1,30 @@
-
 .committee-section {
   background-color: #f8f9fc;
   padding: 60px 80px;
-  font-family: sans-serif;
+  font-family: var(--font-b);
   color: #0b112a;
 }
 
-.subtitle {
+.committee-section .subtitle {
   color: #7b8ebd;
-  font-size: 14px;
-  font-weight: bold;
-  letter-spacing: 2px;
+  font-family: var(--heading-eyebrow-font);
+  font-size: var(--heading-eyebrow-size);
+  font-weight: var(--heading-eyebrow-weight);
+  letter-spacing: var(--heading-eyebrow-tracking);
   margin-bottom: 10px;
 }
 
-.main-title {
-  font-size: 40px;
-  font-weight: 900;
-  margin: 0 0 40px 0;
+.committee-section .main-title {
+  font-family: var(--heading-title-font);
+  font-size: var(--heading-title-size);
+  font-weight: var(--heading-title-weight);
+  margin: 0 0 40px;
+  color: #0b112a;
+  text-transform: uppercase;
 }
 
+
+/* COMMITTEE GRID */
 
 .committees-grid {
   display: grid;
@@ -28,6 +33,8 @@
   align-items: start;
 }
 
+
+/* COMMITTEE CARD */
 
 .committee-card {
   background-color: white;
@@ -38,6 +45,8 @@
   transition: all 0.3s ease;
 }
 
+
+/* CARD HEADER */
 
 .card-header {
   padding: 20px;
@@ -52,7 +61,6 @@
   align-items: center;
   gap: 15px;
 }
-
 
 .icon-box {
   background-color: #f0f4f8;
@@ -74,8 +82,10 @@
 }
 
 
+/* CARD BODY */
+
 .card-body {
-  padding: 0 20px 20px 20px;
+  padding: 0 20px 20px;
 }
 
 .sub-teams-container {
@@ -96,6 +106,13 @@
   gap: 10px;
   min-width: 120px;
   flex: 1;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sub-team-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
 }
 
 .sub-icon {
@@ -111,22 +128,100 @@
 }
 
 
+/* TABLET / MOBILE */
+
 @media (max-width: 768px) {
+  .committee-section {
+    padding: 50px 20px;
+  }
+
   .committees-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .main-title {
+    margin-bottom: 30px;
+  }
+
+  .card-header {
+    padding: 18px;
+  }
+
+  .header-left {
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .card-title {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .card-body {
+    padding: 0 18px 18px;
+  }
+
+  .sub-teams-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sub-team-box {
+    width: 100%;
+    min-width: 0;
+    flex: none;
+    box-sizing: border-box;
+    padding: 16px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+
+  .sub-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .sub-name {
+    font-size: 12px;
+    text-align: left;
+    line-height: 1.4;
   }
 }
 
 
-.sub-team-box {
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* SMALL PHONES */
+
+@media (max-width: 480px) {
+  .committee-section {
+    padding: 40px 16px;
+  }
+
+  .main-title {
+    font-size: var(--heading-title-size);
+  }
+
+  .card-header {
+    padding: 16px;
+  }
+
+  .card-body {
+    padding: 0 16px 16px;
+  }
+
+  .sub-team-box {
+    padding: 15px;
+  }
+
+  .sub-name {
+    font-size: 12px;
+  }
 }
 
-.sub-team-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-}
+
+/* MODAL */
 
 .modal-overlay {
   position: fixed;
@@ -171,7 +266,7 @@
   font-size: 18px;
   font-weight: 800;
   letter-spacing: 1px;
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   color: #0b112a;
 }
 
