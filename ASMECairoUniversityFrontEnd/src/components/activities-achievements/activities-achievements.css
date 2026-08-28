@@ -660,6 +660,10 @@
     border-radius: 0;
   }
 
+    .carousel-viewport {
+    touch-action: pan-y;
+    user-select: none;
+  }
 
   /* Slide */
 

@@ -17,17 +17,19 @@
     </div>
   </div>
 
-  <div
-    class="carousel-viewport"
-    role="region"
-    aria-roledescription="carousel"
-    aria-label="Featured ASME activities"
-    tabindex="0"
-    (keydown)="onCarouselKeydown($event)"
-    (mouseenter)="pauseAutoplay()"
-    (mouseleave)="resumeAutoplay()"
-    (focusin)="pauseAutoplay()"
-    (focusout)="resumeAutoplay()">
+<div
+  class="carousel-viewport"
+  role="region"
+  aria-roledescription="carousel"
+  aria-label="Featured ASME activities"
+  tabindex="0"
+  (keydown)="onCarouselKeydown($event)"
+  (mouseenter)="pauseAutoplay()"
+  (mouseleave)="resumeAutoplay()"
+  (focusin)="pauseAutoplay()"
+  (focusout)="resumeAutoplay()"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)">
     <div
       class="carousel-slides"
       id="activityCarouselSlides"

@@ -22,6 +22,10 @@ export class ActivitiesAchievements implements OnInit, OnDestroy {
   private autoplayTimer: ReturnType<typeof setInterval> | undefined;
   private revealObserver?: IntersectionObserver;
 
+
+  private touchStartX = 0;
+  private touchEndX = 0;
+
   constructor(
     private contentService: ContentService,
     private cdr: ChangeDetectorRef,
@@ -107,4 +111,28 @@ export class ActivitiesAchievements implements OnInit, OnDestroy {
 
     document.querySelectorAll('.reveal').forEach((el) => this.revealObserver!.observe(el));
   }
+
+  onTouchStart(event: TouchEvent): void {
+  this.touchStartX = event.changedTouches[0].screenX;
+}
+
+onTouchEnd(event: TouchEvent): void {
+  this.touchEndX = event.changedTouches[0].screenX;
+
+  const swipeDistance = this.touchEndX - this.touchStartX;
+
+  // Ignore very small movements
+  if (Math.abs(swipeDistance) < 50) {
+    return;
+  }
+
+  if (swipeDistance < 0) {
+    // Swipe left → next slide
+    this.nextSlide();
+  } else {
+    // Swipe right → previous slide
+    this.prevSlide();
+  }
+}
+
 }

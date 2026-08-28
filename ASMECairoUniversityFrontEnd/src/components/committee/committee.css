@@ -1,233 +1,768 @@
+/* ═══════════════════════════════════════════
+   COMMITTEE SECTION
+   ═══════════════════════════════════════════ */
+
 .committee-section {
   background: var(--off-white);
+
   width: 100%;
+
   margin: 0;
-  padding: var(--section-y) max(var(--gutter), calc((100% - var(--content-max)) / 2));
+
+  padding:
+    var(--section-y)
+    max(
+      var(--gutter),
+      calc((100% - var(--content-max)) / 2)
+    );
+
   font-family: var(--font-body);
+
   color: var(--text-body);
+
   box-sizing: border-box;
 }
 
+
+/* ═══════════════════════════════════════════
+   SECTION HEADER
+   ═══════════════════════════════════════════ */
+
 .committee-section .subtitle {
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   color: var(--blue);
+
   font-family: var(--heading-eyebrow-font);
+
   font-size: var(--heading-eyebrow-size);
+
   font-weight: var(--heading-eyebrow-weight);
+
   letter-spacing: var(--heading-eyebrow-tracking);
+
   text-transform: uppercase;
+
   margin: 0 0 12px;
+
   opacity: 0.75;
 }
 
+
 .committee-section .subtitle span {
   display: inline-block;
+
   width: 24px;
+
   height: 2px;
+
   background: var(--accent);
 }
 
+
 .committee-section .main-title {
   font-family: var(--heading-title-font);
+
   font-size: var(--heading-title-size);
+
   font-weight: var(--heading-title-weight);
+
   margin: 0 0 36px;
+
   color: var(--navy);
+
   text-transform: uppercase;
+
   line-height: 1;
 }
 
+
 /* ═══════════════════════════════════════════
-   3-PILLAR DIVISION SHOWCASE
+   3-PILLAR GRID
    ═══════════════════════════════════════════ */
 
 .pillars-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
   gap: clamp(18px, 2.5vw, 28px);
+
   align-items: stretch;
 }
 
+
+/* ═══════════════════════════════════════════
+   PILLAR
+   ═══════════════════════════════════════════ */
+
 .pillar-column {
   background: var(--surface);
+
   border: 1px solid var(--line);
-  border-top: 4px solid var(--pillar-accent, var(--blue));
+
+  border-top:
+    4px solid
+    var(--pillar-accent, var(--blue));
+
   border-radius: 18px;
-  padding: clamp(24px, 3vw, 32px) clamp(18px, 2.2vw, 24px);
+
+  padding:
+    clamp(24px, 3vw, 32px)
+    clamp(18px, 2.2vw, 24px);
+
   box-shadow: var(--shadow-soft);
+
   display: flex;
+
   flex-direction: column;
-  transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease), border-color var(--t);
+
+  transition:
+    transform var(--t) var(--ease),
+    box-shadow var(--t) var(--ease),
+    border-color var(--t);
 }
+
 
 .pillar-column:hover {
   transform: translateY(-6px);
+
   box-shadow: var(--shadow-hover);
-  border-color: var(--pillar-accent, var(--accent));
+
+  border-color:
+    var(--pillar-accent, var(--accent));
 }
 
-/* ── Division Specific Themes ── */
+
+/* ═══════════════════════════════════════════
+   PILLAR COLORS
+   ═══════════════════════════════════════════ */
+
 .pillar-0 {
   --pillar-accent: var(--blue);
-  --pillar-glow: rgb(26 36 114 / 8%);
+
+  --pillar-glow:
+    rgb(26 36 114 / 8%);
 }
+
 
 .pillar-1 {
   --pillar-accent: var(--blue);
-  --pillar-glow: rgb(26 36 114 / 8%);
+
+  --pillar-glow:
+    rgb(26 36 114 / 8%);
 }
+
 
 .pillar-2 {
   --pillar-accent: var(--blue);
-  --pillar-glow: rgb(26 36 114 / 8%);
+
+  --pillar-glow:
+    rgb(26 36 114 / 8%);
 }
 
-/* ── Pillar Header ── */
+
+/* ═══════════════════════════════════════════
+   PILLAR HEADER
+   ═══════════════════════════════════════════ */
+
 .pillar-header {
   margin-bottom: 20px;
 }
 
+
 .pillar-header-top {
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   margin-bottom: 10px;
 }
 
+
 .pillar-index {
   font-family: var(--font-display);
+
   font-size: 15px;
+
   font-weight: 900;
+
   color: var(--pillar-accent);
+
   letter-spacing: 1px;
 }
 
+
 .pillar-count {
   font-family: var(--font-display);
+
   font-size: 11px;
+
   font-weight: 800;
+
   letter-spacing: 1.2px;
+
   text-transform: uppercase;
+
   color: var(--text-muted);
-  background: rgb(13 21 64 / 4%);
+
+  background:
+    rgb(13 21 64 / 4%);
+
   padding: 3px 8px;
+
   border-radius: 4px;
 }
 
+
 .pillar-title {
   font-family: var(--font-display);
+
   font-size: clamp(22px, 2vw, 26px);
+
   font-weight: 900;
+
   letter-spacing: 0.8px;
+
   color: var(--navy);
+
   text-transform: uppercase;
+
   margin: 0 0 16px;
+
   line-height: 1.1;
 }
 
+
 .pillar-rule {
   width: 100%;
+
   height: 1px;
+
   background: var(--line);
 }
 
-/* ── Sub-Team Cards inside Pillar ── */
+
+/* ═══════════════════════════════════════════
+   SUB-TEAM STACK
+   ═══════════════════════════════════════════ */
+
 .subteam-stack {
   display: flex;
+
   flex-direction: column;
+
   gap: 14px;
+
   flex: 1;
 }
 
+
+/* ═══════════════════════════════════════════
+   SUB-TEAM CARD
+   ═══════════════════════════════════════════ */
+
 .subteam-item {
-  background: var(--off-white);
+  background: var(--surface);
+
   border: 1px solid var(--line);
-  border-radius: 12px;
+
+  border-radius: 14px;
+
   padding: 18px 16px;
+
   display: flex;
-  gap: 14px;
+
+  gap: 16px;
+
   align-items: flex-start;
-  transition: transform var(--t) var(--ease), background-color var(--t), border-color var(--t), box-shadow var(--t);
+
+  cursor: pointer;
+
+  outline: none;
+
+  transition:
+    transform var(--t) var(--ease),
+    background-color var(--t),
+    border-color var(--t),
+    box-shadow var(--t);
 }
+
+
+/* Hover */
 
 .subteam-item:hover {
   background: #fff;
-  border-color: var(--pillar-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgb(13 21 64 / 8%);
+
+  border-color:
+    var(--pillar-accent);
+
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 8px 22px
+    rgb(13 21 64 / 9%);
 }
+
+
+/* Keyboard focus */
+
+.subteam-item:focus-visible {
+  border-color:
+    var(--pillar-accent);
+
+  box-shadow:
+    0 0 0 3px
+    var(--pillar-glow);
+}
+
+
+/* ═══════════════════════════════════════════
+   SUB-TEAM ICON
+   ═══════════════════════════════════════════ */
 
 .subteam-icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--pillar-glow);
-  color: var(--pillar-accent);
+  width: 48px;
+
+  height: 48px;
+
+  border-radius: 12px;
+
+  background:
+    var(--pillar-glow);
+
+  color:
+    var(--pillar-accent);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
-  font-size: 17px;
+
+  font-size: 19px;
+
   flex: 0 0 auto;
-  transition: background-color var(--t), color var(--t), transform var(--t);
+
+  transition:
+    background-color var(--t),
+    color var(--t),
+    transform var(--t);
 }
 
-.subteam-item:hover .subteam-icon-box {
-  background: var(--pillar-accent);
+
+.subteam-item:hover
+.subteam-icon-box {
+  background:
+    var(--pillar-accent);
+
   color: #fff;
-  transform: scale(1.08);
+
+  transform: scale(1.05);
 }
+
+
+/* ═══════════════════════════════════════════
+   SUB-TEAM BODY
+   ═══════════════════════════════════════════ */
 
 .subteam-body {
   flex: 1;
+
   min-width: 0;
 }
 
+
+/* ═══════════════════════════════════════════
+   SUB-TEAM NAME
+   ═══════════════════════════════════════════ */
+
 .subteam-name {
   font-family: var(--font-display);
-  font-size: 15px;
+
+  font-size: 16px;
+
   font-weight: 800;
+
   letter-spacing: 0.5px;
+
   color: var(--navy);
+
   text-transform: uppercase;
-  margin: 0 0 6px;
+
+  margin: 2px 0 7px;
+
   line-height: 1.2;
 }
 
+
+/* ═══════════════════════════════════════════
+   DESCRIPTION PREVIEW
+   ═══════════════════════════════════════════ */
+
 .subteam-description {
   font-family: var(--font-body);
-  font-size: 13px;
+
+  font-size: 14px;
+
   line-height: 1.55;
+
   color: var(--text-muted);
+
   margin: 0;
+
+  /*
+   * Only show the first 3 lines.
+   * Full description is shown inside the popup.
+   */
+
+  display: -webkit-box;
+
+  -webkit-box-orient: vertical;
+
+  -webkit-line-clamp: 3;
+
+  overflow: hidden;
+}
+
+
+/* ═══════════════════════════════════════════
+   VIEW MORE
+   ═══════════════════════════════════════════ */
+
+.view-more {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  margin-top: 12px;
+
+  font-family: var(--font-display);
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+  color: var(--pillar-accent);
+
+  text-transform: uppercase;
+}
+
+
+.view-more i {
+  font-size: 10px;
+
+  transition:
+    transform var(--t) var(--ease);
+}
+
+
+.subteam-item:hover
+.view-more i {
+  transform: translateX(4px);
+}
+
+
+/* ═══════════════════════════════════════════
+   SUB-TEAM MODAL BACKDROP
+   ═══════════════════════════════════════════ */
+
+.subteam-modal-backdrop {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 24px;
+
+  background:
+    rgb(8 15 45 / 65%);
+
+  backdrop-filter: blur(6px);
+
+  animation:
+    modalFadeIn 0.2s ease;
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════ */
+
+.subteam-modal {
+  position: relative;
+
+  width: min(560px, 100%);
+
+  background: var(--surface);
+
+  border-radius: 20px;
+
+  border-top:
+    5px solid var(--blue);
+
+  padding: 40px;
+
+  box-shadow:
+    0 25px 80px
+    rgb(0 0 0 / 30%);
+
+  animation:
+    modalSlideUp 0.25s var(--ease);
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL CLOSE
+   ═══════════════════════════════════════════ */
+
+.modal-close {
+  position: absolute;
+
+  top: 18px;
+
+  right: 18px;
+
+  width: 38px;
+
+  height: 38px;
+
+  border: 1px solid var(--line);
+
+  border-radius: 50%;
+
+  background: var(--off-white);
+
+  color: var(--navy);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  cursor: pointer;
+
+  font-size: 17px;
+
+  transition:
+    background var(--t),
+    color var(--t),
+    transform var(--t) var(--ease);
+}
+
+
+.modal-close:hover {
+  background: var(--blue);
+
+  color: #fff;
+
+  transform: rotate(90deg);
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL ICON
+   ═══════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════
+   MODAL TITLE ROW
+   ═══════════════════════════════════════════ */
+
+.modal-title-row {
+  display: flex;
+
+  align-items: center;
+
+  gap: 18px;
+
+  padding-right: 50px;
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL ICON
+   ═══════════════════════════════════════════ */
+
+.subteam-modal .modal-icon {
+  width: 58px;
+
+  height: 58px;
+
+  flex: 0 0 auto;
+
+  border-radius: 14px;
+
+  background:
+    rgb(26 36 114 / 8%);
+
+  color: var(--blue);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 23px;
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL TITLE
+   ═══════════════════════════════════════════ */
+
+.subteam-modal .modal-title {
+  font-family: var(--font-display);
+
+  font-size:
+    clamp(24px, 4vw, 34px);
+
+  font-weight: 900;
+
+  letter-spacing: 0.8px;
+
+  color: var(--navy);
+
+  text-transform: uppercase;
+
+  margin: 0;
+
+  line-height: 1.1;
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL DIVIDER
+   ═══════════════════════════════════════════ */
+
+.subteam-modal .modal-rule {
+  width: 100%;
+
+  height: 1px;
+
+  background: var(--line);
+
+  margin: 26px 0 22px;
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL DESCRIPTION
+   ═══════════════════════════════════════════ */
+
+.subteam-modal .modal-description {
+  font-family: var(--font-body);
+
+  font-size: 16px;
+
+  line-height: 1.7;
+
+  color: var(--text-muted);
+
+  margin: 0;
+
+  text-align: center;
 }
 
 /* ═══════════════════════════════════════════
-   RESPONSIVE BREAKPOINTS
+   MODAL ANIMATIONS
+   ═══════════════════════════════════════════ */
+
+@keyframes modalFadeIn {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+
+}
+
+
+@keyframes modalSlideUp {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(20px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+
+/* ═══════════════════════════════════════════
+   TABLET
    ═══════════════════════════════════════════ */
 
 @media (max-width: 990px) {
+
   .pillars-grid {
     grid-template-columns: 1fr;
+
     gap: 20px;
   }
+
 
   .pillar-column {
     padding: 24px 20px;
   }
+
 }
 
+
+/* ═══════════════════════════════════════════
+   MOBILE
+   ═══════════════════════════════════════════ */
+
 @media (max-width: 600px) {
-  .committee-section {
-    padding: var(--section-y) 16px;
+
+  .modal-title-row {
+    gap: 14px;
+
+    padding-right: 40px;
   }
 
-  .pillar-column {
-    padding: 20px 16px;
+  .subteam-modal .modal-icon {
+    width: 50px;
+
+    height: 50px;
+
+    font-size: 20px;
   }
 
-  .subteam-item {
-    padding: 16px 14px;
+  .subteam-modal .modal-title {
+    font-size: 24px;
   }
+
 }

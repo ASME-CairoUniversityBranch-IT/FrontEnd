@@ -1,41 +1,188 @@
-<section class="committee-section" id="committees" *ngIf="loaded" aria-label="Our committees">
+<section
+  #committeeSection
+  class="committee-section"
+  id="committees"
+  *ngIf="loaded"
+  aria-label="Our committees">
 
+  <!-- Header -->
   <div class="header">
-    <p class="subtitle"><span aria-hidden="true"></span> {{ subtitle }}</p>
-    <h2 class="main-title">{{ title }}</h2>
+    <p class="subtitle">
+      <span aria-hidden="true"></span>
+      {{ subtitle }}
+    </p>
+
+    <h2 class="main-title">
+      {{ title }}
+    </h2>
   </div>
 
+
+  <!-- Committees -->
   <div class="pillars-grid">
+
     <section
       class="pillar-column"
       *ngFor="let c of committees; let i = index"
       [ngClass]="'pillar-' + i">
 
-      <!-- Pillar Header -->
+      <!-- Committee Header -->
       <header class="pillar-header">
+
         <div class="pillar-header-top">
-          <span class="pillar-index" aria-hidden="true">0{{ i + 1 }}</span>
-          <span class="pillar-count">{{ c.subTeams.length }} SUB-TEAMS</span>
+
+          <span
+            class="pillar-index"
+            aria-hidden="true">
+            0{{ i + 1 }}
+          </span>
+
+          <span class="pillar-count">
+            {{ c.subTeams.length }} SUB-TEAMS
+          </span>
+
         </div>
-        <h3 class="pillar-title">{{ c.title }}</h3>
-        <div class="pillar-rule" aria-hidden="true"></div>
+
+
+        <h3 class="pillar-title">
+          {{ c.title }}
+        </h3>
+
+        <div
+          class="pillar-rule"
+          aria-hidden="true">
+        </div>
+
       </header>
 
-      <!-- Sub-Teams List inside this Pillar -->
+
+      <!-- Sub-Teams -->
       <div class="subteam-stack">
-        <article class="subteam-item" *ngFor="let team of c.subTeams">
-          <div class="subteam-icon-box" aria-hidden="true">
+
+        <article
+          class="subteam-item"
+          *ngFor="let team of c.subTeams"
+
+          (click)="openSubTeam(team)"
+
+          role="button"
+          tabindex="0"
+
+          (keydown.enter)="openSubTeam(team)"
+          (keydown.space)="openSubTeam(team); $event.preventDefault()">
+
+          <!-- Icon -->
+          <div
+            class="subteam-icon-box"
+            aria-hidden="true">
+
             <i [class]="team.icon"></i>
+
           </div>
 
+
+          <!-- Content -->
           <div class="subteam-body">
-            <h4 class="subteam-name">{{ team.name }}</h4>
-            <p class="subteam-description">{{ team.description }}</p>
+
+            <h4 class="subteam-name">
+              {{ team.name }}
+            </h4>
+
+
+            <!-- View More -->
+            <span class="view-more">
+
+              View Committee Role
+
+              <i
+                class="fa-solid fa-arrow-right"
+                aria-hidden="true">
+              </i>
+
+            </span>
+
           </div>
+
         </article>
+
       </div>
 
     </section>
+
   </div>
 
 </section>
+
+
+
+<!-- ═══════════════════════════════════════════
+     SUB-TEAM DESCRIPTION MODAL
+     ═══════════════════════════════════════════ -->
+
+<div
+  class="subteam-modal-backdrop"
+  *ngIf="selectedSubTeam"
+
+  (click)="closeSubTeam()">
+
+  <div
+    class="subteam-modal"
+
+    role="dialog"
+    aria-modal="true"
+
+    [attr.aria-label]="selectedSubTeam.name"
+
+    (click)="$event.stopPropagation()">
+
+
+    <!-- Close Button -->
+    <button
+      class="modal-close"
+
+      type="button"
+
+      aria-label="Close"
+
+      (click)="closeSubTeam()">
+
+      <i
+        class="fa-solid fa-xmark"
+        aria-hidden="true">
+      </i>
+
+    </button>
+
+
+<div class="modal-title-row">
+
+  <div class="modal-icon">
+    <i
+      [class]="selectedSubTeam.icon"
+      aria-hidden="true">
+    </i>
+  </div>
+
+  <h2 class="modal-title">
+    {{ selectedSubTeam.name }}
+  </h2>
+
+</div>
+
+
+    <!-- Divider -->
+    <div
+      class="modal-rule"
+      aria-hidden="true">
+    </div>
+
+
+    <!-- Full Description -->
+    <p class="modal-description">
+      {{ selectedSubTeam.description }}
+    </p>
+
+
+  </div>
+
+</div>
