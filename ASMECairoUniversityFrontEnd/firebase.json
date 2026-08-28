@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "D:\\Cairo University\\ECs\\ASME\\Github\\FrontEnd\\ASMECairoUniversityFrontEnd\\dist\\ASMECairoUniversityFrontEnd\\browser",
+    "public": "dist/ASMECairoUniversityFrontEnd/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
