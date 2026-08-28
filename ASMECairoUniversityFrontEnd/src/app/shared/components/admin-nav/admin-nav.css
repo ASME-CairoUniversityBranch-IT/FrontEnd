@@ -26,10 +26,16 @@
   z-index: 100;
 }
 .nav-brand {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #fff;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 40px;
+}
+.nav-brand img {
+  display: block;
+  width: auto;
+  height: 38px;
+  object-fit: contain;
 }
 .nav-breadcrumb {
   font-size: 12px;
@@ -152,7 +158,11 @@
   }
 
   .nav-brand {
-    font-size: 14px;
+    height: 36px;
+  }
+
+  .nav-brand img {
+    height: 34px;
   }
 
   .nav-breadcrumb,

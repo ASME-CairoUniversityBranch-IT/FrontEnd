@@ -21,7 +21,8 @@
       <div class="filter-pills">
         <button type="button" class="pill" [class.active]="activeFilter === 'all'" [attr.aria-pressed]="activeFilter === 'all'" (click)="setFilter('all')">All</button>
         <button type="button" class="pill" *ngFor="let t of types" [class.active]="activeFilter === t" [attr.aria-pressed]="activeFilter === t" (click)="setFilter(t)">
-          {{ projectTypeIcon(t) }} {{ projectTypeLabel(t) }}
+          <i [class]="projectTypeIcon(t) + ' type-icon'" aria-hidden="true"></i>
+          <span>{{ projectTypeLabel(t) }}</span>
         </button>
       </div>
     </div>
@@ -42,7 +43,7 @@
             <div class="admin-card" *ngFor="let card of filtered" [class.busy]="card.busy">
               <a class="card-image-box" [routerLink]="projectDetailPath(card.summary)">
                 <img *ngIf="card.summary.coverImageUrl" [src]="card.summary.coverImageUrl" [alt]="card.summary.title" loading="lazy" decoding="async" />
-                <span *ngIf="!card.summary.coverImageUrl" class="icon">{{ projectTypeIcon(card.summary.type) }}</span>
+                <i *ngIf="!card.summary.coverImageUrl" [class]="projectTypeIcon(card.summary.type) + ' icon'" aria-hidden="true"></i>
               </a>
 
               <div class="card-content">

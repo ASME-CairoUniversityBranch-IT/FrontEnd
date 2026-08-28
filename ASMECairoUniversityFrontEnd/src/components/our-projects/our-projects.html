@@ -15,6 +15,7 @@
           [class.active]="activeTab === t"
           [attr.aria-selected]="activeTab === t"
           (click)="switchTab(t)">
+          <i [class]="projectTypeIcon(t) + ' type-icon'" aria-hidden="true"></i>
           {{ projectTypeLabel(t) }}
         </button>
       </li>
@@ -33,7 +34,7 @@
         <a class="card" *ngFor="let project of filtered" [routerLink]="projectDetailPath(project)">
           <div class="card-image-box">
             <img *ngIf="project.coverImageUrl" [src]="project.coverImageUrl" [alt]="project.title" loading="lazy" decoding="async">
-            <span *ngIf="!project.coverImageUrl" class="icon">{{ projectTypeIcon(project.type) }}</span>
+            <i *ngIf="!project.coverImageUrl" [class]="projectTypeIcon(project.type) + ' icon'" aria-hidden="true"></i>
           </div>
 
           <div class="card-content">
@@ -42,7 +43,7 @@
             <p class="card-date"><span class="date-label">DATE</span> {{ project.mainDateAndTime | date:'mediumDate' }}</p>
           </div>
         </a>
-        <p class="empty-msg" *ngIf="filtered.length === 0">No {{ projectTypeLabel(activeTab) | lowercase }}s yet — check back soon.</p>
+        <p class="empty-msg" *ngIf="filtered.length === 0">No {{ projectTypeLabel(activeTab) | lowercase }} yet — check back soon.</p>
       </ng-container>
     </div>
   </ng-container>

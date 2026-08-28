@@ -75,13 +75,13 @@
 }
 
 .pillar-1 {
-  --pillar-accent: #059669;
-  --pillar-glow: rgb(16 185 129 / 8%);
+  --pillar-accent: var(--blue);
+  --pillar-glow: rgb(26 36 114 / 8%);
 }
 
 .pillar-2 {
-  --pillar-accent: #e11d48;
-  --pillar-glow: rgb(225 29 72 / 8%);
+  --pillar-accent: var(--blue);
+  --pillar-glow: rgb(26 36 114 / 8%);
 }
 
 /* ── Pillar Header ── */

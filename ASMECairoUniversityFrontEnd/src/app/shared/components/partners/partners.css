@@ -14,7 +14,6 @@
   gap: 12px;
   margin-bottom: clamp(22px, 3vw, 32px);
   padding-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .section-mark {
@@ -30,6 +29,11 @@
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.08em;
+}
+
+.section-mark i {
+  font-size: 15px;
+  line-height: 1;
 }
 
 .card-header h2 {
@@ -67,7 +71,7 @@
 }
 
 .partner-item.main-partner {
-  border-color: rgba(249, 200, 70, 0.55);
+  border-color: rgba(126, 168, 248, 0.55);
 }
 
 .partner-logo-stage {
@@ -115,7 +119,7 @@
 }
 
 .partner-type {
-  color: #f9c846;
+  color: var(--accent-light);
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 700;

@@ -18,8 +18,8 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --t: 0.3s;
 
-  --font-display: 'Saira Semi Condensed', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
   --font-h: var(--font-display);
   --font-b: var(--font-body);
   --font-c: var(--font-display);

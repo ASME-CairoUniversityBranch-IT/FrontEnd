@@ -53,6 +53,9 @@
 }
 
 .tab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 44px;
   padding: 0 4px 12px;
   border: 0;
@@ -66,6 +69,10 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: color var(--t), border-color var(--t);
+}
+
+.tab-button .type-icon {
+  font-size: 0.9em;
 }
 
 .tab-button.active {

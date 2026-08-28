@@ -1,5 +1,5 @@
 .logistics-card { background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.05); padding:24px; margin-bottom:24px; }
-.card-header { display:flex; align-items:center; gap:12px; padding-bottom:20px; border-bottom:1px solid #f0f0f0; margin-bottom:20px; }
+.card-header { display:flex; align-items:center; gap:12px; padding-bottom:20px; margin-bottom:20px; }
 .icon-container { background:#92400e; color:#fff; width:32px; height:32px; border-radius:6px; display:flex; justify-content:center; align-items:center; font-size:16px; }
 .card-header h2 { font-size:16px; color:#92400e; margin:0; font-weight:700; letter-spacing:1px; }
 

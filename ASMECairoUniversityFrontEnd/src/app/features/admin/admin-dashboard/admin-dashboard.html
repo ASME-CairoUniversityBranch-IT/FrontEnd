@@ -69,8 +69,8 @@
           <section class="panel-card">
             <h2 class="panel-title">PROJECTS BY TYPE</h2>
             <div class="type-row" *ngFor="let entry of typeCountEntries(vm.dashboard)">
-              <span class="type-icon">{{ iconFor(entry.label) }}</span>
-              <span class="type-name">{{ entry.label }}</span>
+              <i [class]="iconFor(entry.label) + ' type-icon'" aria-hidden="true"></i>
+              <span class="type-name">{{ labelFor(entry.label) }}</span>
               <span class="type-count">{{ entry.count }}</span>
             </div>
           </section>
@@ -82,10 +82,10 @@
               *ngIf="vm.dashboard.mostViewedProject as top; else noViews"
               [routerLink]="detailPath(top.projectId, top.type)"
             >
-              <span class="most-viewed-icon">{{ iconFor(top.type) }}</span>
+              <i [class]="iconFor(top.type) + ' most-viewed-icon'" aria-hidden="true"></i>
               <span>
                 <div class="most-viewed-title">{{ top.title }}</div>
-                <div class="most-viewed-meta">{{ top.type }} · {{ top.viewCount }} views</div>
+                <div class="most-viewed-meta">{{ labelFor(top.type) }} · {{ top.viewCount }} views</div>
               </span>
             </a>
             <ng-template #noViews>
@@ -103,9 +103,9 @@
             [routerLink]="detailPath(p.projectId, p.type)"
           >
             <span class="top-rank">{{ i + 1 }}</span>
-            <span class="top-icon">{{ iconFor(p.type) }}</span>
+            <i [class]="iconFor(p.type) + ' top-icon'" aria-hidden="true"></i>
             <span class="top-title">{{ p.title }}</span>
-            <span class="top-type">{{ p.type }}</span>
+            <span class="top-type">{{ labelFor(p.type) }}</span>
             <span class="top-views">{{ p.viewCount }} views</span>
           </a>
         </section>

@@ -6,17 +6,17 @@
     </div>
 
     <div class="error-msg" role="alert" *ngIf="vm.status === 'notFound'">
-      <h1>Workshop not found</h1>
+      <h1>Academic Workshop not found</h1>
       <a routerLink="/projects">Back to projects</a>
     </div>
 
     <ng-container *ngIf="vm.status === 'loaded'">
-    <app-project-hero [project]="vm.project" typeLabel="Workshop"></app-project-hero>
+    <app-project-hero [project]="vm.project" typeLabel="Academic Workshops"></app-project-hero>
 
     <div class="project-page-container">
       <div class="main-content">
         <div class="about-card">
-          <h2>About This Workshop</h2>
+          <h2>About This Academic Workshop</h2>
           <markdown class="markdown-body" [data]="vm.project.longDescription"></markdown>
         </div>
 

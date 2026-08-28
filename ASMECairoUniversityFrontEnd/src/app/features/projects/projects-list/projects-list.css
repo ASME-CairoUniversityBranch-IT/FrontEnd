@@ -113,6 +113,9 @@
 }
 
 .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 40px;
   padding: 8px 18px;
   border-radius: 20px;
@@ -127,6 +130,10 @@
   text-transform: uppercase;
   transition: all var(--t);
   box-shadow: 0 2px 6px rgb(13 21 64 / 4%);
+}
+
+.pill .type-icon {
+  font-size: 0.95em;
 }
 
 .pill:hover {

@@ -12,7 +12,6 @@
   align-items: center;
   gap: 12px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
   margin-bottom: 22px;
 }
 
@@ -26,6 +25,10 @@
   justify-content: center;
   align-items: center;
   font-size: 16px;
+}
+
+.icon-container i {
+  line-height: 1;
 }
 
 .card-header h2 {

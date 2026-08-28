@@ -1,7 +1,9 @@
 <div class="page-wrapper">
 
   <header class="top-nav">
-    <div class="nav-brand">ASME CU</div>
+    <div class="nav-brand">
+      <img src="logo/ASME LOGO WHITE.png" alt="ASME Cairo University" />
+    </div>
     <div class="nav-breadcrumb">ADMIN PANEL &gt; {{ breadcrumb }}</div>
     <div class="nav-right">
       <span class="admin-name" *ngIf="authService.currentUser() as u">{{ u.name }}</span>

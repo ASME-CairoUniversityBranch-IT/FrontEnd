@@ -37,7 +37,7 @@
                   [class.selected]="selectedType === t" [class.locked]="mode === 'edit'"
                   [disabled]="mode === 'edit'" (click)="selectedType = t">
             <span class="check-mark" *ngIf="selectedType === t">SELECTED</span>
-            <div class="type-mark" aria-hidden="true">{{ projectTypeIcon(t) }}</div>
+            <div class="type-mark" aria-hidden="true"><i [class]="projectTypeIcon(t)"></i></div>
             <div class="type-label">{{ projectTypeLabel(t) }}</div>
           </button>
         </div>

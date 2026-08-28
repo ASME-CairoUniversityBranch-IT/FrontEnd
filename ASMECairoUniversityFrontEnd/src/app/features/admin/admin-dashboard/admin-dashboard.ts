@@ -7,7 +7,7 @@ import { catchError, map, startWith } from 'rxjs/operators';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { DashboardAnalytics, TopProject, TypeViewCount } from '../../../core/models/analytics.model';
 import { AdminNavComponent } from '../../../shared/components/admin-nav/admin-nav';
-import { projectDetailPath, projectTypeFromLabel, projectTypeIcon } from '../../../core/utils/project-route.util';
+import { projectDetailPath, projectTypeFromLabel, projectTypeIcon, projectTypeLabel } from '../../../core/utils/project-route.util';
 
 type DashboardVM =
   | { status: 'loading' }
@@ -60,7 +60,12 @@ export class AdminDashboardComponent {
 
   iconFor(typeLabel: string): string {
     const type = projectTypeFromLabel(typeLabel);
-    return type !== null ? projectTypeIcon(type) : '--';
+    return type !== null ? projectTypeIcon(type) : 'fa-solid fa-shapes';
+  }
+
+  labelFor(typeLabel: string): string {
+    const type = projectTypeFromLabel(typeLabel);
+    return type !== null ? projectTypeLabel(type) : typeLabel;
   }
 
   typeCountEntries(dashboard: DashboardAnalytics): { label: string; count: number }[] {

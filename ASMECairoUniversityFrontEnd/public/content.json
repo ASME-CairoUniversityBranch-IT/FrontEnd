@@ -2,14 +2,14 @@
   "mainBanner": {
     "badge": "American Society of Mechanical Engineers",
     "titleLines": ["ASME", "Cairo", "University"],
-    "subtitle": "A student-led engineering community at Cairo University, building practical skills through projects, competitions, and community programs.",
+    "subtitle": "Cairo University's premier engineering society — where innovation meets excellence. Building tomorrow's engineers through projects, competitions, and community.",
     "ctaPrimary": { "label": "Explore Projects", "href": "#projects" },
     "ctaSecondary": { "label": "Join ASME", "href": "#contact" },
     "stats": [
-      { "target": 9, "suffix": "+", "label": "ASME Global recognitions" },
+      { "target": 9, "suffix": "+", "label": "ASME Global recognizations" },
       { "target": 19, "suffix": "", "label": "Years Active" },
       { "target": 41, "suffix": "+", "label": "Projects" },
-      { "target": 25, "suffix": "+", "label": "Workshops" }
+      { "target": 120, "suffix": "+", "label": "Active Members" }
     ]
   },
 
@@ -25,7 +25,7 @@
     "cards": [
       {
         "title": "GLOBAL VISION",
-        "description": "ASME connects engineers worldwide through skills, knowledge, and professional practice across emerging and established fields."
+        "description": "ASME's vision is to be the essential resource for mechanical engineers and other technical professionals worldwide to develop their skills, knowledge, and professional practices across emerging and traditional engineering frontiers."
       },
       {
         "title": "OUR BRANCH MISSION",
@@ -33,7 +33,7 @@
       },
       {
         "title": "BRANCH VISION",
-        "description": "A student organization where engineering practice, leadership, and service move together."
+        "description": "To be a top student organization promoting innovation, technical excellence, and leadership for future professionals."
       }
     ]
   },
@@ -45,20 +45,26 @@
       {
         "tag": "One Team",
         "title": "One Goal",
-        "overlayBody1": "We plan, build, and learn together across every committee. Work is visible, handoffs are clear, and every member can contribute.",
-        "overlayBody2": "Shared responsibility turns student ideas into reliable outcomes."
+        "overlayBody1": "We move as one. Every decision, every effort, every win — shared across the entire team. No silos, no solo missions. When one of us succeeds, all of us succeed.",
+        "overlayBody2": "Our unity is our greatest competitive advantage."
       },
       {
         "tag": "Grow",
         "title": "Together",
-        "overlayBody1": "We share technical knowledge, give useful feedback, and create room for members to try new responsibilities.",
-        "overlayBody2": "Progress is measured in skills put into practice."
+        "overlayBody1": "Growth is not a solo sport. We invest in each other's development, share knowledge openly, and lift each other higher. Real progress is collective progress.",
+        "overlayBody2": "We celebrate every step forward — big or small."
       },
       {
         "tag": "Drive Change",
         "title": "With Ownership",
-        "overlayBody1": "We take initiative, own our outcomes, and improve the work in front of us — from an event detail to a long-term chapter program.",
-        "overlayBody2": "Make the next decision clearer and more useful."
+        "overlayBody1": "We don't wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn't a rule — it's a mindset.",
+        "overlayBody2": "Act like an owner. Think long-term. Deliver."
+      },
+      {
+        "tag": "Shape What's",
+        "title": "NEXT",
+        "overlayBody1": "We don't wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn't a rule — it's a mindset.",
+        "overlayBody2": "Act like an owner. Think long-term. Deliver."
       }
     ]
   },
@@ -76,7 +82,7 @@
     {
       "tag": "Community",
       "title": "Alomran Language Schools Visit",
-      "desc": "Helping students raise their awareness and discover the world of engineering and volunteering.",
+      "desc": "Helpeing students, raising their awareness, and introducing them to the world of engineering and volunteering.",
       "image": "images/featured-highlights/Al-Omran-School-Visit.jpeg",
       "bg": "linear-gradient(135deg,#071030 0%,#0d2060 50%,#163580 100%)"
     },
@@ -115,7 +121,7 @@
   "committees": [
     {
       "title": "OPERATIONS",
-      "borderColor": "#1e3a8a",
+      "borderColor": "#1a2472",
       "subTeams": [
         {
           "name": "EXTERNAL RELATIONS",
@@ -129,7 +135,7 @@
     },
     {
       "title": "QUALITY",
-      "borderColor": "#10b981",
+      "borderColor": "#1a2472",
       "subTeams": [
         {
           "name": "HR",
@@ -147,7 +153,7 @@
     },
     {
       "title": "BRANDING",
-      "borderColor": "#ef4444",
+      "borderColor": "#1a2472",
       "subTeams": [
         {
           "name": "Photography & Videography",

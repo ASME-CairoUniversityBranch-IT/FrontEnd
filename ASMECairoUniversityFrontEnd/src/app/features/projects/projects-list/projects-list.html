@@ -44,7 +44,8 @@
         [class.active]="activeFilter === t"
         [attr.aria-pressed]="activeFilter === t"
         (click)="setFilter(t)">
-        {{ projectTypeIcon(t) }} {{ projectTypeLabel(t) }}
+        <i [class]="projectTypeIcon(t) + ' type-icon'" aria-hidden="true"></i>
+        <span>{{ projectTypeLabel(t) }}</span>
       </button>
     </div>
   </div>
@@ -72,7 +73,7 @@
           <a class="card" *ngFor="let p of filtered; let i = index" [routerLink]="projectDetailPath(p)">
             <div class="card-image-box">
               <img *ngIf="p.coverImageUrl" [src]="p.coverImageUrl" [alt]="p.title" [attr.loading]="i < 3 ? 'eager' : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : 'auto'" decoding="async">
-              <span *ngIf="!p.coverImageUrl" class="icon">{{ projectTypeIcon(p.type) }}</span>
+              <i *ngIf="!p.coverImageUrl" [class]="projectTypeIcon(p.type) + ' icon'" aria-hidden="true"></i>
               <span class="card-type-badge">{{ projectTypeLabel(p.type) }}</span>
             </div>
             <div class="card-content">
