@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MainBannerStatistics } from './main-banner-statistics';
+import { HeroStats } from './main-banner-statistics';
 
-describe('MainBannerStatistics', () => {
-  let component: MainBannerStatistics;
-  let fixture: ComponentFixture<MainBannerStatistics>;
+describe('HeroStats', () => {
+  let component: HeroStats;
+  let fixture: ComponentFixture<HeroStats>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MainBannerStatistics]
+      imports: [HeroStats]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(MainBannerStatistics);
+    fixture = TestBed.createComponent(HeroStats);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

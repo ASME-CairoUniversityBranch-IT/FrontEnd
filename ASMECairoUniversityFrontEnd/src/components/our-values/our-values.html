@@ -1,11 +1,11 @@
-<section class="section" id="our-values" *ngIf="loaded" data-aos="fade-right" data-aos-duration="1000">
+<section class="section" id="our-values" *ngIf="loaded">
   <p class="section-label">{{ sectionLabel }}</p>
   <h2 class="section-title">{{ sectionTitle }}</h2>
 
   <div class="cards-grid">
     <div
       class="card-wrapper"
-      *ngFor="let card of cards"
+      *ngFor="let card of cards; let i = index"
       [class.open]="card.isOpen"
     >
       <!-- Base Card -->
@@ -15,7 +15,13 @@
       </div>
 
       <!-- Overlay Card -->
-      <div class="overlay-card">
+      <div
+        class="overlay-card"
+        [id]="'value-details-' + i"
+        role="region"
+        [attr.aria-label]="card.title + ' details'"
+        [attr.aria-hidden]="!card.isOpen"
+        [attr.inert]="!card.isOpen ? '' : null">
         <span class="overlay-tag">{{ card.tag }}</span>
         <h3 class="overlay-title">{{ card.title }}</h3>
         <div class="overlay-divider"></div>
@@ -25,9 +31,13 @@
 
       <!-- Plus Button -->
       <button
+        type="button"
         class="plus-btn"
-        (click)="openCard(card)"
-        aria-label="Learn more"
+        (click)="openCard(card, $event.currentTarget)"
+        [attr.aria-label]="'Learn more about ' + card.title"
+        [attr.aria-expanded]="card.isOpen"
+        [attr.aria-controls]="'value-details-' + i"
+        [attr.tabindex]="card.isOpen ? -1 : 0"
       >
         <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
@@ -36,9 +46,11 @@
 
       <!-- Close Button -->
       <button
+        type="button"
         class="close-btn"
         (click)="closeCard(card)"
-        aria-label="Close"
+        [attr.aria-label]="'Close ' + card.title + ' details'"
+        [attr.tabindex]="card.isOpen ? 0 : -1"
       >
         <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M2 2l10 10M12 2L2 12" stroke="rgba(255,255,255,0.85)" stroke-width="1.8" stroke-linecap="round"/>

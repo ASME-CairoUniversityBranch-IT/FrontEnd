@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { Observable } from 'rxjs';
@@ -17,7 +18,7 @@ import { TripLogisticsComponent } from '../../../shared/components/trip-logistic
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, MarkdownComponent, ProjectHeroComponent, ProjectGalleryComponent,
+    CommonModule, RouterModule, MarkdownComponent, ProjectHeroComponent, ProjectGalleryComponent,
     ProjectDetailsComponent, ReservationComponent, TripLogisticsComponent,
   ],
   templateUrl: './fieldtrip-detail.html',

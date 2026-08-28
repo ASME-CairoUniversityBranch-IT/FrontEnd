@@ -1,14 +1,22 @@
 <section class="projects-section" id="projects">
 
   <div class="header">
-    <p class="subtitle"><span>—</span> WHAT WE DO</p>
-    <h1 class="main-title">OUR PROJECTS</h1>
+    <p class="subtitle"><span aria-hidden="true"></span> WHAT WE DO</p>
+    <h2 class="main-title">OUR PROJECTS</h2>
   </div>
 
   <div class="tabs-container">
-    <ul class="tabs">
-      <li *ngFor="let t of tabs" [class.active]="activeTab === t" (click)="switchTab(t)">
-        {{ projectTypeLabel(t) }}
+    <ul class="tabs" role="tablist" aria-label="Project categories">
+      <li *ngFor="let t of tabs" role="presentation">
+        <button
+          type="button"
+          class="tab-button"
+          role="tab"
+          [class.active]="activeTab === t"
+          [attr.aria-selected]="activeTab === t"
+          (click)="switchTab(t)">
+          {{ projectTypeLabel(t) }}
+        </button>
       </li>
     </ul>
     <hr class="tabs-line">
@@ -22,17 +30,16 @@
 
     <div class="cards-grid" *ngIf="vm.status === 'loaded'">
       <ng-container *ngIf="projectsForTab(vm.projects) as filtered">
-        <a class="card" *ngFor="let project of filtered" [routerLink]="projectDetailPath(project)"
-           data-aos="fade-up" data-aos-duration="700">
+        <a class="card" *ngFor="let project of filtered" [routerLink]="projectDetailPath(project)">
           <div class="card-image-box">
-            <img *ngIf="project.coverImageUrl" [src]="project.coverImageUrl" [alt]="project.title">
+            <img *ngIf="project.coverImageUrl" [src]="project.coverImageUrl" [alt]="project.title" loading="lazy" decoding="async">
             <span *ngIf="!project.coverImageUrl" class="icon">{{ projectTypeIcon(project.type) }}</span>
           </div>
 
           <div class="card-content">
             <h3 class="card-title">{{ project.title }}</h3>
             <p class="card-description">{{ project.shortDescription }}</p>
-            <p class="card-date">📅 {{ project.mainDateAndTime | date:'mediumDate' }}</p>
+            <p class="card-date"><span class="date-label">DATE</span> {{ project.mainDateAndTime | date:'mediumDate' }}</p>
           </div>
         </a>
         <p class="empty-msg" *ngIf="filtered.length === 0">No {{ projectTypeLabel(activeTab) | lowercase }}s yet — check back soon.</p>

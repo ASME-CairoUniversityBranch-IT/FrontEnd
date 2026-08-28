@@ -1,38 +1,46 @@
 .contact-section {
-  background-color: #f8f9fc;
-  padding: 80px 20px;
-  font-family: var(--font-b);
-  color: #0b112a;
+  background: var(--off-white);
+  padding: var(--section-y) max(var(--gutter), calc((100% - var(--content-max)) / 2));
+  font-family: var(--font-body);
+  color: var(--text-body);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .contact-container {
   width: 100%;
-  max-width: 1100px;
   margin: 0 auto;
 }
 
 .contact-info {
   width: 100%;
-  max-width: 850px;
   margin: 0 auto;
 }
-
 
 /* =========================
    SECTION HEADING
    ========================= */
 
 .contact-section .subtitle {
-  color: #7b8ebd;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--blue);
   font-family: var(--heading-eyebrow-font);
   font-size: var(--heading-eyebrow-size);
   font-weight: var(--heading-eyebrow-weight);
   letter-spacing: var(--heading-eyebrow-tracking);
-  margin: 0 0 10px;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  opacity: 0.75;
 }
 
 .contact-section .subtitle span {
-  margin-right: 5px;
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  background: var(--accent);
+  margin-right: 2px;
 }
 
 .contact-section .title {
@@ -40,19 +48,18 @@
   font-size: var(--heading-title-size);
   font-weight: var(--heading-title-weight);
   line-height: 1;
-  color: #0b112a;
+  color: var(--navy);
   text-transform: uppercase;
-  margin: 0 0 18px;
+  margin: 0 0 16px;
 }
 
 .contact-section .hear-text {
-  font-family: var(--font-b);
-  font-size: 20px;
+  font-family: var(--font-body);
+  font-size: clamp(16px, 1.6vw, 19px);
   font-weight: 400;
-  color: #4a5578;
-  margin: 0 0 40px;
+  color: var(--text-muted);
+  margin: 0 0 36px;
 }
-
 
 /* =========================
    CONTACT DETAILS
@@ -61,7 +68,7 @@
 .contact-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 60px;
+  column-gap: clamp(32px, 5vw, 64px);
   row-gap: 0;
 }
 
@@ -71,35 +78,41 @@
   align-items: flex-start;
   gap: 18px;
   padding: 24px 0;
-  border-bottom: 1px solid #e2e6ef;
+  border-bottom: 1px solid var(--line);
+  transition: border-color var(--t);
 }
 
+.info-item:hover {
+  border-color: var(--accent);
+}
 
 /* =========================
    ICON
    ========================= */
 
 .info-item .icon {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background-color: #ffffff;
+  background-color: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
-
-  box-shadow: 0 5px 15px rgba(11, 17, 42, 0.06);
+  box-shadow: var(--shadow-soft);
+  color: var(--blue);
+  font-size: 18px;
+  transition: transform var(--t), background-color var(--t), color var(--t), border-color var(--t), box-shadow var(--t);
 }
 
-.info-item .icon img {
-  width: 25px;
-  height: 25px;
-  object-fit: contain;
+.info-item:hover .icon {
+  background-color: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
-
 
 /* =========================
    TEXT
@@ -111,17 +124,18 @@
 }
 
 .info-text h4 {
-  font-family: var(--font-b);
-  font-size: 12px;
+  font-family: var(--font-display);
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  margin: 2px 0 8px;
-  color: #0b112a;
+  text-transform: uppercase;
+  margin: 2px 0 6px;
+  color: var(--navy);
 }
 
 .info-text p {
-  color: #596580;
-  font-family: var(--font-b);
+  color: var(--text-muted);
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
@@ -132,113 +146,39 @@
 .info-text a {
   color: inherit;
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color var(--t);
 }
 
 .info-text a:hover {
-  color: #1a2472;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-
 /* =========================
-   TABLET
+   TABLET & MOBILE
    ========================= */
 
-@media (max-width: 900px) {
-  .contact-section {
-    padding: 60px 30px;
-  }
-
-  .contact-info {
-    max-width: 750px;
-  }
-
+@media (max-width: 860px) {
   .contact-details {
     grid-template-columns: 1fr;
-    column-gap: 0;
   }
 }
 
-
-/* =========================
-   PHONE
-   ========================= */
-
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .contact-section {
-    padding: 50px 20px;
-  }
-
-  .contact-info {
-    max-width: 100%;
-  }
-
-  .contact-section .hear-text {
-    font-size: 18px;
-    margin-bottom: 30px;
-  }
-
-  .contact-details {
-    display: flex;
-    flex-direction: column;
+    padding: var(--section-y) 16px;
   }
 
   .info-item {
-    padding: 20px 0;
+    padding: 18px 0;
     gap: 14px;
   }
 
   .info-item .icon {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-  }
-
-  .info-item .icon img {
-    width: 23px;
-    height: 23px;
-  }
-
-  .info-text h4 {
-    font-size: 11px;
-  }
-
-  .info-text p {
-    font-size: 13px;
-    line-height: 1.5;
-  }
-}
-
-
-/* =========================
-   SMALL PHONE
-   ========================= */
-
-@media (max-width: 400px) {
-  .contact-section {
-    padding: 40px 16px;
-  }
-
-  .contact-section .hear-text {
-    font-size: 17px;
-  }
-
-  .info-item {
-    gap: 12px;
-  }
-
-  .info-item .icon {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-  }
-
-  .info-item .icon img {
-    width: 21px;
-    height: 21px;
-  }
-
-  .info-text p {
-    font-size: 12px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    font-size: 16px;
   }
 }

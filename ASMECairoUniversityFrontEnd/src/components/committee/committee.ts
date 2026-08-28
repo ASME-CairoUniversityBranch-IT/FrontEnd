@@ -1,26 +1,24 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import * as AOS from 'aos';
 import { ContentService } from '../../app/core/services/content.service';
 
-interface SubTeamVM {
+export interface SubTeamWithIcon {
   name: string;
-  icon: string;
   description: string;
+  icon: string;
 }
 
-/** A committee plus the client-only UI state (isExpanded) that content.json doesn't need to know about. */
-interface CommitteeVM {
+export interface EnrichedCommittee {
   title: string;
-  icon: string;
+  index: number;
   borderColor: string;
-  isExpanded: boolean;
-  subTeams: SubTeamVM[];
+  subTeams: SubTeamWithIcon[];
 }
 
 @Component({
   selector: 'app-committee',
+  standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './committee.html',
   styleUrl: './committee.css',
@@ -28,14 +26,20 @@ interface CommitteeVM {
 export class Committee implements OnInit {
   subtitle = '';
   title = '';
-
-  /** Variable length — driven entirely by content.json's `committee.committees` array. */
-  committees: CommitteeVM[] = [];
-
+  committees: EnrichedCommittee[] = [];
+  selectedCommitteeIndex = 0;
   loaded = false;
 
-  /** Sub-team currently shown in the popup, or null when the popup is closed. */
-  selectedSubTeam: SubTeamVM | null = null;
+  private iconMap: Record<string, string> = {
+    'external relations': 'fa-solid fa-handshake',
+    'oc & logistics': 'fa-solid fa-boxes-packing',
+    'hr': 'fa-solid fa-users-gear',
+    'supply chain': 'fa-solid fa-network-wired',
+    'it': 'fa-solid fa-laptop-code',
+    'photography & videography': 'fa-solid fa-camera-retro',
+    'graphic design': 'fa-solid fa-palette',
+    'marketing': 'fa-solid fa-bullhorn',
+  };
 
   constructor(
     private contentService: ContentService,
@@ -43,30 +47,33 @@ export class Committee implements OnInit {
   ) {}
 
   ngOnInit() {
-    AOS.init();
-
     this.contentService.getContent().subscribe((data) => {
       this.subtitle = data.committee.subtitle;
       this.title = data.committee.title;
-      this.committees = data.committee.committees.map((c) => ({ ...c, isExpanded: false }));
+      this.committees = data.committee.committees.map((c, cIndex) => ({
+        title: c.title,
+        index: cIndex,
+        borderColor: c.borderColor,
+        subTeams: c.subTeams.map((sub) => {
+          const key = sub.name.trim().toLowerCase();
+          return {
+            name: sub.name,
+            description: sub.description,
+            icon: this.iconMap[key] || 'fa-solid fa-gear',
+          };
+        }),
+      }));
+
       this.loaded = true;
-      // Cards are rendered via *ngFor once content arrives, so AOS needs to
-      // re-scan the DOM for the data-aos elements that just appeared.
       this.cdr.detectChanges();
-      AOS.refreshHard();
     });
   }
 
-  toggleCommittee(index: number) {
-    this.committees[index].isExpanded = !this.committees[index].isExpanded;
+  selectCommittee(index: number): void {
+    this.selectedCommitteeIndex = index;
   }
 
-  openTeamModal(sub: SubTeamVM, event: MouseEvent) {
-    event.stopPropagation();
-    this.selectedSubTeam = sub;
-  }
-
-  closeTeamModal() {
-    this.selectedSubTeam = null;
+  get activeCommittee(): EnrichedCommittee | undefined {
+    return this.committees[this.selectedCommitteeIndex];
   }
 }

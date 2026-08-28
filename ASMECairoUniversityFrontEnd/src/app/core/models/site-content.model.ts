@@ -33,8 +33,6 @@ export interface MainBannerContent {
 }
 
 export interface AboutAsmeCard {
-  /** A single emoji or short icon glyph. */
-  icon: string;
   title: string;
   description: string;
 }
@@ -68,8 +66,6 @@ export interface ActivitySlide {
   desc: string;
   /** CSS background value, e.g. a linear-gradient(...) string. */
   bg: string;
-  /** Raw decorative SVG markup rendered behind the slide text. */
-  decoSvg: string;
   image: string;
 }
 
@@ -89,13 +85,11 @@ export interface ActivitiesAchievementsContent {
 
 export interface SubTeam {
   name: string;
-  icon: string;
   description: string;
 }
 
 export interface CommitteeItem {
   title: string;
-  icon: string;
   /** Hex color for the card's left border accent, e.g. "#1e3a8a". */
   borderColor: string;
   subTeams: SubTeam[];

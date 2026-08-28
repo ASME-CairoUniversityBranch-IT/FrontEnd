@@ -6,7 +6,7 @@
       <p>Loading project...</p>
     </div>
 
-    <div class="state-msg" *ngIf="loadError">{{ loadError }}</div>
+    <div class="state-msg" role="alert" *ngIf="loadError">{{ loadError }}</div>
 
     <ng-container *ngIf="!loadingProject && !loadError">
 
@@ -17,13 +17,13 @@
           <p class="page-subtitle">{{ mode === 'edit' ? 'Update the details below.' : 'Fill in the details below.' }}</p>
         </div>
         <div class="header-actions">
-          <button class="btn-publish-top" (click)="onPublish()" [disabled]="requiredRemaining > 0 || submitting">
+          <button type="button" class="btn-publish-top" (click)="onPublish()" [disabled]="requiredRemaining > 0 || submitting">
             {{ submitting ? (mode === 'edit' ? 'SAVING…' : 'PUBLISHING…') : (mode === 'edit' ? 'SAVE CHANGES →' : 'PUBLISH →') }}
           </button>
         </div>
       </div>
 
-      <p class="submit-error" *ngIf="submitError">{{ submitError }}</p>
+      <p class="submit-error" role="alert" *ngIf="submitError">{{ submitError }}</p>
 
       <!-- 1: PROJECT TYPE -->
       <section class="section-card">
@@ -36,8 +36,8 @@
           <button type="button" class="type-card" *ngFor="let t of types"
                   [class.selected]="selectedType === t" [class.locked]="mode === 'edit'"
                   [disabled]="mode === 'edit'" (click)="selectedType = t">
-            <span class="check-mark" *ngIf="selectedType === t">✓</span>
-            <div class="type-emoji">{{ projectTypeIcon(t) }}</div>
+            <span class="check-mark" *ngIf="selectedType === t">SELECTED</span>
+            <div class="type-mark" aria-hidden="true">{{ projectTypeIcon(t) }}</div>
             <div class="type-label">{{ projectTypeLabel(t) }}</div>
           </button>
         </div>
@@ -50,20 +50,20 @@
           <div class="section-title">BASIC INFORMATION</div>
         </div>
         <div class="form-group">
-          <label class="field-label">TITLE <span class="req">*</span></label>
-          <input type="text" class="form-input" [(ngModel)]="title" name="title">
+          <label class="field-label" for="title">TITLE <span class="req">*</span></label>
+          <input id="title" type="text" class="form-input" [(ngModel)]="title" name="title">
         </div>
         <div class="form-group">
-          <label class="field-label">SHORT DESCRIPTION <span class="req">*</span></label>
-          <textarea class="form-textarea" [(ngModel)]="shortDescription" name="shortDescription"></textarea>
+          <label class="field-label" for="shortDescription">SHORT DESCRIPTION <span class="req">*</span></label>
+          <textarea id="shortDescription" class="form-textarea" [(ngModel)]="shortDescription" name="shortDescription"></textarea>
         </div>
         <div class="form-group">
-          <label class="field-label">LONG DESCRIPTION <span class="opt">(Markdown supported)</span></label>
+          <label class="field-label" for="longDescription">LONG DESCRIPTION <span class="opt">(Markdown supported)</span></label>
           <div class="md-tabs">
             <button type="button" class="md-tab" [class.active]="descriptionView === 'write'" (click)="descriptionView = 'write'">Write</button>
             <button type="button" class="md-tab" [class.active]="descriptionView === 'preview'" (click)="descriptionView = 'preview'">Preview</button>
           </div>
-          <textarea *ngIf="descriptionView === 'write'" class="form-textarea" rows="8"
+          <textarea *ngIf="descriptionView === 'write'" id="longDescription" class="form-textarea" rows="8"
                     [(ngModel)]="longDescription" name="longDescription"
                     placeholder="Supports Markdown: **bold**, _italic_, # headings, - lists, [links](url)..."></textarea>
           <div class="md-preview-box" *ngIf="descriptionView === 'preview'">
@@ -81,40 +81,40 @@
         </div>
         <div class="form-row two-col">
           <div class="form-group">
-            <label class="field-label">DATE <span class="req">*</span></label>
-            <input type="date" class="form-input" [(ngModel)]="date" name="date">
+            <label class="field-label" for="date">DATE <span class="req">*</span></label>
+            <input id="date" type="date" class="form-input" [(ngModel)]="date" name="date">
           </div>
           <div class="form-group">
-            <label class="field-label">TIME</label>
-            <input type="time" class="form-input" [(ngModel)]="time" name="time">
+            <label class="field-label" for="time">TIME</label>
+            <input id="time" type="time" class="form-input" [(ngModel)]="time" name="time">
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label">LOCATION <span class="req">*</span></label>
-          <input type="text" class="form-input" [(ngModel)]="location" name="location">
+          <label class="field-label" for="location">LOCATION <span class="req">*</span></label>
+          <input id="location" type="text" class="form-input" [(ngModel)]="location" name="location">
         </div>
 
         <!-- Workshop-specific dates -->
         <div class="form-row two-col" *ngIf="selectedType === ProjectType.Workshop">
           <div class="form-group">
-            <label class="field-label">START DATE</label>
-            <input type="date" class="form-input" [(ngModel)]="startDate" name="startDate">
+            <label class="field-label" for="startDate">START DATE</label>
+            <input id="startDate" type="date" class="form-input" [(ngModel)]="startDate" name="startDate">
           </div>
           <div class="form-group">
-            <label class="field-label">END DATE</label>
-            <input type="date" class="form-input" [(ngModel)]="endDate" name="endDate">
+            <label class="field-label" for="endDate">END DATE</label>
+            <input id="endDate" type="date" class="form-input" [(ngModel)]="endDate" name="endDate">
           </div>
         </div>
 
         <!-- FieldTrip-specific dates -->
         <div class="form-row two-col" *ngIf="selectedType === ProjectType.FieldTrip">
           <div class="form-group">
-            <label class="field-label">DEPARTURE TIME</label>
-            <input type="datetime-local" class="form-input" [(ngModel)]="departureTime" name="departureTime">
+            <label class="field-label" for="departureTime">DEPARTURE TIME</label>
+            <input id="departureTime" type="datetime-local" class="form-input" [(ngModel)]="departureTime" name="departureTime">
           </div>
           <div class="form-group">
-            <label class="field-label">RETURN TIME</label>
-            <input type="datetime-local" class="form-input" [(ngModel)]="returnTime" name="returnTime">
+            <label class="field-label" for="returnTime">RETURN TIME</label>
+            <input id="returnTime" type="datetime-local" class="form-input" [(ngModel)]="returnTime" name="returnTime">
           </div>
         </div>
       </section>
@@ -127,40 +127,43 @@
         </div>
 
         <div class="form-group">
-          <label class="field-label">COVER IMAGE <span class="req" *ngIf="mode === 'create'">*</span><span class="opt" *ngIf="mode === 'edit'">(leave as-is to keep the current cover)</span></label>
+          <label class="field-label" for="coverImage">COVER IMAGE <span class="req" *ngIf="mode === 'create'">*</span><span class="opt" *ngIf="mode === 'edit'">(leave as-is to keep the current cover)</span></label>
           <div class="dropzone" (dragover)="onDragOver($event)" (drop)="onDrop($event)" [class.drag-over]="isDragOver">
             <ng-container *ngIf="!coverPreview">
-              <div class="dz-icon">🖼️</div>
+              <div class="dz-icon" aria-hidden="true">IMG</div>
               <div class="dz-label">Drop image here or browse</div>
               <div class="dz-hint">PNG, JPG up to 5MB</div>
             </ng-container>
             <div *ngIf="coverPreview">
               <img [src]="coverPreview" alt="Cover" class="cover-preview">
-              <button type="button" class="btn-remove-img" (click)="removeImage($event)">✕ Remove</button>
+              <button type="button" class="btn-remove-img" (click)="removeImage($event)">REMOVE IMAGE</button>
             </div>
-            <input type="file" hidden #fileInput (change)="onFileSelected($event)" accept="image/png, image/jpeg">
+            <input id="coverImage" type="file" hidden #fileInput (change)="onFileSelected($event)" accept="image/png, image/jpeg" aria-label="Choose cover image">
             <button *ngIf="!coverPreview" type="button" class="btn-draft-top" style="margin-top:15px" (click)="fileInput.click()">Upload Image</button>
           </div>
         </div>
 
         <div class="form-group" *ngIf="mode === 'edit' && existingGalleryImages.length">
-          <label class="field-label">CURRENT GALLERY <span class="opt">(uncheck to remove on save)</span></label>
+          <div class="field-label">CURRENT GALLERY <span class="opt">(uncheck to remove on save)</span></div>
           <div class="gallery-preview-grid">
             <div class="gallery-preview-item" *ngFor="let g of existingGalleryImages" [class.marked-removed]="!galleryIdsToKeep.has(g.id)">
               <img [src]="g.url" alt="Gallery image">
-              <button *ngIf="galleryIdsToKeep.has(g.id)" type="button" class="btn-x-entry" (click)="removeExistingGalleryImage(g.id)">✕</button>
-              <button *ngIf="!galleryIdsToKeep.has(g.id)" type="button" class="btn-restore-entry" (click)="restoreExistingGalleryImage(g.id)">↺ Undo</button>
+              <button *ngIf="galleryIdsToKeep.has(g.id)" type="button" class="btn-x-entry" (click)="removeExistingGalleryImage(g.id)">REMOVE</button>
+              <button *ngIf="!galleryIdsToKeep.has(g.id)" type="button" class="btn-restore-entry" (click)="restoreExistingGalleryImage(g.id)">UNDO</button>
             </div>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="field-label">{{ mode === 'edit' ? 'ADD NEW GALLERY IMAGES' : 'GALLERY IMAGES' }}</label>
-          <input type="file" multiple accept="image/png, image/jpeg" (change)="onGallerySelected($event)">
-          <div class="gallery-preview-grid" *ngIf="galleryPreviews.length">
-            <div class="gallery-preview-item" *ngFor="let src of galleryPreviews; let i = index">
-              <img [src]="src" alt="Gallery preview">
-              <button type="button" class="btn-x-entry" (click)="removeGalleryImage(i)">✕</button>
+          <label class="field-label" for="galleryImages">{{ mode === 'edit' ? 'ADD NEW GALLERY IMAGES' : 'GALLERY IMAGES' }}</label>
+          <input id="galleryImages" type="file" multiple accept="image/png, image/jpeg" (change)="onGallerySelected($event)" aria-describedby="galleryImageHint">
+          <div id="galleryImageHint" class="field-hint">PNG or JPG, up to 5 MB each.</div>
+          <p class="submit-error" role="alert" *ngIf="galleryError">{{ galleryError }}</p>
+          <div class="gallery-preview-grid" *ngIf="galleryUploads.length">
+            <div class="gallery-preview-item" *ngFor="let upload of galleryUploads; let i = index">
+              <img *ngIf="upload.preview; else previewLoading" [src]="upload.preview" alt="Gallery preview">
+              <ng-template #previewLoading><span class="preview-loading">Loading preview…</span></ng-template>
+              <button type="button" class="btn-x-entry" (click)="removeGalleryImage(i)">REMOVE</button>
             </div>
           </div>
         </div>
@@ -174,23 +177,23 @@
         </div>
         <div class="form-row two-col">
           <div class="form-group">
-            <label class="field-label">TICKET PRICE</label>
-            <input type="number" class="form-input" [(ngModel)]="ticketPrice" name="ticketPrice">
+            <label class="field-label" for="ticketPrice">TICKET PRICE</label>
+            <input id="ticketPrice" type="number" class="form-input" [(ngModel)]="ticketPrice" name="ticketPrice">
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label">SCHEDULE NOTES</label>
-          <textarea class="form-textarea" [(ngModel)]="scheduleNotes" name="scheduleNotes"></textarea>
+          <label class="field-label" for="scheduleNotes">SCHEDULE NOTES</label>
+          <textarea id="scheduleNotes" class="form-textarea" [(ngModel)]="scheduleNotes" name="scheduleNotes"></textarea>
         </div>
         <div class="form-group">
-          <label class="field-label">COMMENT</label>
-          <textarea class="form-textarea" [(ngModel)]="comment" name="comment"></textarea>
+          <label class="field-label" for="comment">COMMENT</label>
+          <textarea id="comment" class="form-textarea" [(ngModel)]="comment" name="comment"></textarea>
         </div>
 
         <div class="tabs">
-          <button type="button" class="tab" [class.active]="activeTab === 'speakers'" (click)="activeTab = 'speakers'">🎤 SPEAKERS</button>
-          <button type="button" class="tab" [class.active]="activeTab === 'partners'" (click)="activeTab = 'partners'">🤝 PARTNERS</button>
-          <button type="button" class="tab" [class.active]="activeTab === 'sponsors'" (click)="activeTab = 'sponsors'">🏆 SPONSORS</button>
+          <button type="button" class="tab" [class.active]="activeTab === 'speakers'" (click)="activeTab = 'speakers'">SPEAKERS</button>
+          <button type="button" class="tab" [class.active]="activeTab === 'partners'" (click)="activeTab = 'partners'">PARTNERS</button>
+          <button type="button" class="tab" [class.active]="activeTab === 'sponsors'" (click)="activeTab = 'sponsors'">SPONSORS</button>
         </div>
 
         <ng-container *ngIf="activeTab === 'speakers'">
@@ -199,21 +202,21 @@
               <div class="photo-upload">
                 <div class="photo-preview" [class.empty]="!s.photoPreview">
                   <img *ngIf="s.photoPreview" [src]="s.photoPreview" alt="Speaker photo">
-                  <span *ngIf="!s.photoPreview">📷</span>
+                  <span *ngIf="!s.photoPreview" aria-hidden="true">IMG</span>
                 </div>
-                <input type="file" hidden #speakerPhoto accept="image/png, image/jpeg" (change)="setPersonPhoto(s, $any($event.target).files?.[0] ?? null)">
+                <input type="file" hidden #speakerPhoto accept="image/png, image/jpeg" aria-label="Choose speaker photo" (change)="setPersonPhoto(s, $any($event.target).files?.[0] ?? null)">
                 <button type="button" class="btn-photo-pick" (click)="speakerPhoto.click()">{{ s.photoPreview ? 'Change' : 'Add' }} photo</button>
                 <button type="button" class="btn-photo-clear" *ngIf="s.photoPreview" (click)="clearPersonPhoto(s)">Remove</button>
               </div>
               <div class="person-fields">
                 <div class="form-row two-col">
-                  <input type="text" class="form-input" placeholder="Name" [(ngModel)]="s.name" [name]="'speakerName'+i">
-                  <input type="text" class="form-input" placeholder="Title (e.g. AI Research Engineer)" [(ngModel)]="s.title" [name]="'speakerTitle'+i">
+                  <input type="text" class="form-input" placeholder="Name" [attr.aria-label]="'Speaker ' + (i + 1) + ' name'" [(ngModel)]="s.name" [name]="'speakerName'+i">
+                  <input type="text" class="form-input" placeholder="Title (e.g. AI Research Engineer)" [attr.aria-label]="'Speaker ' + (i + 1) + ' title'" [(ngModel)]="s.title" [name]="'speakerTitle'+i">
                 </div>
-                <input type="text" class="form-input" placeholder="Short bio (optional)" [(ngModel)]="s.shortBio" [name]="'speakerBio'+i">
+                <input type="text" class="form-input" placeholder="Short bio (optional)" [attr.aria-label]="'Speaker ' + (i + 1) + ' short bio'" [(ngModel)]="s.shortBio" [name]="'speakerBio'+i">
               </div>
             </div>
-            <button type="button" class="btn-x-entry" (click)="removeSpeaker(i)">✕ Remove speaker</button>
+            <button type="button" class="btn-x-entry" (click)="removeSpeaker(i)">REMOVE SPEAKER</button>
           </div>
           <button type="button" class="btn-add-entry" (click)="addSpeaker()">+ ADD SPEAKER</button>
         </ng-container>
@@ -222,25 +225,25 @@
           <div class="person-entry" *ngFor="let p of partners; let i = index">
             <div class="person-entry-body">
               <div class="photo-upload">
-                <div class="photo-preview" [class.empty]="!p.photoPreview">
+                <div class="photo-preview logo-preview" [class.empty]="!p.photoPreview">
                   <img *ngIf="p.photoPreview" [src]="p.photoPreview" alt="Partner logo">
-                  <span *ngIf="!p.photoPreview">📷</span>
+                  <span *ngIf="!p.photoPreview" aria-hidden="true">LOGO</span>
                 </div>
-                <input type="file" hidden #partnerPhoto accept="image/png, image/jpeg" (change)="setPersonPhoto(p, $any($event.target).files?.[0] ?? null)">
+                <input type="file" hidden #partnerPhoto accept="image/png, image/jpeg" aria-label="Choose partner logo" (change)="setPersonPhoto(p, $any($event.target).files?.[0] ?? null)">
                 <button type="button" class="btn-photo-pick" (click)="partnerPhoto.click()">{{ p.photoPreview ? 'Change' : 'Add' }} logo</button>
                 <button type="button" class="btn-photo-clear" *ngIf="p.photoPreview" (click)="clearPersonPhoto(p)">Remove</button>
               </div>
               <div class="person-fields">
                 <div class="form-row two-col">
-                  <input type="text" class="form-input" placeholder="Partner name" [(ngModel)]="p.name" [name]="'partnerName'+i">
-                  <input type="text" class="form-input" placeholder="Type (e.g. Academic)" [(ngModel)]="p.partnerType" [name]="'partnerType'+i">
+                  <input type="text" class="form-input" placeholder="Partner name" [attr.aria-label]="'Partner ' + (i + 1) + ' name'" [(ngModel)]="p.name" [name]="'partnerName'+i">
+                  <input type="text" class="form-input" placeholder="Type (e.g. Academic)" [attr.aria-label]="'Partner ' + (i + 1) + ' type'" [(ngModel)]="p.partnerType" [name]="'partnerType'+i">
                 </div>
                 <label class="checkbox-label">
                   <input type="checkbox" [(ngModel)]="p.isMainPartner" [name]="'partnerMain'+i"> Main partner
                 </label>
               </div>
             </div>
-            <button type="button" class="btn-x-entry" (click)="removePartner(i)">✕ Remove partner</button>
+            <button type="button" class="btn-x-entry" (click)="removePartner(i)">REMOVE PARTNER</button>
           </div>
           <button type="button" class="btn-add-entry" (click)="addPartner()">+ ADD PARTNER</button>
         </ng-container>
@@ -249,18 +252,18 @@
           <div class="person-entry" *ngFor="let s of sponsors; let i = index">
             <div class="person-entry-body">
               <div class="photo-upload">
-                <div class="photo-preview" [class.empty]="!s.photoPreview">
+                <div class="photo-preview logo-preview" [class.empty]="!s.photoPreview">
                   <img *ngIf="s.photoPreview" [src]="s.photoPreview" alt="Sponsor logo">
-                  <span *ngIf="!s.photoPreview">📷</span>
+                  <span *ngIf="!s.photoPreview" aria-hidden="true">LOGO</span>
                 </div>
-                <input type="file" hidden #sponsorPhoto accept="image/png, image/jpeg" (change)="setPersonPhoto(s, $any($event.target).files?.[0] ?? null)">
+                <input type="file" hidden #sponsorPhoto accept="image/png, image/jpeg" aria-label="Choose sponsor logo" (change)="setPersonPhoto(s, $any($event.target).files?.[0] ?? null)">
                 <button type="button" class="btn-photo-pick" (click)="sponsorPhoto.click()">{{ s.photoPreview ? 'Change' : 'Add' }} logo</button>
                 <button type="button" class="btn-photo-clear" *ngIf="s.photoPreview" (click)="clearPersonPhoto(s)">Remove</button>
               </div>
               <div class="person-fields">
                 <div class="form-row two-col">
-                  <input type="text" class="form-input" placeholder="Sponsor name" [(ngModel)]="s.name" [name]="'sponsorName'+i">
-                  <select class="form-select" [(ngModel)]="s.sponsorshipTier" [name]="'sponsorTier'+i">
+                  <input type="text" class="form-input" placeholder="Sponsor name" [attr.aria-label]="'Sponsor ' + (i + 1) + ' name'" [(ngModel)]="s.name" [name]="'sponsorName'+i">
+                  <select class="form-select" [attr.aria-label]="'Sponsor ' + (i + 1) + ' sponsorship tier'" [(ngModel)]="s.sponsorshipTier" [name]="'sponsorTier'+i">
                     <option [ngValue]="SponsorshipTier.Strategic">Strategic</option>
                     <option [ngValue]="SponsorshipTier.Platinum">Platinum</option>
                     <option [ngValue]="SponsorshipTier.Gold">Gold</option>
@@ -270,7 +273,7 @@
                 </div>
               </div>
             </div>
-            <button type="button" class="btn-x-entry" (click)="removeSponsor(i)">✕ Remove sponsor</button>
+            <button type="button" class="btn-x-entry" (click)="removeSponsor(i)">REMOVE SPONSOR</button>
           </div>
           <button type="button" class="btn-add-entry" (click)="addSponsor()">+ ADD SPONSOR</button>
         </ng-container>
@@ -282,8 +285,8 @@
           <div class="section-title">WORKSHOP DETAILS</div>
         </div>
         <div class="form-group">
-          <label class="field-label">NUMBER OF SESSIONS</label>
-          <input type="number" class="form-input" [(ngModel)]="numberOfSessions" name="numberOfSessions">
+          <label class="field-label" for="numberOfSessions">NUMBER OF SESSIONS</label>
+          <input id="numberOfSessions" type="number" class="form-input" [(ngModel)]="numberOfSessions" name="numberOfSessions">
         </div>
 
         <div class="person-entry" *ngFor="let ins of instructors; let i = index">
@@ -291,26 +294,26 @@
             <div class="photo-upload">
               <div class="photo-preview" [class.empty]="!ins.photoPreview">
                 <img *ngIf="ins.photoPreview" [src]="ins.photoPreview" alt="Instructor photo">
-                <span *ngIf="!ins.photoPreview">📷</span>
+                <span *ngIf="!ins.photoPreview" aria-hidden="true">IMG</span>
               </div>
-              <input type="file" hidden #insPhoto accept="image/png, image/jpeg" (change)="setPersonPhoto(ins, $any($event.target).files?.[0] ?? null)">
+              <input type="file" hidden #insPhoto accept="image/png, image/jpeg" aria-label="Choose instructor photo" (change)="setPersonPhoto(ins, $any($event.target).files?.[0] ?? null)">
               <button type="button" class="btn-photo-pick" (click)="insPhoto.click()">{{ ins.photoPreview ? 'Change' : 'Add' }} photo</button>
               <button type="button" class="btn-photo-clear" *ngIf="ins.photoPreview" (click)="clearPersonPhoto(ins)">Remove</button>
             </div>
             <div class="person-fields">
               <div class="form-row two-col">
-                <input type="text" class="form-input" placeholder="Full Name" [(ngModel)]="ins.fullName" [name]="'insFullName'+i">
-                <input type="text" class="form-input" placeholder="Title" [(ngModel)]="ins.title" [name]="'insTitle'+i">
+                <input type="text" class="form-input" placeholder="Full Name" [attr.aria-label]="'Instructor ' + (i + 1) + ' full name'" [(ngModel)]="ins.fullName" [name]="'insFullName'+i">
+                <input type="text" class="form-input" placeholder="Title" [attr.aria-label]="'Instructor ' + (i + 1) + ' title'" [(ngModel)]="ins.title" [name]="'insTitle'+i">
               </div>
               <div class="form-row two-col">
-                <input type="text" class="form-input" placeholder="Specialization" [(ngModel)]="ins.specialization" [name]="'insSpecialization'+i">
-                <input type="text" class="form-input" placeholder="Email" [(ngModel)]="ins.email" [name]="'insEmail'+i">
+                <input type="text" class="form-input" placeholder="Specialization" [attr.aria-label]="'Instructor ' + (i + 1) + ' specialization'" [(ngModel)]="ins.specialization" [name]="'insSpecialization'+i">
+                <input type="email" class="form-input" placeholder="Email" [attr.aria-label]="'Instructor ' + (i + 1) + ' email'" [(ngModel)]="ins.email" [name]="'insEmail'+i">
               </div>
-              <input type="text" class="form-input" placeholder="Short bio" [(ngModel)]="ins.bio" [name]="'insBio'+i">
-              <input type="text" class="form-input" placeholder="LinkedIn URL (optional)" [(ngModel)]="ins.linkedInUrl" [name]="'insLinkedIn'+i">
+              <input type="text" class="form-input" placeholder="Short bio" [attr.aria-label]="'Instructor ' + (i + 1) + ' short bio'" [(ngModel)]="ins.bio" [name]="'insBio'+i">
+              <input type="url" class="form-input" placeholder="LinkedIn URL (optional)" [attr.aria-label]="'Instructor ' + (i + 1) + ' LinkedIn URL'" [(ngModel)]="ins.linkedInUrl" [name]="'insLinkedIn'+i">
             </div>
           </div>
-          <button type="button" class="btn-x-entry" (click)="removeInstructor(i)">✕ Remove instructor</button>
+          <button type="button" class="btn-x-entry" (click)="removeInstructor(i)">REMOVE INSTRUCTOR</button>
         </div>
         <button type="button" class="btn-add-entry" (click)="addInstructor()">+ ADD INSTRUCTOR</button>
       </section>
@@ -321,38 +324,38 @@
           <div class="section-title">FIELD TRIP DETAILS</div>
         </div>
         <div class="form-group">
-          <label class="field-label">DESTINATION NAME</label>
-          <input type="text" class="form-input" [(ngModel)]="destinationName" name="destinationName">
+          <label class="field-label" for="destinationName">DESTINATION NAME</label>
+          <input id="destinationName" type="text" class="form-input" [(ngModel)]="destinationName" name="destinationName">
         </div>
         <div class="form-group">
-          <label class="field-label">MEETING POINT</label>
-          <input type="text" class="form-input" [(ngModel)]="meetingPoint" name="meetingPoint">
+          <label class="field-label" for="meetingPoint">MEETING POINT</label>
+          <input id="meetingPoint" type="text" class="form-input" [(ngModel)]="meetingPoint" name="meetingPoint">
         </div>
         <div class="form-group">
-          <label class="field-label">TRANSPORTATION DETAILS</label>
-          <textarea class="form-textarea" [(ngModel)]="transportationDetails" name="transportationDetails"></textarea>
+          <label class="field-label" for="transportationDetails">TRANSPORTATION DETAILS</label>
+          <textarea id="transportationDetails" class="form-textarea" [(ngModel)]="transportationDetails" name="transportationDetails"></textarea>
         </div>
         <div class="form-row two-col">
           <div class="form-group">
-            <label class="field-label">CAPACITY</label>
-            <input type="number" class="form-input" [(ngModel)]="capacity" name="capacity">
+            <label class="field-label" for="capacity">CAPACITY</label>
+            <input id="capacity" type="number" class="form-input" [(ngModel)]="capacity" name="capacity">
           </div>
           <div class="form-group">
-            <label class="field-label">PRICE</label>
-            <input type="number" class="form-input" [(ngModel)]="price" name="price">
+            <label class="field-label" for="price">PRICE</label>
+            <input id="price" type="number" class="form-input" [(ngModel)]="price" name="price">
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label">REGISTRATION URL</label>
-          <input type="text" class="form-input" [(ngModel)]="registrationUrl" name="registrationUrl">
+          <label class="field-label" for="registrationUrl">REGISTRATION URL</label>
+          <input id="registrationUrl" type="url" class="form-input" [(ngModel)]="registrationUrl" name="registrationUrl">
         </div>
         <div class="form-group">
-          <label class="field-label">REQUIREMENTS</label>
-          <textarea class="form-textarea" [(ngModel)]="requirements" name="requirements"></textarea>
+          <label class="field-label" for="fieldTripRequirements">REQUIREMENTS</label>
+          <textarea id="fieldTripRequirements" class="form-textarea" [(ngModel)]="requirements" name="requirements"></textarea>
         </div>
         <div class="form-group">
-          <label class="field-label">NOTES</label>
-          <textarea class="form-textarea" [(ngModel)]="notes" name="notes"></textarea>
+          <label class="field-label" for="fieldTripNotes">NOTES</label>
+          <textarea id="fieldTripNotes" class="form-textarea" [(ngModel)]="notes" name="notes"></textarea>
         </div>
       </section>
 
@@ -363,42 +366,42 @@
         </div>
         <div class="form-row two-col">
           <div class="form-group">
-            <label class="field-label">SCHOOL NAME</label>
-            <input type="text" class="form-input" [(ngModel)]="schoolName" name="schoolName">
+            <label class="field-label" for="schoolName">SCHOOL NAME</label>
+            <input id="schoolName" type="text" class="form-input" [(ngModel)]="schoolName" name="schoolName">
           </div>
           <div class="form-group">
-            <label class="field-label">EDUCATIONAL STAGE</label>
-            <input type="text" class="form-input" list="educationalStageOptions" [(ngModel)]="educationalStage" name="educationalStage" placeholder="e.g. Preparatory">
+            <label class="field-label" for="educationalStage">EDUCATIONAL STAGE</label>
+            <input id="educationalStage" type="text" class="form-input" list="educationalStageOptions" [(ngModel)]="educationalStage" name="educationalStage" placeholder="e.g. Preparatory">
             <datalist id="educationalStageOptions">
               <option *ngFor="let stage of educationalStageSuggestions" [value]="stage"></option>
             </datalist>
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label">NUMBER OF STUDENTS</label>
-          <input type="number" class="form-input" [(ngModel)]="numberOfStudents" name="numberOfStudents">
+          <label class="field-label" for="numberOfStudents">NUMBER OF STUDENTS</label>
+          <input id="numberOfStudents" type="number" class="form-input" [(ngModel)]="numberOfStudents" name="numberOfStudents">
         </div>
         <div class="form-row two-col">
           <div class="form-group">
-            <label class="field-label">CONTACT PERSON NAME</label>
-            <input type="text" class="form-input" [(ngModel)]="contactPersonName" name="contactPersonName">
+            <label class="field-label" for="contactPersonName">CONTACT PERSON NAME</label>
+            <input id="contactPersonName" type="text" class="form-input" [(ngModel)]="contactPersonName" name="contactPersonName">
           </div>
           <div class="form-group">
-            <label class="field-label">CONTACT PERSON PHONE</label>
-            <input type="text" class="form-input" [(ngModel)]="contactPersonPhone" name="contactPersonPhone">
+            <label class="field-label" for="contactPersonPhone">CONTACT PERSON PHONE</label>
+            <input id="contactPersonPhone" type="tel" class="form-input" [(ngModel)]="contactPersonPhone" name="contactPersonPhone">
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label">OBJECTIVE</label>
-          <textarea class="form-textarea" [(ngModel)]="objective" name="objective"></textarea>
+          <label class="field-label" for="objective">OBJECTIVE</label>
+          <textarea id="objective" class="form-textarea" [(ngModel)]="objective" name="objective"></textarea>
         </div>
         <div class="form-group">
-          <label class="field-label">REQUIREMENTS</label>
-          <textarea class="form-textarea" [(ngModel)]="requirements" name="requirements"></textarea>
+          <label class="field-label" for="schoolVisitRequirements">REQUIREMENTS</label>
+          <textarea id="schoolVisitRequirements" class="form-textarea" [(ngModel)]="requirements" name="requirements"></textarea>
         </div>
         <div class="form-group">
-          <label class="field-label">NOTES</label>
-          <textarea class="form-textarea" [(ngModel)]="notes" name="notes"></textarea>
+          <label class="field-label" for="schoolVisitNotes">NOTES</label>
+          <textarea id="schoolVisitNotes" class="form-textarea" [(ngModel)]="notes" name="notes"></textarea>
         </div>
       </section>
 
@@ -411,7 +414,7 @@
         </span>
         <div class="bar-actions">
           <button type="button" class="btn-publish-bar" (click)="onPublish()" [disabled]="requiredRemaining > 0 || submitting">
-            {{ submitting ? (mode === 'edit' ? 'SAVING…' : 'PUBLISHING…') : (mode === 'edit' ? '✓ SAVE CHANGES' : '✓ PUBLISH PROJECT') }}
+            {{ submitting ? (mode === 'edit' ? 'SAVING…' : 'PUBLISHING…') : (mode === 'edit' ? 'SAVE CHANGES' : 'PUBLISH PROJECT') }}
           </button>
         </div>
       </div>

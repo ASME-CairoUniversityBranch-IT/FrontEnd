@@ -1,22 +1,49 @@
-<section class="projects-list-page">
+<main id="main-content" class="projects-list-page" aria-labelledby="projects-page-title">
 
   <div class="header">
-    <p class="subtitle"><span>—</span> BROWSE</p>
-    <h1 class="main-title">ALL PROJECTS</h1>
+    <p class="subtitle"><span aria-hidden="true"></span> BROWSE</p>
+    <h1 id="projects-page-title" class="main-title">ALL PROJECTS</h1>
   </div>
 
   <div class="controls">
-    <input
-      class="search-input"
-      type="text"
-      placeholder="Search by title or description..."
-      [(ngModel)]="searchTerm"
-      name="search"
-    />
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Search projects by title or description..."
+        aria-label="Search projects"
+        [(ngModel)]="searchTerm"
+        name="search"
+      />
+      <button
+        *ngIf="searchTerm"
+        type="button"
+        class="search-clear-btn"
+        (click)="clearSearch()"
+        aria-label="Clear search query">
+        &times;
+      </button>
+    </div>
 
-    <div class="filter-pills">
-      <button class="pill" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">All</button>
-      <button class="pill" *ngFor="let t of types" [class.active]="activeFilter === t" (click)="setFilter(t)">
+    <div class="filter-pills" role="tablist" aria-label="Filter projects by category">
+      <button
+        type="button"
+        class="pill"
+        [class.active]="activeFilter === 'all'"
+        [attr.aria-pressed]="activeFilter === 'all'"
+        (click)="setFilter('all')">
+        All
+      </button>
+      <button
+        type="button"
+        class="pill"
+        *ngFor="let t of types"
+        [class.active]="activeFilter === t"
+        [attr.aria-pressed]="activeFilter === t"
+        (click)="setFilter(t)">
         {{ projectTypeIcon(t) }} {{ projectTypeLabel(t) }}
       </button>
     </div>
@@ -28,23 +55,33 @@
       <p>Loading projects...</p>
     </div>
 
-    <div class="state-msg" *ngIf="vm.status === 'error'">Couldn't load projects — please try again later.</div>
+    <div class="state-msg error-msg" role="alert" *ngIf="vm.status === 'error'">Couldn't load projects — please try again later.</div>
 
     <ng-container *ngIf="vm.status === 'loaded'">
       <ng-container *ngIf="filteredProjects(vm.projects) as filtered">
-        <div class="state-msg" *ngIf="filtered.length === 0">No projects match your search.</div>
+        <div class="results-header" *ngIf="filtered.length > 0">
+          <span class="results-count">{{ filtered.length }} {{ filtered.length === 1 ? 'project' : 'projects' }} found</span>
+        </div>
+
+        <div class="state-msg empty-msg" *ngIf="filtered.length === 0">
+          <p>No projects match your search.</p>
+          <button type="button" class="reset-btn" (click)="clearSearch(); setFilter('all')">Reset filters</button>
+        </div>
 
         <div class="cards-grid" *ngIf="filtered.length > 0">
-          <a class="card" *ngFor="let p of filtered" [routerLink]="projectDetailPath(p)">
+          <a class="card" *ngFor="let p of filtered; let i = index" [routerLink]="projectDetailPath(p)">
             <div class="card-image-box">
-              <img *ngIf="p.coverImageUrl" [src]="p.coverImageUrl" [alt]="p.title">
+              <img *ngIf="p.coverImageUrl" [src]="p.coverImageUrl" [alt]="p.title" [attr.loading]="i < 3 ? 'eager' : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : 'auto'" decoding="async">
               <span *ngIf="!p.coverImageUrl" class="icon">{{ projectTypeIcon(p.type) }}</span>
+              <span class="card-type-badge">{{ projectTypeLabel(p.type) }}</span>
             </div>
             <div class="card-content">
-              <span class="card-type-pill">{{ projectTypeLabel(p.type) }}</span>
-              <h3 class="card-title">{{ p.title }}</h3>
+              <h2 class="card-title">{{ p.title }}</h2>
               <p class="card-description">{{ p.shortDescription }}</p>
-              <p class="card-date">📅 {{ p.mainDateAndTime | date:'mediumDate' }}</p>
+              <p class="card-date">
+                <span class="date-label">DATE</span>
+                {{ p.mainDateAndTime | date:'mediumDate' }}
+              </p>
             </div>
           </a>
         </div>
@@ -52,4 +89,4 @@
     </ng-container>
   </ng-container>
 
-</section>
+</main>

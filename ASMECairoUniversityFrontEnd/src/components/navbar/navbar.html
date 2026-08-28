@@ -1,9 +1,9 @@
-<nav class="navbar" [class.scrolled]="isScrolled">
+<nav class="navbar" [class.scrolled]="isScrolled" aria-label="Primary navigation">
   <div class="nav-inner">
 
     <a href="#home" class="nav-logo" (click)="closeMenu()">
       <div class="logo-icon">
-        <img src="logo/ASME LOGO WHITE.png" alt="ASME Cairo University" class="logo-icon" >
+        <img src="logo/ASME LOGO WHITE.png" alt="ASME Cairo University" class="logo-icon" width="40" height="40">
       </div>
       <div class="logo-text">
         <span class="logo-asme">ASME</span>
@@ -12,14 +12,22 @@
     </a>
 
     <button
+      #menuButton
+      type="button"
       class="hamburger"
       [class.open]="isMenuOpen"
       (click)="toggleMenu()"
-      aria-label="Toggle menu">
+      [attr.aria-expanded]="isMenuOpen"
+      aria-controls="primary-nav"
+      [attr.aria-label]="isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'">
       <span></span><span></span><span></span>
     </button>
 
-    <div class="nav-links" [class.open]="isMenuOpen">
+    <div
+      id="primary-nav"
+      class="nav-links"
+      [class.open]="isMenuOpen"
+      [attr.inert]="isMobile && !isMenuOpen ? '' : null">
       <a href="#home"         class="nav-link" (click)="closeMenu()">Home</a>
       <a href="#about"        class="nav-link" (click)="closeMenu()">About</a>
       <a href="#featured" class="nav-link" (click)="closeMenu()">Featured</a>
@@ -28,6 +36,14 @@
       <a href="#committees"   class="nav-link" (click)="closeMenu()">Committees</a>
       <a href="#contact"      class="nav-link" (click)="closeMenu()">Contact</a>
     </div>
+
+    <button
+      *ngIf="isMenuOpen"
+      type="button"
+      class="nav-scrim"
+      aria-label="Close navigation menu"
+      (click)="closeMenu()">
+    </button>
 
   </div>
 </nav>

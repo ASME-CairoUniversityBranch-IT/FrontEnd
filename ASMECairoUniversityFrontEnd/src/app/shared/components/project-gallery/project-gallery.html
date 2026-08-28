@@ -1,4 +1,4 @@
-<div class="gallery-card">
+<div class="gallery-card" *ngIf="photos.length > 0">
 
   <div class="gallery-header">
     <div class="header-icon">
@@ -8,17 +8,21 @@
   </div>
 
   <div class="gallery-grid">
-    <div
+    <button
+      type="button"
       class="photo-item"
       *ngFor="let photo of photos; let i = index"
       [class]="'photo-' + (i + 1)"
-      (click)="openImage(photo)"
+      (click)="openImage(photo, $event.currentTarget)"
+      [attr.aria-label]="'Open ' + photo.title.toLowerCase()"
     >
       <img
         [src]="photo.url"
         [alt]="photo.title"
+        loading="lazy"
+        decoding="async"
       />
-    </div>
+    </button>
   </div>
 
 </div>
@@ -27,12 +31,17 @@
 <div
   class="image-modal"
   *ngIf="selectedPhoto"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="selectedPhoto.title"
   (click)="closeImage()"
 >
   <button
+    type="button"
     class="modal-close"
     (click)="closeImage(); $event.stopPropagation()"
     aria-label="Close image"
+    autofocus
   >
     <i class="fa-solid fa-xmark"></i>
   </button>
@@ -41,6 +50,7 @@
     class="modal-image"
     [src]="selectedPhoto.url"
     [alt]="selectedPhoto.title"
+    decoding="async"
     (click)="$event.stopPropagation()"
   />
 </div>

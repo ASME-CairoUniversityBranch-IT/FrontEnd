@@ -6,24 +6,25 @@
     <div class="nav-right">
       <span class="admin-name" *ngIf="authService.currentUser() as u">{{ u.name }}</span>
       <div class="avatar">{{ adminInitial }}</div>
-      <button class="btn-events-list" routerLink="/projects">← PROJECTS LIST</button>
-      <button class="btn-logout" (click)="logout()">LOG OUT</button>
+      <button type="button" class="btn-events-list" routerLink="/projects">VIEW SITE</button>
+      <button type="button" class="btn-logout" (click)="logout()">LOG OUT</button>
     </div>
   </header>
 
   <div class="layout">
-    <aside class="sidebar">
+    <nav class="sidebar" aria-label="Admin navigation">
       <div class="sidebar-label">ADMIN</div>
-      <button class="sidebar-item" [class.active]="active === 'dashboard'" routerLink="/admin/dashboard">
-        📊 DASHBOARD
+      <button type="button" class="sidebar-item" [class.active]="active === 'dashboard'" routerLink="/admin/dashboard">
+        DASHBOARD
       </button>
-      <button class="sidebar-item" [class.active]="active === 'projects'" routerLink="/admin/projects">
-        🗂️ PROJECTS
+      <button type="button" class="sidebar-item" [class.active]="active === 'projects'" routerLink="/admin/projects">
+        PROJECTS
       </button>
-      <button class="sidebar-item" [class.active]="active === 'create' || active === 'edit'" routerLink="/admin/create-project">
-        + CREATE PROJECT
+      <button type="button" class="sidebar-item" [class.active]="active === 'create' || active === 'edit'" routerLink="/admin/create-project">
+        <span class="desktop-label">+ CREATE PROJECT</span>
+        <span class="mobile-label">+ CREATE</span>
       </button>
-    </aside>
+    </nav>
 
     <ng-content></ng-content>
   </div>

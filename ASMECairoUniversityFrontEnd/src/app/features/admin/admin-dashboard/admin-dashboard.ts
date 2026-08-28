@@ -60,7 +60,7 @@ export class AdminDashboardComponent {
 
   iconFor(typeLabel: string): string {
     const type = projectTypeFromLabel(typeLabel);
-    return type !== null ? projectTypeIcon(type) : '📁';
+    return type !== null ? projectTypeIcon(type) : '--';
   }
 
   typeCountEntries(dashboard: DashboardAnalytics): { label: string; count: number }[] {

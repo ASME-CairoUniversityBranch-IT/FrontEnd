@@ -11,7 +11,9 @@ const TIER_LABEL: Record<SponsorshipTier, string> = {
   [SponsorshipTier.Silver]: 'Silver',
   [SponsorshipTier.Bronze]: 'Bronze',
 };
-const TIER_ORDER = [SponsorshipTier.Strategic, SponsorshipTier.Platinum, SponsorshipTier.Gold, SponsorshipTier.Silver, SponsorshipTier.Bronze];
+// Keep the public-facing ladder aligned with the visual hierarchy. Strategic
+// is a legacy API tier and stays available after the commercial tiers.
+const TIER_ORDER = [SponsorshipTier.Platinum, SponsorshipTier.Gold, SponsorshipTier.Silver, SponsorshipTier.Bronze, SponsorshipTier.Strategic];
 
 @Component({
   selector: 'app-sponsers',

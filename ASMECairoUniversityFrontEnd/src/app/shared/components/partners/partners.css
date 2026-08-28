@@ -1,12 +1,151 @@
-.partners-card { background:#0d1540; border-radius:12px; padding:24px; margin-bottom:24px; }
-.card-header { display:flex; align-items:center; gap:12px; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:24px; }
-.icon-container { background:rgba(255,255,255,.1); color:#fff; width:32px; height:32px; border-radius:6px; display:flex; justify-content:center; align-items:center; font-size:16px; }
-.card-header h2 { font-size:16px; color:#fff; margin:0; font-weight:700; letter-spacing:1px; }
+.partners-card {
+  width: 100%;
+  margin-bottom: 24px;
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid rgba(126, 168, 248, 0.24);
+  border-radius: 16px;
+  background: var(--navy);
+  box-shadow: var(--shadow-soft);
+}
 
-.partners-grid { display:flex; flex-wrap:wrap; gap:14px; justify-content:center; }
-.partner-item { border:1px solid rgba(255,255,255,.1); border-radius:10px; background:rgba(255,255,255,.04); padding:16px 20px; min-width:140px; display:flex; flex-direction:column; align-items:center; gap:6px; transition:background .2s; }
-.partner-item:hover { background:rgba(255,255,255,.08); }
-.partner-item.main-partner { border-color:rgba(249,200,70,.35); }
-.partner-name { font-weight:700; color:#dde2ff; font-size:.9rem; text-align:center; }
-.partner-type { font-size:.65rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#f9c846; }
-.partner-logo { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: #fff; }
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: clamp(22px, 3vw, 32px);
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.section-mark {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
+  gap: 16px;
+}
+
+.partner-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: transform var(--t) var(--ease), background-color var(--t) var(--ease), border-color var(--t) var(--ease);
+}
+
+.partner-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(126, 168, 248, 0.42);
+  transform: translateY(-3px);
+}
+
+.partner-item.main-partner {
+  border-color: rgba(249, 200, 70, 0.55);
+}
+
+.partner-logo-stage {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 92px;
+  padding: 12px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.partner-logo {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.partner-initials {
+  color: var(--navy);
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.partner-name {
+  min-height: 2.2em;
+  color: #eef2ff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.partner-type {
+  color: #f9c846;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .partners-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .partner-item {
+    padding: 9px;
+  }
+
+  .partner-logo-stage {
+    height: 78px;
+    padding: 9px;
+  }
+
+  .partner-name {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 380px) {
+  .partners-card { padding-inline: 16px; }
+  .partners-grid { gap: 8px; }
+  .partner-item { padding: 8px; }
+}

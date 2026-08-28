@@ -28,6 +28,8 @@ export class HeroStats implements AfterViewInit, OnDestroy {
 
   private initCounters(): void {
     const els = document.querySelectorAll<HTMLElement>('.stat-num');
+    if (typeof IntersectionObserver === 'undefined') return;
+
     this.observer = new IntersectionObserver(
       (entries) => {
         if (!entries[0].isIntersecting || this.animated) return;

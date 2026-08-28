@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { Observable } from 'rxjs';
@@ -19,7 +20,7 @@ import { PartnersComponent } from '../../../shared/components/partners/partners'
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, MarkdownComponent, ProjectHeroComponent, ProjectGalleryComponent,
+    CommonModule, RouterModule, MarkdownComponent, ProjectHeroComponent, ProjectGalleryComponent,
     ProjectDetailsComponent, ReservationComponent, SponsersComponent, SpeakersComponent, PartnersComponent,
   ],
   templateUrl: './event-detail.html',

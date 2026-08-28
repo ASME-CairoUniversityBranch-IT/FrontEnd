@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import * as AOS from 'aos';
 
 @Component({
   selector: 'app-contact-us',
@@ -10,8 +9,4 @@ import * as AOS from 'aos';
   styleUrl: './contact-us.css',
 })
 export class ContactUs {
-ngOnInit() {
-  AOS.init();
-}
-
 }

@@ -1,50 +1,41 @@
-<section class="committee-section" id="committees" *ngIf="loaded">
+<section class="committee-section" id="committees" *ngIf="loaded" aria-label="Our committees">
 
-  <div class="header" data-aos="fade-up">
-    <p class="subtitle"><span>—</span> {{ subtitle }}</p>
-    <h1 class="main-title">{{ title }}</h1>
+  <div class="header">
+    <p class="subtitle"><span aria-hidden="true"></span> {{ subtitle }}</p>
+    <h2 class="main-title">{{ title }}</h2>
   </div>
 
-  <div class="committees-grid" id="cards-trigger">
+  <div class="pillars-grid">
+    <section
+      class="pillar-column"
+      *ngFor="let c of committees; let i = index"
+      [ngClass]="'pillar-' + i">
 
-    <div class="committee-card"
-         *ngFor="let committee of committees; let i = index"
-         [style.border-left-color]="committee.borderColor"
-         data-aos="fade-up" data-aos-duration="1000"
-         data-aos-anchor="#cards-trigger">
-
-      <div class="card-header" (click)="toggleCommittee(i)">
-        <div class="header-left">
-          <div class="icon-box">{{ committee.icon }}</div>
-          <h3 class="card-title">{{ committee.title }}</h3>
+      <!-- Pillar Header -->
+      <header class="pillar-header">
+        <div class="pillar-header-top">
+          <span class="pillar-index" aria-hidden="true">0{{ i + 1 }}</span>
+          <span class="pillar-count">{{ c.subTeams.length }} SUB-TEAMS</span>
         </div>
-        <div class="arrow">{{ committee.isExpanded ? '▾' : '▸' }}</div>
-      </div>
+        <h3 class="pillar-title">{{ c.title }}</h3>
+        <div class="pillar-rule" aria-hidden="true"></div>
+      </header>
 
-      <div class="card-body" *ngIf="committee.isExpanded">
-        <div class="sub-teams-container" data-aos="fade-up" data-aos-duration="1000">
-
-          <div class="sub-team-box"
-               *ngFor="let sub of committee.subTeams"
-               (click)="openTeamModal(sub, $event)">
-            <span class="sub-icon">{{ sub.icon }}</span>
-            <p class="sub-name">{{ sub.name }}</p>
+      <!-- Sub-Teams List inside this Pillar -->
+      <div class="subteam-stack">
+        <article class="subteam-item" *ngFor="let team of c.subTeams">
+          <div class="subteam-icon-box" aria-hidden="true">
+            <i [class]="team.icon"></i>
           </div>
 
-        </div>
+          <div class="subteam-body">
+            <h4 class="subteam-name">{{ team.name }}</h4>
+            <p class="subteam-description">{{ team.description }}</p>
+          </div>
+        </article>
       </div>
 
-    </div>
-
-  </div>
-
-  <div class="modal-overlay" *ngIf="selectedSubTeam" (click)="closeTeamModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <button class="modal-close" (click)="closeTeamModal()">×</button>
-      <div class="modal-icon">{{ selectedSubTeam.icon }}</div>
-      <h3 class="modal-title">{{ selectedSubTeam.name }}</h3>
-      <p class="modal-description">{{ selectedSubTeam.description }}</p>
-    </div>
+    </section>
   </div>
 
 </section>

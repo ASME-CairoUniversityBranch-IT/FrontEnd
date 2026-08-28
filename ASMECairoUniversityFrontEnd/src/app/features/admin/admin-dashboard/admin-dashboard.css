@@ -6,8 +6,9 @@
 
 .dashboard-content {
   flex: 1;
+  min-width: 0;
   padding: 32px 36px 80px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-body);
   max-width: 1200px;
 }
 
@@ -15,33 +16,40 @@
   margin-bottom: 28px;
 }
 .breadcrumb-sub {
-  font-size: 11px;
+  font-family: var(--font-display);
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #8896b8;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--blue);
   margin-bottom: 6px;
+  opacity: 0.8;
 }
 .page-title {
-  font-size: 1.6rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
   font-weight: 800;
-  color: #0d1540;
+  letter-spacing: 0.5px;
+  color: var(--navy);
+  text-transform: uppercase;
 }
 .page-subtitle {
-  font-size: 0.9rem;
-  color: #6b7494;
+  font-size: 0.95rem;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
 .state-msg {
   text-align: center;
-  color: #8896b8;
+  color: var(--text-muted);
   padding: 30px 0;
 }
 .state-msg.banner {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(20, 26, 60, 0.06);
-  color: #4a5480;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  color: var(--text-body);
   font-weight: 600;
 }
 .loading-msg {
@@ -53,8 +61,8 @@
 .loading-msg .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid rgba(58, 79, 208, 0.15);
-  border-top-color: #3a4fd0;
+  border: 3px solid rgb(26 36 114 / 12%);
+  border-top-color: var(--blue);
   border-radius: 50%;
   animation: admin-dash-spin 0.7s linear infinite;
 }
@@ -74,31 +82,38 @@
   grid-template-columns: repeat(5, 1fr);
 }
 .stat-card {
-  background: #fff;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 18px 20px;
-  box-shadow: 0 2px 10px rgba(20, 26, 60, 0.06);
+  box-shadow: var(--shadow-soft);
 }
 .stat-card.accent {
-  background: linear-gradient(135deg, #1a2472, #3a4fd0);
+  background: linear-gradient(135deg, var(--navy-deep), var(--blue));
+  border-color: var(--blue);
   color: #fff;
 }
 .stat-value {
-  font-size: 1.6rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
   font-weight: 800;
-  color: #0d1540;
+  color: var(--navy);
+  letter-spacing: 0.5px;
 }
 .stat-card.accent .stat-value {
   color: #fff;
 }
 .stat-label {
-  font-size: 0.78rem;
-  color: #8896b8;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--text-muted);
   margin-top: 4px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 .stat-card.accent .stat-label {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--accent-light);
 }
 
 .panels-row {
@@ -109,26 +124,29 @@
 }
 
 .panel-card {
-  background: #fff;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 20px 22px;
-  box-shadow: 0 2px 10px rgba(20, 26, 60, 0.06);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-soft);
   margin-bottom: 16px;
 }
 .panel-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #6b7494;
-  margin-bottom: 14px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--navy);
+  margin-bottom: 16px;
 }
 
 .type-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f2f7;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
   font-size: 0.9rem;
 }
 .type-row:last-child {
@@ -140,11 +158,13 @@
 .type-name {
   flex: 1;
   font-weight: 600;
-  color: #1a2340;
+  color: var(--text-body);
 }
 .type-count {
+  font-family: var(--font-display);
   font-weight: 800;
-  color: #3a4fd0;
+  font-size: 16px;
+  color: var(--blue);
 }
 
 .most-viewed {
@@ -230,5 +250,31 @@
   }
   .panels-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-content {
+    width: 100%;
+    padding: 24px 16px 48px;
+  }
+
+  .stat-grid,
+  .stat-grid.five {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .type-row,
+  .top-row {
+    gap: 8px;
+  }
+
+  .top-type,
+  .top-views {
+    display: none;
   }
 }

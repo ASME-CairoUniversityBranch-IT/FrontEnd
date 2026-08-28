@@ -51,28 +51,28 @@ export interface ProjectBase {
 // `id` is null for a brand-new entry that only exists client-side (not yet saved); the API
 // assigns a real id once created, and that id must be echoed back on update to avoid duplicates.
 export interface Speaker {
-  id: number | null;
+  id: string | null;
   name: string;
   title: string;
   shortBio: string;
   photoUrl?: string | null;
 }
 export interface Partner {
-  id: number | null;
+  id: string | null;
   name: string;
   partnerType: string;
   isMainPartner: boolean;
   photoUrl?: string | null;
 }
 export interface Sponsor {
-  id: number | null;
+  id: string | null;
   name: string;
   sponsorshipTier: SponsorshipTier;
   photoUrl?: string | null;
 }
 
 export interface Instructor {
-  id: number | null;
+  id: string | null;
   fullName: string;
   title: string;
   bio: string;

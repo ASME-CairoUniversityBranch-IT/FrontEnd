@@ -12,14 +12,15 @@ import { ALL_PROJECT_TYPES, projectTypeIcon, projectTypeLabel } from '../../../c
 import { AdminNavComponent, AdminNavSection } from '../../../shared/components/admin-nav/admin-nav';
 
 /** Local form shapes add transient upload state (photoFile/photoPreview/removePhoto) on top of
- *  the API's Speaker/Partner/Sponsor/Instructor shapes — see handover §5.1/§5.2 for why photos
- *  are matched to these arrays by index rather than carried as structured JSON. */
+ *  the API's Speaker/Partner/Sponsor/Instructor shapes. New files are accompanied by their
+ *  entry index in the multipart payload so omitted files cannot shift onto another person. */
 interface SpeakerForm extends Speaker { photoFile: File | null; photoPreview: string | null; removePhoto: boolean }
 interface PartnerForm extends Partner { photoFile: File | null; photoPreview: string | null; removePhoto: boolean }
 interface SponsorForm extends Sponsor { photoFile: File | null; photoPreview: string | null; removePhoto: boolean }
 interface InstructorForm extends Instructor { photoFile: File | null; photoPreview: string | null; removePhoto: boolean }
 
 type PhotoEntry = { photoFile: File | null; photoPreview: string | null; removePhoto: boolean };
+type GalleryUpload = { file: File; preview: string | null };
 
 const blankSpeaker = (): SpeakerForm => ({ id: null, name: '', title: '', shortBio: '', photoUrl: null, photoFile: null, photoPreview: null, removePhoto: false });
 const blankPartner = (): PartnerForm => ({ id: null, name: '', partnerType: '', isMainPartner: false, photoUrl: null, photoFile: null, photoPreview: null, removePhoto: false });
@@ -74,8 +75,10 @@ export class CreateProjectComponent implements OnInit {
   coverImage: File | null = null;
   coverPreview: string | null = null; // data URL for a newly-picked file, or the existing cover URL in edit mode
   isDragOver = false;
-  galleryFiles: File[] = []; // newly added gallery images only — existing ones live in existingGalleryImages
-  galleryPreviews: string[] = [];
+  /** New gallery files and their previews stay paired so an asynchronous FileReader cannot
+   * reorder the preview list relative to the multipart payload. */
+  galleryUploads: GalleryUpload[] = [];
+  galleryError = '';
   existingGalleryImages: GalleryImage[] = [];
   galleryIdsToKeep = new Set<number>();
 
@@ -174,8 +177,8 @@ export class CreateProjectComponent implements OnInit {
 
     this.existingGalleryImages = project.galleryImages;
     this.galleryIdsToKeep = new Set(project.galleryImages.map(g => g.id));
-    this.galleryFiles = [];
-    this.galleryPreviews = [];
+    this.galleryUploads = [];
+    this.galleryError = '';
 
     switch (project.type) {
       case ProjectType.Event:
@@ -307,21 +310,34 @@ export class CreateProjectComponent implements OnInit {
 
   // ── Gallery images ──
   onGallerySelected(event: Event): void {
-    const files = Array.from((event.target as HTMLInputElement).files ?? []);
-    this.galleryFiles.push(...files);
-    files.forEach(file => {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    const validFiles = files.filter(file => file.type === 'image/png' || file.type === 'image/jpeg');
+    const validSizeFiles = validFiles.filter(file => file.size <= 5 * 1024 * 1024);
+    const rejectedType = files.length - validFiles.length;
+    const rejectedSize = validFiles.length - validSizeFiles.length;
+
+    this.galleryError = rejectedType || rejectedSize
+      ? 'Only PNG or JPEG images under 5 MB can be added to the gallery.'
+      : '';
+
+    validSizeFiles.forEach(file => {
+      const upload: GalleryUpload = { file, preview: null };
+      this.galleryUploads.push(upload);
       const reader = new FileReader();
       reader.onload = e => {
-        this.galleryPreviews.push(e.target?.result as string);
-        this.cdr.detectChanges(); // add this
+        upload.preview = e.target?.result as string;
+        this.cdr.detectChanges();
       };
       reader.readAsDataURL(file);
     });
+
+    // Allow selecting the same file again after removing it.
+    input.value = '';
   }
 
   removeGalleryImage(index: number): void {
-    this.galleryFiles.splice(index, 1);
-    this.galleryPreviews.splice(index, 1);
+    this.galleryUploads.splice(index, 1);
   }
 
   /** Edit mode only — drops an existing gallery image from the "keep" list. The image (and its
@@ -376,24 +392,32 @@ export class CreateProjectComponent implements OnInit {
 
     if (this.mode === 'edit') {
       this.galleryIdsToKeep.forEach(id => fd.append('GalleryImageIdsToKeep', String(id)));
-      this.galleryFiles.forEach((file, i) => {
-        fd.append('NewGalleryImages', file);
+      this.galleryUploads.forEach((upload, i) => {
+        fd.append('NewGalleryImages', upload.file);
         fd.append('NewGalleryImagesOrder', String(i));
       });
     } else {
-      this.galleryFiles.forEach((file, i) => {
-        fd.append('GalleryImages', file);
+      this.galleryUploads.forEach((upload, i) => {
+        fd.append('GalleryImages', upload.file);
         fd.append('GalleryImagesOrder', String(i));
       });
     }
     return fd;
   }
 
-  /** Appends one photo per entry, in the same order as the JSON array it corresponds to — an
-   *  empty File for any entry with no photo, so indices between the JSON array and the photo
-   *  file list never drift out of alignment (see handover §5.1). */
-  private appendPersonPhotos(fd: FormData, fieldName: string, entries: PhotoEntry[]): void {
-    entries.forEach(entry => fd.append(fieldName, entry.photoFile ?? new File([], '')));
+  /** Sends only real files and pairs each one with its JSON-array index. Empty multipart files
+   *  are not reliable placeholders because browsers/ASP.NET may omit them during binding. */
+  private appendPersonPhotos(
+    fd: FormData,
+    fieldName: string,
+    indexFieldName: string,
+    entries: PhotoEntry[],
+  ): void {
+    entries.forEach((entry, index) => {
+      if (!entry.photoFile) return;
+      fd.append(fieldName, entry.photoFile);
+      fd.append(indexFieldName, String(index));
+    });
   }
 
   private buildFormData(): FormData {
@@ -409,19 +433,19 @@ export class CreateProjectComponent implements OnInit {
         fd.append('Speakers', JSON.stringify(validSpeakers.map(s => ({
           id: s.id, name: s.name, title: s.title, shortBio: s.shortBio, removePhoto: s.removePhoto,
         }))));
-        this.appendPersonPhotos(fd, 'SpeakerPhotos', validSpeakers);
+        this.appendPersonPhotos(fd, 'SpeakerPhotos', 'SpeakerPhotoIndexes', validSpeakers);
 
         const validSponsors = this.sponsors.filter(s => s.name.trim());
         fd.append('Sponsors', JSON.stringify(validSponsors.map(s => ({
           id: s.id, name: s.name, sponsorshipTier: s.sponsorshipTier, removePhoto: s.removePhoto,
         }))));
-        this.appendPersonPhotos(fd, 'SponsorPhotos', validSponsors);
+        this.appendPersonPhotos(fd, 'SponsorPhotos', 'SponsorPhotoIndexes', validSponsors);
 
         const validPartners = this.partners.filter(p => p.name.trim());
         fd.append('Partners', JSON.stringify(validPartners.map(p => ({
           id: p.id, name: p.name, partnerType: p.partnerType, isMainPartner: p.isMainPartner, removePhoto: p.removePhoto,
         }))));
-        this.appendPersonPhotos(fd, 'PartnerPhotos', validPartners);
+        this.appendPersonPhotos(fd, 'PartnerPhotos', 'PartnerPhotoIndexes', validPartners);
         break;
       }
 
@@ -435,7 +459,7 @@ export class CreateProjectComponent implements OnInit {
           id: i.id, fullName: i.fullName, title: i.title, bio: i.bio, specialization: i.specialization,
           email: i.email, linkedInUrl: i.linkedInUrl || null, removePhoto: i.removePhoto,
         }))));
-        this.appendPersonPhotos(fd, 'InstructorPhotos', validInstructors);
+        this.appendPersonPhotos(fd, 'InstructorPhotos', 'InstructorPhotoIndexes', validInstructors);
         break;
       }
 

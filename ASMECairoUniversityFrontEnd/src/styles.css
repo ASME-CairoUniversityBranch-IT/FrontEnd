@@ -1,37 +1,139 @@
-/* ── SHARED DESIGN TOKENS ──
- * Single source of truth for the home page. Change a value here and every
- * section that references it updates together. */
+/* Shared design tokens. Component styles should consume these values instead
+ * of inventing a new spacing, color, or typography scale per section. */
 :root {
   --navy: #0d1540;
   --navy-deep: #07102e;
   --blue: #1a2472;
   --accent: #7ea8f8;
+  --accent-strong: #5f8fe9;
+  --accent-light: #c9dcff;
   --off-white: #f4f6fb;
+  --surface: #ffffff;
   --text-body: #2a3458;
+  --text-muted: #66708f;
+  --line: #dfe5f1;
 
-  --shadow-hover: 0 12px 48px rgba(13, 21, 64, 0.22);
+  --shadow-soft: 0 12px 36px rgba(13, 21, 64, 0.08);
+  --shadow-hover: 0 18px 48px rgba(13, 21, 64, 0.16);
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --t: 0.3s;
 
-  --font-h: 'Bebas Neue', sans-serif;
-  --font-b: 'Barlow', sans-serif;
-  --font-c: 'Barlow Condensed', sans-serif;
+  --font-display: 'Saira Semi Condensed', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-h: var(--font-display);
+  --font-b: var(--font-body);
+  --font-c: var(--font-display);
 
-  /* Heading system */
   --heading-eyebrow-size: 14px;
   --heading-eyebrow-weight: 700;
   --heading-eyebrow-tracking: 2px;
-  --heading-eyebrow-font: var(--font-b);
+  --heading-eyebrow-font: var(--font-display);
 
-  --heading-title-size: 40px;
+  --heading-title-size: clamp(36px, 5vw, 64px);
   --heading-title-weight: 900;
-  --heading-title-font: var(--font-c);
+  --heading-title-font: var(--font-display);
+
+  --content-max: 1200px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --section-y: clamp(56px, 8vw, 104px);
 }
 
-body{
-  background:#F4F6FB;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-html, body {
-  overflow-x: hidden;
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+body {
+  margin: 0;
+  background: var(--off-white);
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img {
+  display: block;
   max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 10px;
+  left: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform var(--t) var(--ease);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+html, body {
+  width: 100%;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--off-white);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

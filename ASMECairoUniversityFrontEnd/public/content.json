@@ -2,11 +2,11 @@
   "mainBanner": {
     "badge": "American Society of Mechanical Engineers",
     "titleLines": ["ASME", "Cairo", "University"],
-    "subtitle": "Cairo University's premier engineering society — where innovation meets excellence. Building tomorrow's engineers through projects, competitions, and community.",
+    "subtitle": "A student-led engineering community at Cairo University, building practical skills through projects, competitions, and community programs.",
     "ctaPrimary": { "label": "Explore Projects", "href": "#projects" },
     "ctaSecondary": { "label": "Join ASME", "href": "#contact" },
     "stats": [
-      { "target": 9, "suffix": "+", "label": "ASME Global recognizations" },
+      { "target": 9, "suffix": "+", "label": "ASME Global recognitions" },
       { "target": 19, "suffix": "", "label": "Years Active" },
       { "target": 41, "suffix": "+", "label": "Projects" },
       { "target": 25, "suffix": "+", "label": "Workshops" }
@@ -24,19 +24,16 @@
     ],
     "cards": [
       {
-        "icon": "🌐",
         "title": "GLOBAL VISION",
-        "description": "ASME's vision is to be the essential resource for mechanical engineers and other technical professionals worldwide to develop their skills, knowledge, and professional practices across emerging and traditional engineering frontiers."
+        "description": "ASME connects engineers worldwide through skills, knowledge, and professional practice across emerging and established fields."
       },
       {
-        "icon": "🎯",
         "title": "OUR BRANCH MISSION",
         "description": "Empowering engineering students with hands-on learning, industry exposure, and leadership development to connect academia with the real world."
       },
       {
-        "icon": "⭐",
         "title": "BRANCH VISION",
-        "description": "To be a top student organization promoting innovation, technical excellence, and leadership for future professionals."
+        "description": "A student organization where engineering practice, leadership, and service move together."
       }
     ]
   },
@@ -48,26 +45,20 @@
       {
         "tag": "One Team",
         "title": "One Goal",
-        "overlayBody1": "We move as one. Every decision, every effort, every win — shared across the entire team. No silos, no solo missions. When one of us succeeds, all of us succeed.",
-        "overlayBody2": "Our unity is our greatest competitive advantage."
+        "overlayBody1": "We plan, build, and learn together across every committee. Work is visible, handoffs are clear, and every member can contribute.",
+        "overlayBody2": "Shared responsibility turns student ideas into reliable outcomes."
       },
       {
         "tag": "Grow",
         "title": "Together",
-        "overlayBody1": "Growth is not a solo sport. We invest in each other's development, share knowledge openly, and lift each other higher. Real progress is collective progress.",
-        "overlayBody2": "We celebrate every step forward — big or small."
+        "overlayBody1": "We share technical knowledge, give useful feedback, and create room for members to try new responsibilities.",
+        "overlayBody2": "Progress is measured in skills put into practice."
       },
       {
         "tag": "Drive Change",
         "title": "With Ownership",
-        "overlayBody1": "We don't wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn't a rule — it's a mindset.",
-        "overlayBody2": "Act like an owner. Think long-term. Deliver."
-      },
-      {
-        "tag": "Shape What's",
-        "title": "NEXT",
-        "overlayBody1": "We don't wait for permission. We take initiative, own our outcomes, and lead change from wherever we stand. Accountability isn't a rule — it's a mindset.",
-        "overlayBody2": "Act like an owner. Think long-term. Deliver."
+        "overlayBody1": "We take initiative, own our outcomes, and improve the work in front of us — from an event detail to a long-term chapter program.",
+        "overlayBody2": "Make the next decision clearer and more useful."
       }
     ]
   },
@@ -80,24 +71,21 @@
       "title": "Resala Volunteering",
       "desc": "Our team participated in a community outreach initiative with Resala Charity Organization for Eid Al-Fitr, supporting over 500 underprivileged families with clothing, food supplies, and joyful activities for children.",
       "image": "images/featured-highlights/Resala.jpeg",
-      "bg": "linear-gradient(135deg,#0d1540 0%,#1a2472 50%,#0a3d7a 100%)",
-      "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><circle cx=\"100\" cy=\"100\" r=\"80\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"55\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"30\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/><path d=\"M100 20L100 180M20 100L180 100\" stroke=\"rgba(126,168,248,0.08)\" stroke-width=\"1\"/></svg>"
+      "bg": "linear-gradient(135deg,#0d1540 0%,#1a2472 50%,#0a3d7a 100%)"
     },
     {
       "tag": "Community",
       "title": "Alomran Language Schools Visit",
-      "desc": "Helpeing students, raising their awareness, and introducing them to the world of engineering and volunteering.",
+      "desc": "Helping students raise their awareness and discover the world of engineering and volunteering.",
       "image": "images/featured-highlights/Al-Omran-School-Visit.jpeg",
-      "bg": "linear-gradient(135deg,#071030 0%,#0d2060 50%,#163580 100%)",
-      "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><rect x=\"30\" y=\"30\" width=\"140\" height=\"140\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\"/><rect x=\"60\" y=\"60\" width=\"80\" height=\"80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" transform=\"rotate(45 100 100)\"/><circle cx=\"100\" cy=\"100\" r=\"20\" stroke=\"rgba(126,168,248,0.20)\" stroke-width=\"1\"/></svg>"
+      "bg": "linear-gradient(135deg,#071030 0%,#0d2060 50%,#163580 100%)"
     },
     {
       "tag": "Achievement",
       "title": "Awarded Distinguished Student Section",
       "desc": "Recognized as the Distinguished Student Section for Season 2025/2026 among 300+ sections across Africa & the Middle East.",
       "image": "images/featured-highlights/distinguished-student-section.png",
-      "bg": "linear-gradient(135deg,#050e28 0%,#102060 50%,#0e2855 100%)",
-      "decoSvg": "<svg viewBox=\"0 0 200 200\" fill=\"none\"><polygon points=\"100,20 180,70 180,130 100,180 20,130 20,70\" stroke=\"rgba(126,168,248,0.15)\" stroke-width=\"1\" fill=\"none\"/><polygon points=\"100,50 155,80 155,120 100,150 45,120 45,80\" stroke=\"rgba(126,168,248,0.10)\" stroke-width=\"1\" fill=\"none\"/><circle cx=\"100\" cy=\"100\" r=\"15\" stroke=\"rgba(126,168,248,0.25)\" stroke-width=\"1\"/></svg>"
+      "bg": "linear-gradient(135deg,#050e28 0%,#102060 50%,#0e2855 100%)"
     }
   ],
 "achievementsEyebrow": "Our Track Record",
@@ -127,61 +115,50 @@
   "committees": [
     {
       "title": "OPERATIONS",
-      "icon": "⚙️",
       "borderColor": "#1e3a8a",
       "subTeams": [
         {
           "name": "EXTERNAL RELATIONS",
-          "icon": "🤝",
           "description": "Connect ASME CU with the world beyond our team. Build relationships with companies, partners, and industry professionals to support our projects and events, create new opportunities, and open doors for our members. Be the bridge that turns connections into impact."
         },
         {
           "name": "OC & LOGISTICS",
-          "icon": "🚚",
           "description": "Turn ideas into unforgettable events. From planning to execution, you'll help organize every detail behind ASME CU's activities and ensure every event runs smoothly from start to finish."
         }
       ]
     },
     {
       "title": "QUALITY",
-      "icon": "🎯",
       "borderColor": "#10b981",
       "subTeams": [
         {
           "name": "HR",
-          "icon": "👥",
           "description": "Empower people to reach their full potential. Support member development, organize engaging activities, and help create a positive culture where every member can grow and succeed."
         },
         {
           "name": "Supply Chain",
-          "icon": "📦",
           "description": "Drive smarter decisions behind the scenes. Help coordinate projects, analyze data, and improve workflows while gaining hands-on experience in operations, documentation, and process improvement."
         },
         {
           "name": "IT",
-          "icon": "💻",
           "description": "Build the digital face of ASME CU. Help develop and maintain our website, improve user experience, and create a platform that keeps students connected with everything happening in the chapter."
         }
       ]
     },
     {
       "title": "BRANDING",
-      "icon": "🎨",
       "borderColor": "#ef4444",
       "subTeams": [
         {
           "name": "Photography & Videography",
-          "icon": "📸",
           "description": "Tell the ASME CU story through your lens. Capture the moments that define us and turn them into engaging content that showcases our people, energy, and spirit."
         },
         {
           "name": "Graphic Design",
-          "icon": "🖌️",
           "description": "Bring ideas to life through creativity. Design eye-catching visuals that shape ASME CU's identity, promote events, and make every campaign stand out."
         },
         {
           "name": "Marketing",
-          "icon": "📢",
           "description": "Tell the story that inspires others. Create campaigns, promote events, and produce engaging content that connects students with ASME CU and amplifies our impact."
         }
       ]

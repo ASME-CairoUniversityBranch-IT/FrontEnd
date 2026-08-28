@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+.not-found-page {
+  display: grid;
+  min-height: min(70vh, 720px);
+  place-items: center;
+  padding: 120px var(--gutter) 80px;
+}
+
+.not-found-card {
+  width: min(620px, 100%);
+  padding: clamp(28px, 6vw, 64px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.not-found-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: var(--blue);
+  font-family: var(--heading-eyebrow-font);
+  font-size: var(--heading-eyebrow-size);
+  font-weight: var(--heading-eyebrow-weight);
+  letter-spacing: var(--heading-eyebrow-tracking);
+}
+
+.not-found-eyebrow span {
+  width: 24px;
+  height: 2px;
+  background: var(--accent);
+}
+
+h1 {
+  margin: 0;
+  color: var(--navy);
+  font-family: var(--heading-title-font);
+  font-size: clamp(36px, 7vw, 68px);
+  font-weight: var(--heading-title-weight);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.not-found-copy {
+  max-width: 42ch;
+  margin: 20px auto 0;
+  color: var(--text-muted);
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.not-found-actions a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background-color var(--t), border-color var(--t), color var(--t), transform var(--t);
+}
+
+.not-found-actions a:hover {
+  transform: translateY(-1px);
+}
+
+.primary-action {
+  border: 1px solid var(--navy);
+  background: var(--navy);
+  color: #fff;
+}
+
+.primary-action:hover {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.secondary-action {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--navy);
+}
+
+.secondary-action:hover {
+  border-color: var(--accent);
+  background: var(--off-white);
+}

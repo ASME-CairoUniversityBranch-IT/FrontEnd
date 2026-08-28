@@ -1,14 +1,17 @@
 <div class="partners-card" *ngIf="partners.length">
   <div class="card-header">
-    <div class="icon-container">🤝</div>
+    <div class="section-mark" aria-hidden="true">PT</div>
     <h2>OUR PARTNERS</h2>
   </div>
 
   <div class="partners-grid">
-  <div class="partner-item" [class.main-partner]="p.isMainPartner" *ngFor="let p of partners">
-    <img *ngIf="p.photoUrl" class="partner-logo" [src]="p.photoUrl" [alt]="p.name">
-    <span class="partner-name">{{ p.name }}</span>
-    <span class="partner-type">{{ p.partnerType }}</span>
-  </div>
+    <div class="partner-item" [class.main-partner]="p.isMainPartner" *ngFor="let p of partners">
+      <div class="partner-logo-stage">
+        <img *ngIf="p.photoUrl" class="partner-logo" [src]="p.photoUrl" [alt]="p.name" loading="lazy" decoding="async">
+        <span *ngIf="!p.photoUrl" class="partner-initials" aria-hidden="true">{{ p.name | slice:0:2 }}</span>
+      </div>
+      <span class="partner-name">{{ p.name }}</span>
+      <span class="partner-type">{{ p.partnerType }}</span>
+    </div>
   </div>
 </div>

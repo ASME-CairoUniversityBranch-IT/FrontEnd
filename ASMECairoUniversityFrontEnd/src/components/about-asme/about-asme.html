@@ -1,9 +1,9 @@
 
 <section class="about-section" id="about" *ngIf="content as c">
 
-  <div class="left-side" data-aos="fade-right" data-aos-duration="1000">
-    <p class="who-we-are"><span>—</span> {{ c.eyebrow }}</p>
-    <h1 class="main-title">{{ c.titleLine1 }}<br>{{ c.titleLine2 }}</h1>
+  <div class="left-side">
+    <p class="who-we-are"><span class="section-rule" aria-hidden="true"></span>{{ c.eyebrow }}</p>
+    <h2 class="main-title">{{ c.titleLine1 }}<br>{{ c.titleLine2 }}</h2>
 
     <div class="organization-box">
       <h4 class="org-title">{{ c.organizationTitle }}</h4>
@@ -12,9 +12,10 @@
   </div>
 
   <div class="right-side">
-    <div class="info-card" *ngFor="let card of c.cards" data-aos="fade-up" data-aos-duration="1000">
+    <div class="info-card" *ngFor="let card of c.cards; let i = index">
       <h3 class="card-title">
-        <span class="icon">{{ card.icon }}</span> {{ card.title }}
+        <span class="card-index" aria-hidden="true">{{ i + 1 | number: '2.0-0' }}</span>
+        <span>{{ card.title }}</span>
       </h3>
       <p class="card-description">{{ card.description }}</p>
     </div>

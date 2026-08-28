@@ -1,6 +1,6 @@
 <div class="sponsors-card" *ngIf="groups.length">
   <div class="card-header">
-    <div class="icon-container">🏆</div>
+    <div class="section-mark" aria-hidden="true">SP</div>
     <h2>EVENT SPONSORS</h2>
   </div>
 
@@ -12,18 +12,22 @@
         <span class="line"></span>
       </div>
 
-      <div class="sponsors-grid" [class]="'tier-' + group.tierName.toLowerCase()">
+      <div class="sponsors-grid" [ngClass]="'tier-' + group.tierName.toLowerCase()">
         <div class="sponsor-item" *ngFor="let sponsor of group.sponsors">
-          <img
-            *ngIf="sponsor.photoUrl; else sponsorNameOnly"
-            class="sponsor-logo"
-            [src]="sponsor.photoUrl"
-            [alt]="sponsor.name"
-          >
+          <div class="sponsor-logo-stage">
+            <img
+              *ngIf="sponsor.photoUrl; else sponsorNameOnly"
+              class="sponsor-logo"
+              [src]="sponsor.photoUrl"
+              [alt]="sponsor.name"
+              loading="lazy"
+              decoding="async"
+            >
 
-          <ng-template #sponsorNameOnly>
-            <span class="sponsor-name">{{ sponsor.name }}</span>
-          </ng-template>
+            <ng-template #sponsorNameOnly>
+              <span class="sponsor-name">{{ sponsor.name }}</span>
+            </ng-template>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,5 @@
 <section id="home" class="hero-section">
   <div class="hero-grid-bg"></div>
-  <div class="hero-particles" id="heroBannerParticles"></div>
 
   @if (heroContent; as HERO_CONTENT) {
     <div class="hero-content">
@@ -34,7 +33,14 @@
       </div>
       <div class="hero-image-col">
         <div class="hero-img-frame">
-          <img src="images/team.jpg" alt="ASME Cairo team" />
+          <img
+            src="images/team.jpg"
+            alt="ASME Cairo University student team"
+            width="1400"
+            height="1050"
+            decoding="async"
+            fetchpriority="high"
+          />
         </div>
       </div>
     </div>

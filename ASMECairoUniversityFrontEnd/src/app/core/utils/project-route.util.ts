@@ -1,12 +1,12 @@
 import { Project, ProjectType } from '../models/project.model';
 
-/** Maps a ProjectType to its URL segment, display label and emoji — single source of truth
+/** Maps a ProjectType to its URL segment, display label and compact type mark — single source of truth
  *  so list/detail/create pages never hardcode these strings separately. */
 const TYPE_META: Record<ProjectType, { segment: string; label: string; icon: string }> = {
-  [ProjectType.Event]:       { segment: 'events',       label: 'Event',        icon: '🚀' },
-  [ProjectType.Workshop]:    { segment: 'workshops',    label: 'Workshop',     icon: '🖥️' },
-  [ProjectType.FieldTrip]:   { segment: 'fieldtrips',   label: 'Field Trip',   icon: '🏭' },
-  [ProjectType.SchoolVisit]: { segment: 'schoolvisits', label: 'School Visit', icon: '🎓' },
+  [ProjectType.Event]:       { segment: 'events',       label: 'Event',        icon: 'EV' },
+  [ProjectType.Workshop]:    { segment: 'workshops',    label: 'Workshop',     icon: 'WS' },
+  [ProjectType.FieldTrip]:   { segment: 'fieldtrips',   label: 'Field Trip',   icon: 'FT' },
+  [ProjectType.SchoolVisit]: { segment: 'schoolvisits', label: 'School Visit', icon: 'SV' },
 };
 
 export const projectTypeSegment = (type: ProjectType): string => TYPE_META[type].segment;

@@ -3,19 +3,19 @@
     <div class="nav-brand">ASME CU</div>
     <div class="nav-breadcrumb">ADMIN PANEL &gt; SIGN IN</div>
     <div class="nav-right">
-      <button class="btn-back" routerLink="/projects">← PROJECTS LIST</button>
+      <button type="button" class="btn-back" routerLink="/projects">← PROJECTS LIST</button>
     </div>
   </header>
 
   <main class="login-main">
     <form class="login-card" (ngSubmit)="onSubmit()" novalidate>
       <div class="login-head">
-        <div class="login-badge">🔒</div>
+        <div class="login-badge" aria-hidden="true">CU</div>
         <h1 class="login-title">Admin Sign In</h1>
         <p class="login-subtitle">Sign in to create or manage projects.</p>
       </div>
 
-      <p class="login-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <p class="login-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</p>
 
       <div class="form-group">
         <label class="field-label" for="email">EMAIL</label>

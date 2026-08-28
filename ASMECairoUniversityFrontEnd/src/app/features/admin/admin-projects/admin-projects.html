@@ -6,7 +6,7 @@
         <h1 class="page-title">MANAGE PROJECTS</h1>
         <p class="page-subtitle">Every project, its own view stats, and quick status/edit controls.</p>
       </div>
-      <button class="btn-create" routerLink="/admin/create-project">+ NEW PROJECT</button>
+      <button type="button" class="btn-create" routerLink="/admin/create-project">+ NEW PROJECT</button>
     </div>
 
     <div class="controls">
@@ -14,12 +14,13 @@
         class="search-input"
         type="text"
         placeholder="Search by title or description..."
+        aria-label="Search projects"
         [(ngModel)]="searchTerm"
         name="search"
       />
       <div class="filter-pills">
-        <button class="pill" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">All</button>
-        <button class="pill" *ngFor="let t of types" [class.active]="activeFilter === t" (click)="setFilter(t)">
+        <button type="button" class="pill" [class.active]="activeFilter === 'all'" [attr.aria-pressed]="activeFilter === 'all'" (click)="setFilter('all')">All</button>
+        <button type="button" class="pill" *ngFor="let t of types" [class.active]="activeFilter === t" [attr.aria-pressed]="activeFilter === t" (click)="setFilter(t)">
           {{ projectTypeIcon(t) }} {{ projectTypeLabel(t) }}
         </button>
       </div>
@@ -40,7 +41,7 @@
           <div class="cards-grid" *ngIf="filtered.length > 0">
             <div class="admin-card" *ngFor="let card of filtered" [class.busy]="card.busy">
               <a class="card-image-box" [routerLink]="projectDetailPath(card.summary)">
-                <img *ngIf="card.summary.coverImageUrl" [src]="card.summary.coverImageUrl" [alt]="card.summary.title" />
+                <img *ngIf="card.summary.coverImageUrl" [src]="card.summary.coverImageUrl" [alt]="card.summary.title" loading="lazy" decoding="async" />
                 <span *ngIf="!card.summary.coverImageUrl" class="icon">{{ projectTypeIcon(card.summary.type) }}</span>
               </a>
 
@@ -53,6 +54,7 @@
                     [class.draft]="card.summary.status === 0"
                     [class.closed]="card.summary.status === 2"
                     [disabled]="card.busy"
+                    [attr.aria-label]="'Status for ' + card.summary.title"
                     (change)="changeStatus(card, +$any($event.target).value)"
                   >
                     <option *ngFor="let s of statuses" [value]="s" [selected]="s === card.summary.status">
@@ -63,18 +65,18 @@
 
                 <h3 class="card-title">{{ card.summary.title }}</h3>
                 <p class="card-description">{{ card.summary.shortDescription }}</p>
-                <p class="card-date">📅 {{ card.summary.mainDateAndTime | date: 'mediumDate' }}</p>
+                <p class="card-date"><span class="date-label">DATE</span> {{ card.summary.mainDateAndTime | date: 'mediumDate' }}</p>
 
                 <div class="card-analytics" *ngIf="card.analytics as a">
-                  <span>👁️ {{ a.totalViews }} views</span>
-                  <span>👤 {{ a.uniqueViews }} unique</span>
+                  <span>VIEWS {{ a.totalViews }}</span>
+                  <span>UNIQUE {{ a.uniqueViews }}</span>
                 </div>
 
                 <div class="card-actions">
-                  <button class="btn-edit" [routerLink]="['/admin/update-project', card.summary.id]" [disabled]="card.busy">
-                    ✎ Edit
+                  <button type="button" class="btn-edit" [routerLink]="['/admin/update-project', card.summary.id]" [disabled]="card.busy">
+                    EDIT
                   </button>
-                  <button class="btn-delete" (click)="deleteProject(card)" [disabled]="card.busy">🗑 Delete</button>
+                  <button type="button" class="btn-delete" (click)="deleteProject(card)" [disabled]="card.busy">DELETE</button>
                 </div>
               </div>
             </div>

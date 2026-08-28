@@ -1,13 +1,13 @@
 <div class="instructors-card" *ngIf="instructors.length">
   <div class="card-header">
-    <div class="icon-container">🧑‍🏫</div>
+    <div class="icon-container" aria-hidden="true">IN</div>
     <h2>INSTRUCTORS</h2>
   </div>
 
   <div class="instructors-grid">
     <div class="instructor-card" *ngFor="let i of instructors">
       <div class="instructor-photo">
-        <img *ngIf="i.profileImagePath" [src]="i.profileImagePath" [alt]="i.fullName">
+        <img *ngIf="i.profileImagePath" [src]="i.profileImagePath" [alt]="i.fullName" loading="lazy" decoding="async">
         <div *ngIf="!i.profileImagePath" class="instructor-photo-placeholder">{{ initials(i.fullName) }}</div>
       </div>
       <div class="instructor-name">{{ i.fullName }}</div>

@@ -1,12 +1,16 @@
-<ng-container *ngIf="vm$ | async as vm">
-  <div class="loading-msg" *ngIf="vm.status === 'loading'">
-    <span class="spinner"></span>
-    <p>Loading school visit...</p>
-  </div>
+<main id="main-content" class="project-detail-page">
+  <ng-container *ngIf="vm$ | async as vm">
+    <div class="loading-msg" *ngIf="vm.status === 'loading'">
+      <span class="spinner"></span>
+      <p>Loading school visit...</p>
+    </div>
 
-  <div class="error-msg" *ngIf="vm.status === 'notFound'">School visit not found.</div>
+    <div class="error-msg" role="alert" *ngIf="vm.status === 'notFound'">
+      <h1>School visit not found</h1>
+      <a routerLink="/projects">Back to projects</a>
+    </div>
 
-  <ng-container *ngIf="vm.status === 'loaded'">
+    <ng-container *ngIf="vm.status === 'loaded'">
     <app-project-hero [project]="vm.project" typeLabel="School Visit"></app-project-hero>
 
     <div class="project-page-container">
@@ -35,5 +39,6 @@
         <app-project-details [project]="vm.project"></app-project-details>
       </div>
     </div>
+    </ng-container>
   </ng-container>
-</ng-container>
+</main>

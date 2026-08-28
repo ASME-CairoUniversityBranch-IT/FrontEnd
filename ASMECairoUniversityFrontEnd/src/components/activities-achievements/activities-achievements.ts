@@ -17,6 +17,7 @@ export class ActivitiesAchievements implements OnInit, OnDestroy {
 
   currentSlide = 0;
   totalSlides = 0;
+  isPaused = false;
 
   private autoplayTimer: ReturnType<typeof setInterval> | undefined;
   private revealObserver?: IntersectionObserver;
@@ -34,6 +35,8 @@ export class ActivitiesAchievements implements OnInit, OnDestroy {
       // force the view to render now so the carousel/reveal init below can find
       // the actual DOM nodes, then wire up the carousel and scroll-reveal behavior.
       this.cdr.detectChanges();
+      this.isPaused = typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.startAutoplay();
       this.initScrollReveal();
     });
@@ -48,19 +51,33 @@ export class ActivitiesAchievements implements OnInit, OnDestroy {
   goTo(index: number): void {
     if (this.totalSlides === 0) return;
     this.currentSlide = ((index % this.totalSlides) + this.totalSlides) % this.totalSlides;
-    const track = document.getElementById('activityCarouselSlides');
-    if (track) track.style.transform = `translateX(-${this.currentSlide * 100}%)`;
   }
 
   nextSlide(): void { this.goTo(this.currentSlide + 1); }
   prevSlide(): void { this.goTo(this.currentSlide - 1); }
 
-  onCarouselEnter(): void { clearInterval(this.autoplayTimer); }
-  onCarouselLeave(): void { this.startAutoplay(); }
+  pauseAutoplay(): void { clearInterval(this.autoplayTimer); }
+  resumeAutoplay(): void { this.startAutoplay(); }
+
+  toggleAutoplay(): void {
+    this.isPaused = !this.isPaused;
+    if (this.isPaused) this.pauseAutoplay();
+    else this.startAutoplay();
+  }
+
+  onCarouselKeydown(event: KeyboardEvent): void {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.prevSlide();
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.nextSlide();
+    }
+  }
 
   private startAutoplay(): void {
     clearInterval(this.autoplayTimer);
-    if (this.totalSlides <= 1) return;
+    if (this.totalSlides <= 1 || this.isPaused) return;
     this.autoplayTimer = setInterval(() => this.nextSlide(), 5000);
   }
 

@@ -1,13 +1,13 @@
 <div class="speakers-card" *ngIf="speakers.length">
   <div class="card-header">
-    <div class="icon-container">🎙</div>
+    <div class="icon-container" aria-hidden="true">SP</div>
     <h2>OUR SPEAKERS</h2>
   </div>
 
   <div class="speakers-grid">
     <div class="speaker-card" *ngFor="let s of speakers">
     <div class="speaker-photo">
-      <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.name">
+      <img *ngIf="s.photoUrl" [src]="s.photoUrl" [alt]="s.name" loading="lazy" decoding="async">
       <div class="speaker-photo-placeholder" *ngIf="!s.photoUrl">{{ initials(s.name) }}</div>
     </div>
       <div class="speaker-info">
@@ -17,4 +17,4 @@
       </div>
     </div>
   </div>
-</div>  
+</div>

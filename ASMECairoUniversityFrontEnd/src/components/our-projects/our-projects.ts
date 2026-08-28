@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import * as AOS from 'aos';
 import { Observable, of } from 'rxjs';
 import { catchError, map, startWith } from 'rxjs/operators';
 import { ProjectsService } from '../../app/core/services/projects.service';
@@ -19,7 +18,7 @@ type OurProjectsVM =
   templateUrl: './our-projects.html',
   styleUrl: './our-projects.css',
 })
-export class OurProject implements OnInit {
+export class OurProject {
   readonly tabs = ALL_PROJECT_TYPES;
   readonly projectTypeLabel = projectTypeLabel;
   readonly projectTypeIcon = projectTypeIcon;
@@ -37,10 +36,6 @@ export class OurProject implements OnInit {
       // teaser section, not worth showing an error banner for.
       catchError(() => of<OurProjectsVM>({ status: 'loaded', projects: [] })),
     );
-  }
-
-  ngOnInit(): void {
-    AOS.init();
   }
 
   /** Filters+caps the already-loaded projects to the active tab — plain function over vm$'s

@@ -7,8 +7,17 @@
   color: #fff;
 }
 .visit-icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 8px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 .visit-label {
   font-size: 0.7rem;

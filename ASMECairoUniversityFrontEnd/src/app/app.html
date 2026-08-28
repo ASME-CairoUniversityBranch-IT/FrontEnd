@@ -1,5 +1,10 @@
-<app-navbar></app-navbar>
+@if (showPublicChrome) {
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <app-navbar></app-navbar>
+}
 
 <router-outlet></router-outlet>
 
-<app-main-footer></app-main-footer>
+@if (showPublicChrome) {
+  <app-main-footer></app-main-footer>
+}

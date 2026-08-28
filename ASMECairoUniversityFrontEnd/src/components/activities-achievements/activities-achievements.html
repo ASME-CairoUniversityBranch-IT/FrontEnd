@@ -1,15 +1,15 @@
 <ng-container *ngIf="content as ACTIVITY_CONTENT">
 <!-- ═══════════════ CAROUSEL ═══════════════ -->
-<section class="carousel-section" id="featured">
+<section class="carousel-section" id="featured" aria-label="Featured highlights carousel">
   <div class="carousel-header">
     <span class="section-title">{{ ACTIVITY_CONTENT.featuredHighlightsLabel }}</span>
     <div class="carousel-nav-btns">
-      <button class="carousel-btn" (click)="prevSlide()" aria-label="Previous">
+      <button type="button" class="carousel-btn" (click)="prevSlide()" aria-label="Previous highlight">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-      <button class="carousel-btn" (click)="nextSlide()" aria-label="Next">
+      <button type="button" class="carousel-btn" (click)="nextSlide()" aria-label="Next highlight">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -19,23 +19,31 @@
 
   <div
     class="carousel-viewport"
-    (mouseenter)="onCarouselEnter()"
-    (mouseleave)="onCarouselLeave()">
-    <div class="carousel-slides" id="activityCarouselSlides">
+    role="region"
+    aria-roledescription="carousel"
+    aria-label="Featured ASME activities"
+    tabindex="0"
+    (keydown)="onCarouselKeydown($event)"
+    (mouseenter)="pauseAutoplay()"
+    (mouseleave)="resumeAutoplay()"
+    (focusin)="pauseAutoplay()"
+    (focusout)="resumeAutoplay()">
+    <div
+      class="carousel-slides"
+      id="activityCarouselSlides"
+      [style.transform]="'translateX(-' + (currentSlide * 100) + '%)'">
       <div
-  class="carousel-slide"
-  *ngFor="let slide of ACTIVITY_CONTENT.slides"
-  [style.background]="slide.bg"
+        class="carousel-slide"
+        *ngFor="let slide of ACTIVITY_CONTENT.slides; let i = index"
+        role="group"
+        aria-roledescription="slide"
+        [attr.aria-label]="(i + 1) + ' of ' + totalSlides"
+        [attr.aria-hidden]="currentSlide !== i"
+        [style.background]="slide.bg"
 >
 
   <!-- Background mesh -->
   <div class="slide-mesh"></div>
-
-  <!-- Decorative SVG -->
-  <div
-    class="slide-deco"
-    [innerHTML]="slide.decoSvg">
-  </div>
 
   <!-- LEFT: Text -->
   <div class="slide-content">
@@ -59,6 +67,8 @@
     <img
       [src]="slide.image"
       [alt]="slide.title"
+      [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+      decoding="async"
     />
   </div>
 
@@ -68,20 +78,31 @@
 
   <div class="carousel-dots">
     <button
+      *ngIf="totalSlides > 1"
+      type="button"
+      class="autoplay-btn"
+      (click)="toggleAutoplay()"
+      [attr.aria-label]="isPaused ? 'Play carousel' : 'Pause carousel'">
+      {{ isPaused ? 'Play' : 'Pause' }}
+    </button>
+    <button
       *ngFor="let slide of ACTIVITY_CONTENT.slides; let i = index"
+      type="button"
       class="dot"
       [class.active]="currentSlide === i"
       (click)="goTo(i)"
-      [attr.aria-label]="'Go to slide ' + (i + 1)">
+      aria-controls="activityCarouselSlides"
+      [attr.aria-current]="currentSlide === i ? 'true' : null"
+      [attr.aria-label]="'Go to highlight ' + (i + 1)">
     </button>
   </div>
 </section>
 
 <!-- ═══════════════ ACHIEVEMENTS ═══════════════ -->
-<section id="achievements" class="achievements-section">
-  <div class="section-title">
-    <span class="section-label">{{ ACTIVITY_CONTENT.achievementsEyebrow }}</span>
-    <h2 class="section-title">{{ ACTIVITY_CONTENT.achievementsTitle }}</h2>
+<section id="achievements" class="achievements-section" aria-label="Our achievements">
+  <div class="achievements-header">
+    <p class="subtitle"><span aria-hidden="true"></span> {{ ACTIVITY_CONTENT.achievementsEyebrow }}</p>
+    <h2 class="main-title">{{ ACTIVITY_CONTENT.achievementsTitle }}</h2>
   </div>
 
 <div class="achievements-grid">
@@ -95,6 +116,10 @@
       <img
         [src]="a.image"
         [alt]="a.title"
+        width="150"
+        height="150"
+        loading="lazy"
+        decoding="async"
       />
     </div>
 

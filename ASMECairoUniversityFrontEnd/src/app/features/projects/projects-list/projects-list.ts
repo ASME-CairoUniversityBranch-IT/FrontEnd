@@ -55,4 +55,8 @@ export class ProjectsListComponent {
   setFilter(filter: TypeFilter): void {
     this.activeFilter = filter;
   }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+  }
 }

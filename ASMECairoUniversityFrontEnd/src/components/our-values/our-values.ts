@@ -1,6 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import * as AOS from 'aos';
 import { ContentService } from '../../app/core/services/content.service';
 
 /** A value card plus the client-only UI state (isOpen) that content.json doesn't need to know about. */
@@ -28,32 +27,37 @@ export class OurValues implements OnInit {
   cards: ValueCardVM[] = [];
 
   loaded = false;
+  private activeCardTrigger: HTMLElement | null = null;
 
   constructor(
     private contentService: ContentService,
     private cdr: ChangeDetectorRef,
   ) {}
 
-  openCard(card: ValueCardVM): void {
+  openCard(card: ValueCardVM, trigger?: EventTarget | null): void {
+    this.activeCardTrigger = trigger instanceof HTMLElement ? trigger : null;
     card.isOpen = true;
   }
 
   closeCard(card: ValueCardVM): void {
     card.isOpen = false;
+    queueMicrotask(() => this.activeCardTrigger?.focus());
+  }
+
+  @HostListener('document:keydown.escape')
+  closeOpenCards(): void {
+    const hadOpenCard = this.cards.some((card) => card.isOpen);
+    this.cards.forEach((card) => card.isOpen = false);
+    if (hadOpenCard) queueMicrotask(() => this.activeCardTrigger?.focus());
   }
 
   ngOnInit(): void {
-    AOS.init();
-
     this.contentService.getContent().subscribe((data) => {
       this.sectionLabel = data.ourValues.sectionLabel;
       this.sectionTitle = data.ourValues.sectionTitle;
       this.cards = data.ourValues.cards.map((card) => ({ ...card, isOpen: false }));
       this.loaded = true;
-      // Cards are rendered via *ngFor once content arrives, so AOS needs to
-      // re-scan the DOM for the data-aos elements that just appeared.
       this.cdr.detectChanges();
-      AOS.refreshHard();
     });
   }
 }
