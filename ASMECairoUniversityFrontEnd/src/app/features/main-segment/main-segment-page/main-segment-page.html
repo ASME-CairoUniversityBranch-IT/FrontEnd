@@ -65,9 +65,9 @@
           </div>
 
           <div class="ms-hero-actions">
-            <a *ngIf="vm.edition.registration.isAvailable" href="#registration" class="ms-primary-cta">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="ms-primary-cta" (click)="openRegistrationModal()">
               Register for Main Segment {{ vm.edition.year }}
-            </a>
+            </button>
             <span *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" class="ms-disabled-cta">
               Opens {{ vm.edition.registration.opensAt | date: 'mediumDate' }}
             </span>
@@ -362,9 +362,9 @@
           </div>
 
           <div class="reg-cta-wrapper">
-            <a *ngIf="vm.edition.registration.isAvailable" [routerLink]="['/main-segment', vm.edition.year, 'register']" class="reg-btn-primary">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="reg-btn-primary" (click)="openRegistrationModal()">
               Register for Main Segment {{ vm.edition.year }}
-            </a>
+            </button>
 
             <button *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" type="button" class="reg-btn-disabled" disabled>
               Registration Opens on {{ vm.edition.registration.opensAt | date: 'mediumDate' }}
@@ -377,5 +377,13 @@
         </div>
       </div>
     </section>
+
+    <!-- Registration Interactive Modal -->
+    <app-main-segment-registration-modal
+      *ngIf="isRegistrationModalOpen && vm.status === 'loaded'"
+      [year]="vm.edition.year"
+      [editionTitle]="vm.edition.title"
+      (closed)="closeRegistrationModal()">
+    </app-main-segment-registration-modal>
   </main>
 </ng-container>

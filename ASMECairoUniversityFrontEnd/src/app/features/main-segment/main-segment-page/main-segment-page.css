@@ -163,6 +163,8 @@
   font-weight: 700;
   border-radius: 6px;
   text-decoration: none;
+  border: 0;
+  cursor: pointer;
   box-shadow: 0 4px 16px rgb(126 168 248 / 30%);
   transition: all var(--t) var(--ease);
 }

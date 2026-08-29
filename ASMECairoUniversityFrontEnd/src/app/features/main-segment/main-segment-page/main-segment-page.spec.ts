@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Title, Meta } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MainSegmentPageComponent } from './main-segment-page';
 import { MainSegmentService } from '../../../core/services/main-segment.service';
@@ -158,6 +160,8 @@ describe('MainSegmentPageComponent', () => {
       imports: [MainSegmentPageComponent],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: MainSegmentService, useValue: mockMainSegmentService },
         {
           provide: ActivatedRoute,

@@ -1,0 +1,373 @@
+<div class="reg-modal-overlay" (click)="requestClose()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div #modalRoot class="reg-modal-card" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <header class="reg-modal-header">
+      <div>
+        <span class="reg-modal-eyebrow">ASME CAIRO UNIVERSITY &bull; {{ year }}</span>
+        <h2 id="modal-title" class="reg-modal-title">Registration Application</h2>
+      </div>
+      <button type="button" class="btn-close-modal" (click)="requestClose()" aria-label="Close registration dialog">&times;</button>
+    </header>
+
+    <!-- Success View -->
+    <div *ngIf="submissionResponse$ | async as res" class="reg-success-view">
+      <div class="success-icon-badge">✓</div>
+      <h3 class="success-title">Registration Successfully Submitted!</h3>
+      <p class="success-copy">
+        Thank you for applying to attend <strong>{{ editionTitle }}</strong>. Your application has been received and logged in our registration system.
+      </p>
+
+      <div class="reference-box">
+        <span class="ref-label">YOUR REGISTRATION REFERENCE CODE:</span>
+        <span class="ref-code">{{ res.referenceNumber }}</span>
+        <span class="ref-status">Status: <strong>{{ res.status }}</strong></span>
+      </div>
+
+      <p class="success-instructions">
+        Please save your reference code for event check-in and application inquiries. An email confirmation has also been scheduled.
+      </p>
+
+      <button type="button" class="btn-primary-done" (click)="requestClose()">
+        RETURN TO EVENT PAGE
+      </button>
+    </div>
+
+    <!-- Multi-step Form (when not submitted yet) -->
+    <div *ngIf="!(submissionResponse$ | async)" class="reg-modal-body">
+
+      <!-- Compact Progress Stepper -->
+      <nav class="reg-stepper" aria-label="Registration steps">
+        <div class="step-indicator" [class.active]="currentStep === 1" [class.completed]="currentStep > 1" (click)="goToStep(1)">
+          <span class="step-num">1</span>
+          <span class="step-label">Details</span>
+        </div>
+        <div class="step-divider" [class.completed]="currentStep > 1"></div>
+        <div class="step-indicator" [class.active]="currentStep === 2" [class.completed]="currentStep > 2" (click)="goToStep(2)">
+          <span class="step-num">2</span>
+          <span class="step-label">Education</span>
+        </div>
+        <div class="step-divider" [class.completed]="currentStep > 2"></div>
+        <div class="step-indicator" [class.active]="currentStep === 3" [class.completed]="currentStep === 3">
+          <span class="step-num">3</span>
+          <span class="step-label">Questions</span>
+        </div>
+      </nav>
+
+      <!-- Global Error Alert -->
+      <div *ngIf="errorMessage$ | async as err" class="reg-error-alert" role="alert">
+        <span class="error-icon">⚠</span>
+        <span>{{ err }}</span>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- STEP 1: Details -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <form *ngIf="currentStep === 1" [formGroup]="detailsForm" class="step-form">
+        <div class="form-section-intro">
+          <h3 #firstStepHeading class="step-heading">Personal & Identification Details</h3>
+          <p class="step-subheading">Enter your official identification information as registered on your National ID.</p>
+        </div>
+
+        <div class="form-grid two-cols">
+          <div class="form-group">
+            <label for="name-en">Full Name in English <span class="req">*</span></label>
+            <input id="name-en" type="text" formControlName="nameEnglish" placeholder="e.g. Ahmed Mohamed Ali" autocomplete="name" />
+            <span class="helper-text">English alphabet letters only.</span>
+            <div *ngIf="detailsForm.get('nameEnglish')?.touched && detailsForm.get('nameEnglish')?.errors" class="field-error">
+              Valid English name is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="name-ar">Full Name in Arabic <span class="req">*</span></label>
+            <input id="name-ar" type="text" formControlName="nameArabic" placeholder="مثال: أحمد محمد علي" dir="rtl" />
+            <span class="helper-text">Arabic script as written on your National ID card.</span>
+            <div *ngIf="detailsForm.get('nameArabic')?.touched && detailsForm.get('nameArabic')?.errors" class="field-error">
+              Valid Arabic name is required.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid two-cols">
+          <div class="form-group">
+            <label for="email-input">Email Address <span class="req">*</span></label>
+            <input id="email-input" type="email" formControlName="email" placeholder="name@example.com" autocomplete="email" />
+            <span class="helper-text">Official confirmation will be sent here.</span>
+            <div *ngIf="detailsForm.get('email')?.touched && detailsForm.get('email')?.errors" class="field-error">
+              Valid email address is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="phone-input">Egyptian Phone Number <span class="req">*</span></label>
+            <input id="phone-input" type="tel" formControlName="phoneNumber" placeholder="01012345678" autocomplete="tel" />
+            <span class="helper-text">11-digit Egyptian mobile number (010, 011, 012, 015).</span>
+            <div *ngIf="detailsForm.get('phoneNumber')?.touched && detailsForm.get('phoneNumber')?.errors" class="field-error">
+              Valid 11-digit Egyptian phone number is required.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid two-cols">
+          <div class="form-group">
+            <label for="gender-select">Gender <span class="req">*</span></label>
+            <select id="gender-select" formControlName="gender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="nid-input">Egyptian National ID Number <span class="req">*</span></label>
+            <input id="nid-input" type="text" formControlName="nationalId" placeholder="14-digit National ID" maxlength="14" />
+            <span class="helper-text">14 numeric digits as printed on your national ID card.</span>
+            <div *ngIf="detailsForm.get('nationalId')?.touched && detailsForm.get('nationalId')?.errors" class="field-error">
+              Valid 14-digit National ID is required.
+            </div>
+          </div>
+        </div>
+
+        <!-- Files Upload Grid -->
+        <div class="file-upload-cards-grid">
+          <!-- National ID Photo -->
+          <div class="file-card" [class.has-file]="nationalIdFile">
+            <div class="file-card-header">
+              <h4>National ID Card Photo <span class="req">*</span></h4>
+              <span class="file-hint">JPEG, PNG, WebP (Max 10MB)</span>
+            </div>
+
+            <div *ngIf="nationalIdPreviewUrl" class="file-preview-wrap">
+              <img [src]="nationalIdPreviewUrl" alt="National ID preview" class="file-preview-img" />
+            </div>
+
+            <label class="btn-file-select">
+              {{ nationalIdFile ? 'Change ID Photo' : 'Upload National ID Photo' }}
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onNationalIdFileSelected($event)" />
+            </label>
+            <div *ngIf="nationalIdFileError" class="field-error">{{ nationalIdFileError }}</div>
+          </div>
+
+          <!-- CV Document -->
+          <div class="file-card" [class.has-file]="cvFile">
+            <div class="file-card-header">
+              <h4>Curriculum Vitae (CV) <span class="req">*</span></h4>
+              <span class="file-hint">PDF or DOCX (Max 10MB)</span>
+            </div>
+
+            <div *ngIf="cvFileName" class="selected-file-chip">
+              📄 {{ cvFileName }}
+            </div>
+
+            <label class="btn-file-select">
+              {{ cvFile ? 'Change CV Document' : 'Upload CV Document' }}
+              <input type="file" accept=".pdf,.doc,.docx" (change)="onCvFileSelected($event)" />
+            </label>
+            <div *ngIf="cvFileError" class="field-error">{{ cvFileError }}</div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" class="btn-step-continue" (click)="goToStep(2)">
+            Continue to Education &rarr;
+          </button>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- STEP 2: Education -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <form *ngIf="currentStep === 2" [formGroup]="educationForm" class="step-form">
+        <div class="form-section-intro">
+          <h3 class="step-heading">Academic & University Information</h3>
+          <p class="step-subheading">Select your university, faculty, department, and upload your student identification.</p>
+        </div>
+
+        <!-- University Selector -->
+        <div class="form-group">
+          <label>University <span class="req">*</span></label>
+          <div class="custom-select-box">
+            <input type="text" placeholder="Search Egyptian universities..." [ngModel]="universitySearch$ | async" (ngModelChange)="universitySearch$.next($event)" [ngModelOptions]="{standalone: true}" class="search-input" />
+
+            <div class="options-list-scroll">
+              <div *ngIf="isLoadingUniversities$ | async" class="select-loading">Loading universities...</div>
+              <div *ngFor="let uni of universitiesList$ | async" class="select-option-item" [class.selected]="selectedUniversity?.id === uni.id" (click)="selectUniversity(uni)">
+                <strong>{{ uni.englishName }}</strong>
+                <span *ngIf="uni.arabicName" class="ar-label">{{ uni.arabicName }}</span>
+              </div>
+              <div class="select-option-item other-opt" [class.selected]="isUniversityOther" (click)="selectUniversity('other')">
+                <em>+ Other / Not Listed</em>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="isUniversityOther" class="other-input-wrap">
+            <label for="other-uni-input">Specify University Name <span class="req">*</span></label>
+            <input id="other-uni-input" type="text" formControlName="universityOtherName" placeholder="Enter your university name..." />
+          </div>
+        </div>
+
+        <!-- Faculty Selector -->
+        <div class="form-group">
+          <label>Faculty / College <span class="req">*</span></label>
+          <div class="custom-select-box" [class.disabled-box]="!selectedUniversity && !isUniversityOther">
+            <input type="text" placeholder="Search faculties in selected university..." [ngModel]="facultySearch$ | async" (ngModelChange)="facultySearch$.next($event)" [ngModelOptions]="{standalone: true}" [disabled]="!selectedUniversity && !isUniversityOther" class="search-input" />
+
+            <div class="options-list-scroll">
+              <div *ngIf="isLoadingFaculties$ | async" class="select-loading">Loading faculties...</div>
+              <div *ngFor="let fac of facultiesList$ | async" class="select-option-item" [class.selected]="selectedFaculty?.offeringId === fac.offeringId" (click)="selectFaculty(fac)">
+                <strong>{{ fac.englishName }}</strong>
+                <span *ngIf="fac.arabicName" class="ar-label">{{ fac.arabicName }}</span>
+              </div>
+              <div class="select-option-item other-opt" [class.selected]="isFacultyOther" (click)="selectFaculty('other')">
+                <em>+ Other / Not Listed</em>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="isFacultyOther" class="other-input-wrap">
+            <label for="other-fac-input">Specify Faculty Name <span class="req">*</span></label>
+            <input id="other-fac-input" type="text" formControlName="facultyOtherName" placeholder="Enter your faculty name..." />
+          </div>
+        </div>
+
+        <!-- Department Selector -->
+        <div class="form-group">
+          <label>Department / Major <span class="req">*</span></label>
+          <div class="custom-select-box" [class.disabled-box]="!selectedFaculty && !isFacultyOther">
+            <input type="text" placeholder="Search departments..." [ngModel]="departmentSearch$ | async" (ngModelChange)="departmentSearch$.next($event)" [ngModelOptions]="{standalone: true}" [disabled]="!selectedFaculty && !isFacultyOther" class="search-input" />
+
+            <div class="options-list-scroll">
+              <div *ngIf="isLoadingDepartments$ | async" class="select-loading">Loading departments...</div>
+              <div *ngFor="let dept of departmentsList$ | async" class="select-option-item" [class.selected]="selectedDepartment?.id === dept.id" (click)="selectDepartment(dept)">
+                <strong>{{ dept.englishName }}</strong>
+                <span *ngIf="dept.arabicName" class="ar-label">{{ dept.arabicName }}</span>
+              </div>
+              <div class="select-option-item other-opt" [class.selected]="isDepartmentOther" (click)="selectDepartment('other')">
+                <em>+ Other / General / Not Listed</em>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="isDepartmentOther" class="other-input-wrap">
+            <label for="other-dept-input">Specify Department Name <span class="req">*</span></label>
+            <input id="other-dept-input" type="text" formControlName="departmentOtherName" placeholder="Enter your department name..." />
+          </div>
+        </div>
+
+        <div class="form-grid two-cols">
+          <div class="form-group">
+            <label for="grad-year">Expected Graduation Year <span class="req">*</span></label>
+            <input id="grad-year" type="number" formControlName="graduationYear" placeholder="2026" min="2020" max="2035" />
+          </div>
+
+          <!-- University ID Photo -->
+          <div class="file-card compact-file-card" [class.has-file]="universityIdFile">
+            <div class="file-card-header">
+              <h4>University Student ID Card <span class="req">*</span></h4>
+              <span class="file-hint">JPEG, PNG, WebP (Max 10MB)</span>
+            </div>
+
+            <div *ngIf="universityIdPreviewUrl" class="file-preview-wrap">
+              <img [src]="universityIdPreviewUrl" alt="University ID preview" class="file-preview-img" />
+            </div>
+
+            <label class="btn-file-select">
+              {{ universityIdFile ? 'Change Student ID' : 'Upload Student ID Photo' }}
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onUniversityIdFileSelected($event)" />
+            </label>
+            <div *ngIf="universityIdFileError" class="field-error">{{ universityIdFileError }}</div>
+          </div>
+        </div>
+
+        <div class="step-actions split">
+          <button type="button" class="btn-step-back" (click)="goToStep(1)">
+            &larr; Back to Details
+          </button>
+          <button type="button" class="btn-step-continue" (click)="goToStep(3)">
+            Continue to Questions &rarr;
+          </button>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- STEP 3: Questions & Consent -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <form *ngIf="currentStep === 3" [formGroup]="questionsForm" class="step-form">
+        <div class="form-section-intro">
+          <h3 class="step-heading">Edition Application Questions</h3>
+          <p class="step-subheading">Please answer the questions below to finalize your Main Segment 2026 application.</p>
+        </div>
+
+        <div *ngIf="schema$ | async as schema" class="dynamic-questions-list">
+          <div *ngFor="let q of schema.questions">
+            <div *ngIf="isQuestionVisible(q)" class="question-card">
+              <label class="question-title">
+                {{ q.title }}
+                <span *ngIf="q.isRequired" class="req">*</span>
+              </label>
+              <p *ngIf="q.description" class="question-desc">{{ q.description }}</p>
+
+              <!-- ShortText -->
+              <input *ngIf="q.type === 'ShortText'" type="text" [formControlName]="q.key" [placeholder]="q.placeholder || ''" class="question-input" />
+
+              <!-- LongText -->
+              <textarea *ngIf="q.type === 'LongText'" rows="3" [formControlName]="q.key" [placeholder]="q.placeholder || ''" class="question-textarea"></textarea>
+
+              <!-- SingleChoice -->
+              <div *ngIf="q.type === 'SingleChoice' && q.options" class="choice-group">
+                <label *ngFor="let opt of q.options" class="radio-label">
+                  <input type="radio" [formControlName]="q.key" [value]="opt.value" />
+                  <span>{{ opt.label }}</span>
+                </label>
+              </div>
+
+              <!-- MultipleChoice -->
+              <div *ngIf="q.type === 'MultipleChoice' && q.options" class="choice-group">
+                <label *ngFor="let opt of q.options" class="checkbox-label">
+                  <input type="checkbox" [checked]="(questionsForm.get(q.key)?.value || []).includes(opt.value)" (change)="onCheckboxOptionToggled(q.key, opt.value)" />
+                  <span>{{ opt.label }}</span>
+                </label>
+              </div>
+
+              <!-- YesNo -->
+              <div *ngIf="q.type === 'YesNo'" class="yesno-group">
+                <label class="radio-label">
+                  <input type="radio" [formControlName]="q.key" [value]="true" />
+                  <span>Yes</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" [formControlName]="q.key" [value]="false" />
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Privacy & Consent Notice -->
+        <div class="consent-box">
+          <label class="consent-checkbox-label">
+            <input type="checkbox" formControlName="consentAgreed" />
+            <span>
+              I confirm that all submitted details and uploaded documents are accurate, and I agree to ASME Cairo University's privacy and data collection policies for event operations.
+            </span>
+          </label>
+          <div *ngIf="questionsForm.get('consentAgreed')?.touched && questionsForm.get('consentAgreed')?.errors" class="field-error">
+            You must agree to the registration consent notice to submit.
+          </div>
+        </div>
+
+        <div class="step-actions split">
+          <button type="button" class="btn-step-back" (click)="goToStep(2)" [disabled]="isSubmitting$ | async">
+            &larr; Back to Education
+          </button>
+          <button type="button" class="btn-submit-final" (click)="submitAll()" [disabled]="(isSubmitting$ | async) || !isQuestionsStepValid()">
+            {{ (isSubmitting$ | async) ? 'SUBMITTING APPLICATION...' : 'SUBMIT REGISTRATION' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>

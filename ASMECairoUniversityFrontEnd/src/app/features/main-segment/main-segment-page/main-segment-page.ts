@@ -21,6 +21,7 @@ import {
   SponsorGroup,
 } from '../../../core/utils/main-segment.util';
 import { NotFoundComponent } from '../../not-found/not-found';
+import { MainSegmentRegistrationModalComponent } from '../main-segment-registration-modal/main-segment-registration-modal';
 
 export type MainSegmentPageVM =
   | { status: 'loading' }
@@ -45,7 +46,13 @@ const DEFAULT_DESCRIPTION =
   selector: 'app-main-segment-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, DatePipe, NotFoundComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    DatePipe,
+    NotFoundComponent,
+    MainSegmentRegistrationModalComponent,
+  ],
   templateUrl: './main-segment-page.html',
   styleUrl: './main-segment-page.css',
 })
@@ -56,6 +63,7 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
   private readonly metaService = inject(Meta);
 
   private metaSubscription?: Subscription;
+  isRegistrationModalOpen = false;
 
   readonly journeySteps: JourneyStep[] = [
     {
@@ -156,6 +164,14 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
     this.metaService.updateTag({ name: 'description', content: DEFAULT_DESCRIPTION });
     this.metaService.updateTag({ property: 'og:title', content: DEFAULT_TITLE });
     this.metaService.updateTag({ property: 'og:description', content: DEFAULT_DESCRIPTION });
+  }
+
+  openRegistrationModal(): void {
+    this.isRegistrationModalOpen = true;
+  }
+
+  closeRegistrationModal(): void {
+    this.isRegistrationModalOpen = false;
   }
 
   getPersonInitials(name: string): string {
