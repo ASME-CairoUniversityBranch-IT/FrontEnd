@@ -1,7 +1,12 @@
 <nav class="navbar" [class.scrolled]="isScrolled" aria-label="Primary navigation">
   <div class="nav-inner">
 
-    <a href="#home" class="nav-logo" (click)="closeMenu()">
+    <a
+      [routerLink]="['/']"
+      fragment="home"
+      class="nav-logo"
+      (click)="onLogoClick()"
+      aria-label="ASME Cairo University Home">
       <div class="logo-icon">
         <img src="logo/ASME LOGO WHITE.png" alt="ASME Cairo University" class="logo-icon" width="40" height="40">
       </div>
@@ -28,13 +33,63 @@
       class="nav-links"
       [class.open]="isMenuOpen"
       [attr.inert]="isMobile && !isMenuOpen ? '' : null">
-      <a href="#home"         class="nav-link" (click)="closeMenu()">Home</a>
-      <a href="#about"        class="nav-link" (click)="closeMenu()">About</a>
-      <a href="#featured" class="nav-link" (click)="closeMenu()">Featured</a>
-      <a href="#achievements" class="nav-link" (click)="closeMenu()">Achievements</a>
-      <a href="#projects"     class="nav-link" (click)="closeMenu()">Projects</a>
-      <a href="#committees"   class="nav-link" (click)="closeMenu()">Committees</a>
-      <a href="#contact"      class="nav-link" (click)="closeMenu()">Contact</a>
+      <a
+        [routerLink]="['/']"
+        fragment="home"
+        class="nav-link"
+        [class.active]="isLandingRoute && activeSection === 'home'"
+        [attr.aria-current]="isLandingRoute && activeSection === 'home' ? 'page' : null"
+        (click)="onNavClick('home')">Home</a>
+      <a
+        [routerLink]="['/']"
+        fragment="about"
+        class="nav-link"
+        [class.active]="isLandingRoute && activeSection === 'about'"
+        [attr.aria-current]="isLandingRoute && activeSection === 'about' ? 'page' : null"
+        (click)="onNavClick('about')">About</a>
+      <a
+        [routerLink]="['/']"
+        fragment="featured"
+        class="nav-link"
+        [class.active]="isLandingRoute && activeSection === 'featured'"
+        [attr.aria-current]="isLandingRoute && activeSection === 'featured' ? 'page' : null"
+        (click)="onNavClick('featured')">Featured</a>
+      <a
+        [routerLink]="['/']"
+        fragment="achievements"
+        class="nav-link"
+        [class.active]="isLandingRoute && activeSection === 'achievements'"
+        [attr.aria-current]="isLandingRoute && activeSection === 'achievements' ? 'page' : null"
+        (click)="onNavClick('achievements')">Achievements</a>
+      <a
+        [routerLink]="['/']"
+        fragment="projects"
+        class="nav-link"
+        [class.active]="isLandingRoute && activeSection === 'projects'"
+        [attr.aria-current]="isLandingRoute && activeSection === 'projects' ? 'page' : null"
+        (click)="onNavClick('projects')">Projects</a>
+      <a
+        [routerLink]="['/']"
+        fragment="committees"
+        class="nav-link"
+        [class.active]="isLandingRoute && activeSection === 'committees'"
+        [attr.aria-current]="isLandingRoute && activeSection === 'committees' ? 'page' : null"
+        (click)="onNavClick('committees')">Committees</a>
+      <a
+        [routerLink]="['/']"
+        fragment="contact"
+        class="nav-link"
+        [class.active]="isLandingRoute && activeSection === 'contact'"
+        [attr.aria-current]="isLandingRoute && activeSection === 'contact' ? 'page' : null"
+        (click)="onNavClick('contact')">Contact</a>
+      <a
+        routerLink="/main-segment"
+        class="nav-link main-segment-link"
+        [class.active]="isMainSegmentRoute"
+        [attr.aria-current]="isMainSegmentRoute ? 'page' : null"
+        (click)="closeMenu()">
+        Main Segment
+      </a>
     </div>
 
     <button
@@ -42,7 +97,7 @@
       type="button"
       class="nav-scrim"
       aria-label="Close navigation menu"
-      (click)="closeMenu()">
+      (click)="onScrimClick()">
     </button>
 
   </div>

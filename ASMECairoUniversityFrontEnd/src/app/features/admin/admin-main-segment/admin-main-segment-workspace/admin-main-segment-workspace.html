@@ -1,0 +1,1481 @@
+<app-admin-nav active="main-segment">
+  <main class="workspace-page">
+
+    <!-- Loading State -->
+    <ng-container *ngIf="(vm$ | async) as vm">
+      <div *ngIf="vm.status === 'loading'" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading Main Segment {{ year }} workspace...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="vm.status === 'error'" class="error-banner" role="alert">
+        <div class="error-content">
+          <strong>Workspace Error:</strong> {{ vm.errorMessage }}
+        </div>
+        <a routerLink="/admin/main-segment" class="btn-secondary">&larr; Back to Editions</a>
+      </div>
+
+      <!-- Loaded Workspace -->
+      <div *ngIf="vm.status === 'loaded' && vm.edition as edition" class="workspace-container">
+
+        <!-- Top Header & Actions Bar -->
+        <header class="workspace-header">
+          <div class="header-top-row">
+            <a routerLink="/admin/main-segment" class="back-link">&larr; ALL EDITIONS</a>
+            <div class="status-pills">
+              <span class="status-pill" [class.published]="edition.status === 'Published'" [class.draft]="edition.status === 'Draft'" [class.archived]="edition.status === 'Archived'">
+                {{ edition.status }}
+              </span>
+              <span class="reg-pill" [class.open]="edition.isRegistrationAvailable" [class.closed]="!edition.isRegistrationAvailable">
+                {{ edition.isRegistrationAvailable ? 'Reg Open' : 'Reg Closed' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="header-main-row">
+            <div>
+              <h1 class="workspace-title">{{ edition.title }} ({{ edition.year }})</h1>
+              <div class="workspace-slug">Slug: <code>/main-segment/{{ edition.year }}</code></div>
+            </div>
+
+            <div class="workspace-actions">
+              <button type="button" class="btn-preview" (click)="openPreview()">
+                👁 LIVE PREVIEW
+              </button>
+
+              <button type="button" class="btn-action-status" (click)="togglePublishStatus(edition.status)" [disabled]="isSaving$ | async">
+                {{ edition.status === 'Published' ? 'UNPUBLISH (DRAFT)' : 'PUBLISH LIVE' }}
+              </button>
+
+              <button type="button" class="btn-action-reg" (click)="toggleRegistration(edition.isRegistrationAvailable)" [disabled]="isSaving$ | async">
+                {{ edition.isRegistrationAvailable ? 'CLOSE REGISTRATION' : 'OPEN REGISTRATION' }}
+              </button>
+
+              <button *ngIf="activeTab === 'overview'" type="button" class="btn-save" (click)="saveDraft()" [disabled]="(isSaving$ | async) || !form.dirty">
+                {{ (isSaving$ | async) ? 'SAVING...' : 'SAVE DRAFT' }}
+              </button>
+
+              <button *ngIf="activeTab === 'form-builder'" type="button" class="btn-save" (click)="saveDraftSchema()" [disabled]="(isSavingSchema$ | async)">
+                {{ (isSavingSchema$ | async) ? 'SAVING SCHEMA...' : 'SAVE SCHEMA DRAFT' }}
+              </button>
+
+              <button *ngIf="activeTab === 'registrations'" type="button" class="btn-export-csv" (click)="exportRegistrationsCsv()" [disabled]="(isExporting$ | async) || (registrationLoadState$ | async) === 'loading' || (registrationLoadState$ | async) === 'forbidden' || (registrationLoadState$ | async) === 'error'">
+                {{ (isExporting$ | async) ? 'EXPORTING CSV...' : '⬇ EXPORT CSV' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Toast Messages -->
+          <div *ngIf="successMessage$ | async as msg" class="toast-success" role="status">
+            ✓ {{ msg }}
+          </div>
+          <div *ngIf="errorMessage$ | async as err" class="toast-error" role="alert">
+            ⚠ {{ err }}
+          </div>
+
+          <!-- Navigation Subtabs -->
+          <nav class="workspace-tabs" aria-label="Edition workspace sub-navigation">
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+              OVERVIEW & STORY
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'program'" (click)="setTab('program')">
+              PROGRAM <span class="tab-badge">{{ edition.programItems.length }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'companies'" (click)="setTab('companies')">
+              COMPANIES & ECOSYSTEM <span class="tab-badge">{{ edition.organizations.length }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'form-builder'" (click)="setTab('form-builder')">
+              REGISTRATION FORM
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'registrations'" (click)="setTab('registrations')">
+              REGISTRATIONS
+            </button>
+          </nav>
+        </header>
+
+        <!-- Tab 1: Overview & Story -->
+        <section *ngIf="activeTab === 'overview'" class="tab-content">
+          <form [formGroup]="form" class="edition-form">
+
+            <!-- Section A: Identity & Hero -->
+            <div class="form-card">
+              <h2 class="card-title">1. Edition Identity & Hero Banner</h2>
+              <p class="card-desc">Configure the public title, slug, main banner copy, date, location, and key visual frame.</p>
+
+              <div class="form-grid two-cols">
+                <div class="form-group">
+                  <label for="edition-title">Edition Title <span class="req">*</span></label>
+                  <input id="edition-title" type="text" formControlName="title" />
+                  <div *ngIf="form.get('title')?.touched && form.get('title')?.errors" class="field-error">
+                    Title is required.
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="edition-slug">URL Slug <span class="req">*</span></label>
+                  <input id="edition-slug" type="text" formControlName="slug" />
+                  <div *ngIf="form.get('slug')?.touched && form.get('slug')?.errors" class="field-error">
+                    Lowercase slug is required.
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="hero-content">Hero Supporting Headline & Copy <span class="req">*</span></label>
+                <textarea id="hero-content" rows="2" formControlName="heroContent"></textarea>
+                <div *ngIf="form.get('heroContent')?.touched && form.get('heroContent')?.errors" class="field-error">
+                  Hero copy is required.
+                </div>
+              </div>
+
+              <div class="form-grid three-cols">
+                <div class="form-group">
+                  <label for="starts-at">Starts At <span class="req">*</span></label>
+                  <input id="starts-at" type="datetime-local" formControlName="startsAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="ends-at">Ends At <span class="req">*</span></label>
+                  <input id="ends-at" type="datetime-local" formControlName="endsAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="location">Location / Venue <span class="req">*</span></label>
+                  <input id="location" type="text" formControlName="location" />
+                </div>
+              </div>
+
+              <!-- Hero Image Management -->
+              <div class="image-management-box">
+                <div class="image-preview-area">
+                  <div *ngIf="edition.heroImageUrl" class="current-image-preview">
+                    <img [src]="edition.heroImageUrl" alt="Hero visual" />
+                  </div>
+                  <div *ngIf="!edition.heroImageUrl" class="no-image-placeholder">
+                    <span>No Hero Image Uploaded</span>
+                  </div>
+                </div>
+
+                <div class="image-controls">
+                  <h4>Hero Visual Frame</h4>
+                  <p class="helper-text">Upload a landscape visual representing the edition. Max 10MB (JPEG, PNG, WebP).</p>
+
+                  <div class="image-actions">
+                    <label class="btn-upload" [class.disabled]="isUploadingImage$ | async">
+                      {{ (isUploadingImage$ | async) ? 'UPLOADING...' : 'UPLOAD NEW IMAGE' }}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onHeroImageSelected($event)" [disabled]="isUploadingImage$ | async" />
+                    </label>
+
+                    <button *ngIf="edition.heroImageUrl" type="button" class="btn-remove-img" (click)="removeHeroImage()" [disabled]="isUploadingImage$ | async">
+                      REMOVE IMAGE
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section B: Why Main Segment Matters -->
+            <div class="form-card">
+              <h2 class="card-title">2. Editorial Story Narrative ("Why Main Segment Matters")</h2>
+              <p class="card-desc">The high-impact editorial narrative framed with engineering design language explaining the purpose of this edition.</p>
+
+              <div class="form-group">
+                <label for="story-content">Story Narrative Body <span class="req">*</span></label>
+                <textarea id="story-content" rows="6" formControlName="storyContent"></textarea>
+                <div *ngIf="form.get('storyContent')?.touched && form.get('storyContent')?.errors" class="field-error">
+                  Story narrative is required.
+                </div>
+              </div>
+            </div>
+
+            <!-- Section C: Segment Introductions -->
+            <div class="form-card">
+              <h2 class="card-title">3. Segment Introductions</h2>
+              <p class="card-desc">Optional editorial introductions rendered above the Career Fair and Mock Interviews sections.</p>
+
+              <div class="form-group">
+                <label for="career-fair-intro">Career Fair Introduction</label>
+                <textarea id="career-fair-intro" rows="3" formControlName="careerFairIntro" placeholder="Connect directly with engineering leaders, recruiters, and top companies..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="cv-review-intro">CV Review & Mock Interviews Introduction</label>
+                <textarea id="cv-review-intro" rows="3" formControlName="cvReviewAndMockInterviewsIntro" placeholder="One-on-one resume feedback and technical interview simulations with industrial hiring managers..."></textarea>
+              </div>
+            </div>
+
+            <!-- Section D: Registration Availability & Settings -->
+            <div class="form-card">
+              <h2 class="card-title">4. Registration Parameters & Windows</h2>
+              <p class="card-desc">Configure scheduled registration opening/closing dates, capacity limits, and manual overrides.</p>
+
+              <div class="form-grid three-cols">
+                <div class="form-group">
+                  <label for="reg-opens">Registration Opens At</label>
+                  <input id="reg-opens" type="datetime-local" formControlName="registrationOpensAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="reg-closes">Registration Closes At</label>
+                  <input id="reg-closes" type="datetime-local" formControlName="registrationClosesAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="capacity">Capacity Limit</label>
+                  <input id="capacity" type="number" formControlName="capacity" placeholder="e.g. 500" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="reg-override">Availability Override</label>
+                <select id="reg-override" formControlName="registrationAvailabilityOverride">
+                  <option [ngValue]="null">Automatic (Follow Open/Close Schedule)</option>
+                  <option [ngValue]="true">Force Open (Manual Override)</option>
+                  <option [ngValue]="false">Force Closed (Manual Override)</option>
+                </select>
+                <span class="helper-text">
+                  Setting this overrides the scheduled dates. Select "Automatic" to use the configured opening/closing dates.
+                </span>
+              </div>
+            </div>
+
+            <!-- Section E: Section Order & Visibility -->
+            <div class="form-card">
+              <h2 class="card-title">5. Section Visibility & Display Order</h2>
+              <p class="card-desc">Toggle visibility and customize display priority for the 8 standard Main Segment sections.</p>
+
+              <div class="sections-table-wrapper" formArrayName="sections">
+                <table class="sections-table">
+                  <thead>
+                    <tr>
+                      <th>Section Name</th>
+                      <th>Journey Milestone</th>
+                      <th>Visible</th>
+                      <th>Order</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let secCtrl of sectionsArray.controls; let i = index" [formGroupName]="i">
+                      <td class="section-name-cell">
+                        <strong>{{ getSectionTitle(secCtrl.get('sectionKey')?.value) }}</strong>
+                      </td>
+                      <td class="section-eyebrow-cell">
+                        <span class="journey-tag">{{ getSectionEyebrow(secCtrl.get('sectionKey')?.value) }}</span>
+                      </td>
+                      <td class="section-visible-cell">
+                        <input type="checkbox" formControlName="isVisible" />
+                      </td>
+                      <td class="section-order-cell">
+                        <input type="number" formControlName="displayOrder" class="order-input" />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Bottom Action Bar -->
+            <div class="form-bottom-bar">
+              <div class="bottom-left">
+                <button type="button" class="btn-archive" (click)="toggleArchiveStatus(edition.status)">
+                  {{ edition.status === 'Archived' ? 'UNARCHIVE' : 'ARCHIVE EDITION' }}
+                </button>
+              </div>
+
+              <div class="bottom-right">
+                <button type="button" class="btn-preview-secondary" (click)="openPreview()">
+                  LIVE PREVIEW
+                </button>
+                <button type="button" class="btn-save-primary" (click)="saveDraft()" [disabled]="(isSaving$ | async) || !form.dirty">
+                  {{ (isSaving$ | async) ? 'SAVING CHANGES...' : 'SAVE CHANGES' }}
+                </button>
+              </div>
+            </div>
+
+          </form>
+        </section>
+
+        <!-- Tab 2: Program & Schedule Editor -->
+        <section *ngIf="activeTab === 'program'" class="tab-content">
+          <div class="sub-header-bar">
+            <div class="filter-pills">
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'All'" (click)="setProgramFilter('All')">
+                All Items ({{ edition.programItems.length }})
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'PanelDiscussion'" (click)="setProgramFilter('PanelDiscussion')">
+                Panel Discussions
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'Talk'" (click)="setProgramFilter('Talk')">
+                Talks
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'Workshop'" (click)="setProgramFilter('Workshop')">
+                Workshops
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'MentorshipCircle'" (click)="setProgramFilter('MentorshipCircle')">
+                Mentorship Circles
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'Speakers'" (click)="setProgramFilter('Speakers')">
+                Speakers & Mentors ({{ edition.people.length }})
+              </button>
+            </div>
+
+            <div class="sub-actions">
+              <button *ngIf="programFilter !== 'Speakers'" type="button" class="btn-add-primary" (click)="openAddProgramItemModal()">
+                + ADD PROGRAM ITEM
+              </button>
+              <button type="button" class="btn-add-secondary" (click)="openAddPersonModal()">
+                + ADD SPEAKER / MENTOR
+              </button>
+            </div>
+          </div>
+
+          <!-- Speakers Roster View -->
+          <div *ngIf="programFilter === 'Speakers'" class="speakers-roster-view">
+            <div *ngIf="edition.people.length === 0" class="empty-tab-box">
+              <p>No speakers or mentors added yet. Click "+ ADD SPEAKER / MENTOR" to create the first speaker.</p>
+            </div>
+
+            <div *ngIf="edition.people.length > 0" class="people-editor-grid">
+              <article *ngFor="let person of edition.people; let i = index" class="person-editor-card">
+                <div class="person-card-top">
+                  <div class="person-avatar-box">
+                    <img *ngIf="person.photoUrl" [src]="person.photoUrl" [alt]="person.name" class="person-avatar-img" />
+                    <div *ngIf="!person.photoUrl" class="person-avatar-fallback">
+                      {{ getPersonInitials(person.name) }}
+                    </div>
+                  </div>
+
+                  <div class="person-card-meta">
+                    <h3 class="person-name">{{ person.name }}</h3>
+                    <div class="person-job">{{ person.jobTitle }}</div>
+                    <a *ngIf="person.linkedInUrl" [href]="person.linkedInUrl" target="_blank" class="person-linkedin">
+                      LinkedIn Profile ↗
+                    </a>
+                  </div>
+
+                  <div class="person-order-controls">
+                    <button type="button" class="btn-arrow" [disabled]="i === 0" (click)="movePerson(i, 'up', edition.people)" aria-label="Move speaker up">&uarr;</button>
+                    <button type="button" class="btn-arrow" [disabled]="i === edition.people.length - 1" (click)="movePerson(i, 'down', edition.people)" aria-label="Move speaker down">&darr;</button>
+                  </div>
+                </div>
+
+                <p class="person-bio-text">{{ person.shortBio }}</p>
+
+                <div class="person-assignments-row">
+                  <span class="assignment-label">Assigned to:</span>
+                  <span class="assignment-val">{{ getPersonAssignedItemTitles(person.programItemIds, edition.programItems) }}</span>
+                </div>
+
+                <div class="person-card-footer">
+                  <div class="photo-upload-group">
+                    <label class="btn-photo-upload" [class.disabled]="isUploadingImage$ | async">
+                      {{ (isUploadingImage$ | async) ? '...' : (person.photoUrl ? 'REPLACE PHOTO' : 'UPLOAD PHOTO') }}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPersonPhotoSelected(person.id, $event)" [disabled]="isUploadingImage$ | async" />
+                    </label>
+                    <button *ngIf="person.photoUrl" type="button" class="btn-photo-remove" (click)="removePersonPhoto(person.id)" [disabled]="isUploadingImage$ | async">
+                      ✕
+                    </button>
+                  </div>
+
+                  <div class="person-actions-right">
+                    <button type="button" class="btn-edit-inline" (click)="openEditPersonModal(person)">EDIT</button>
+                    <button type="button" class="btn-delete-inline" (click)="deletePerson(person.id)">DELETE</button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- Program Items List View -->
+          <div *ngIf="programFilter !== 'Speakers'" class="program-items-view">
+            <div *ngIf="getFilteredProgramItems(edition.programItems).length === 0" class="empty-tab-box">
+              <p>No program items found for this category. Click "+ ADD PROGRAM ITEM" to create one.</p>
+            </div>
+
+            <div *ngIf="getFilteredProgramItems(edition.programItems).length > 0" class="program-items-list">
+              <article *ngFor="let item of getFilteredProgramItems(edition.programItems); let i = index" class="program-item-card" [class.hidden-item]="!item.isVisible">
+                <div class="item-card-header">
+                  <div class="item-tags-row">
+                    <span class="category-badge">{{ item.category }}</span>
+                    <span *ngIf="!item.isVisible" class="hidden-badge">HIDDEN FROM PUBLIC</span>
+                    <span *ngIf="item.startsAt" class="time-badge">
+                      {{ item.startsAt | date:'shortTime' }}<span *ngIf="item.endsAt"> - {{ item.endsAt | date:'shortTime' }}</span>
+                    </span>
+                    <span *ngIf="item.location" class="location-badge">📍 {{ item.location }}</span>
+                  </div>
+
+                  <div class="item-reorder-group">
+                    <button type="button" class="btn-arrow" [disabled]="i === 0" (click)="moveProgramItem(i, 'up', edition.programItems)" aria-label="Move item up">&uarr;</button>
+                    <button type="button" class="btn-arrow" [disabled]="i === edition.programItems.length - 1" (click)="moveProgramItem(i, 'down', edition.programItems)" aria-label="Move item down">&darr;</button>
+                  </div>
+                </div>
+
+                <h3 class="item-title">{{ item.title }}</h3>
+                <p class="item-description">{{ item.description }}</p>
+
+                <div class="item-assigned-speakers">
+                  <strong>Speakers / Mentors:</strong> {{ getAssignedPeopleNames(item.personIds, edition.people) }}
+                </div>
+
+                <div class="item-card-actions">
+                  <button type="button" class="btn-edit-inline" (click)="openEditProgramItemModal(item)">EDIT ITEM</button>
+                  <button type="button" class="btn-delete-inline" (click)="deleteProgramItem(item.id)">DELETE</button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 3: Companies & Ecosystem Editor -->
+        <section *ngIf="activeTab === 'companies'" class="tab-content">
+          <div class="sub-header-bar">
+            <div class="filter-pills">
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'All'" (click)="setOrgFilter('All')">
+                All Organizations ({{ edition.organizations.length }})
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'CareerFair'" (click)="setOrgFilter('CareerFair')">
+                Career Fair
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'CvReviewAndMockInterview'" (click)="setOrgFilter('CvReviewAndMockInterview')">
+                CV Review & Interviews
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'Sponsor'" (click)="setOrgFilter('Sponsor')">
+                Sponsors
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'Partner'" (click)="setOrgFilter('Partner')">
+                Partners
+              </button>
+            </div>
+
+            <div class="sub-actions">
+              <button type="button" class="btn-add-primary" (click)="openAddOrgModal()">
+                + ADD ORGANIZATION
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="getFilteredOrganizations(edition.organizations).length === 0" class="empty-tab-box">
+            <p>No organizations found in this category. Click "+ ADD ORGANIZATION" to add one.</p>
+          </div>
+
+          <div *ngIf="getFilteredOrganizations(edition.organizations).length > 0" class="orgs-editor-grid">
+            <article *ngFor="let org of getFilteredOrganizations(edition.organizations); let i = index" class="org-editor-card" [class.hidden-item]="!org.isVisible">
+              <div class="org-stage-box">
+                <img *ngIf="org.logoUrl" [src]="org.logoUrl" [alt]="org.name" class="org-stage-logo" />
+                <div *ngIf="!org.logoUrl" class="org-stage-fallback">
+                  {{ getOrgInitials(org.name) }}
+                </div>
+              </div>
+
+              <div class="org-card-body">
+                <div class="org-tags-row">
+                  <span class="org-cat-badge">{{ org.category }}</span>
+                  <span *ngIf="org.category === 'Sponsor' && org.sponsorTier" class="sponsor-tier-badge" [class.strategic]="org.sponsorTier === 'Strategic'" [class.platinum]="org.sponsorTier === 'Platinum'" [class.gold]="org.sponsorTier === 'Gold'">
+                    {{ org.sponsorTier }}
+                  </span>
+                  <span *ngIf="!org.isVisible" class="hidden-badge">HIDDEN</span>
+                </div>
+
+                <h3 class="org-name">{{ org.name }}</h3>
+                <a *ngIf="org.websiteUrl" [href]="org.websiteUrl" target="_blank" class="org-website-link">
+                  Website ↗
+                </a>
+              </div>
+
+              <div class="org-card-footer">
+                <div class="photo-upload-group">
+                  <label class="btn-photo-upload" [class.disabled]="isUploadingImage$ | async">
+                    {{ (isUploadingImage$ | async) ? '...' : (org.logoUrl ? 'REPLACE LOGO' : 'UPLOAD LOGO') }}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onOrgLogoSelected(org.id, $event)" [disabled]="isUploadingImage$ | async" />
+                  </label>
+                  <button *ngIf="org.logoUrl" type="button" class="btn-photo-remove" (click)="removeOrgLogo(org.id)" [disabled]="isUploadingImage$ | async">
+                    ✕
+                  </button>
+                </div>
+
+                <div class="org-order-group">
+                  <button type="button" class="btn-arrow" [disabled]="i === 0" (click)="moveOrg(i, 'up', edition.organizations)" aria-label="Move org up">&uarr;</button>
+                  <button type="button" class="btn-arrow" [disabled]="i === edition.organizations.length - 1" (click)="moveOrg(i, 'down', edition.organizations)" aria-label="Move org down">&darr;</button>
+                </div>
+
+                <div class="org-actions-right">
+                  <button type="button" class="btn-edit-inline" (click)="openEditOrgModal(org)">EDIT</button>
+                  <button type="button" class="btn-delete-inline" (click)="deleteOrg(org.id)">DELETE</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Tab 4: Registration Form Builder & Settings (Milestone 6) -->
+        <section *ngIf="activeTab === 'form-builder'" class="tab-content">
+          <div *ngIf="schema$ | async as schema" class="form-builder-container">
+
+            <!-- Schema Version & Status Banner -->
+            <div class="schema-status-banner">
+              <div class="schema-meta">
+                <div class="schema-badge-row">
+                  <span class="schema-ver-badge">SCHEMA VERSION {{ schema.version }}</span>
+                  <span class="schema-live-badge" [class.published]="schema.isPublished" [class.draft]="!schema.isPublished">
+                    {{ schema.isPublished ? '● Live Published' : '○ Draft (Unpublished Changes)' }}
+                  </span>
+                </div>
+                <p class="schema-meta-desc">
+                  Changes made here configure Step 3 of the public registration modal. Publishing will advance the schema version for new applicants without altering historical registrations.
+                </p>
+              </div>
+
+              <div class="schema-actions-bar">
+                <button type="button" class="btn-preview-schema" (click)="openSchemaPreview()">
+                  👁 PREVIEW APPLICANT FORM
+                </button>
+                <button type="button" class="btn-seed-schema" (click)="seedDefaultQuestions()" [disabled]="isSavingSchema$ | async">
+                  RESET 2026 DEFAULTS
+                </button>
+                <button type="button" class="btn-publish-schema" (click)="publishSchema()" [disabled]="isSavingSchema$ | async">
+                  {{ (isSavingSchema$ | async) ? 'PUBLISHING...' : 'PUBLISH LIVE SCHEMA' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Global Registration Parameters & Eligibility -->
+            <form [formGroup]="schemaSettingsForm" class="schema-settings-card">
+              <h2 class="card-title">1. Registration Bounds & Application Parameters</h2>
+              <p class="card-desc">Set allowable graduation years, eligibility guidelines, privacy notice version, and confirmation workflow.</p>
+
+              <div class="form-grid two-cols">
+                <div class="form-group">
+                  <label for="min-grad">Minimum Graduation Year <span class="req">*</span></label>
+                  <input id="min-grad" type="number" formControlName="minGraduationYear" />
+                  <span class="helper-text">Earliest allowable graduation year (e.g. 2020).</span>
+                </div>
+
+                <div class="form-group">
+                  <label for="max-grad">Maximum Graduation Year <span class="req">*</span></label>
+                  <input id="max-grad" type="number" formControlName="maxGraduationYear" />
+                  <span class="helper-text">Latest allowable graduation year (e.g. 2035).</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="eligibility">Eligibility Notice / Text</label>
+                <textarea id="eligibility" rows="2" formControlName="eligibilityText" placeholder="e.g. Undergraduate and recent graduate engineering students across all Egyptian universities..."></textarea>
+              </div>
+
+              <div class="form-grid two-cols">
+                <div class="form-group">
+                  <label for="priv-ver">Privacy Notice Version <span class="req">*</span></label>
+                  <input id="priv-ver" type="text" formControlName="privacyNoticeVersion" placeholder="2026.1" />
+                </div>
+
+                <div class="form-group">
+                  <label for="workflow">Submission Workflow <span class="req">*</span></label>
+                  <select id="workflow" formControlName="submissionWorkflow">
+                    <option value="ReviewFirst">Review-First (Team manually accepts/rejects applications)</option>
+                    <option value="InstantConfirmation">Instant Confirmation (Auto-confirmed upon submit)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-save-row">
+                <button type="button" class="btn-save-inline" (click)="saveDraftSchema()" [disabled]="(isSavingSchema$ | async) || !schemaSettingsForm.dirty">
+                  {{ (isSavingSchema$ | async) ? 'Saving Settings...' : 'Save Settings' }}
+                </button>
+              </div>
+            </form>
+
+            <!-- Dynamic Question Builder -->
+            <div class="question-builder-card">
+              <div class="qb-header">
+                <div>
+                  <h2 class="card-title">2. Dynamic Registration Questions (Step 3)</h2>
+                  <p class="card-desc">Configure the questions presented dynamically to applicants on the final step.</p>
+                </div>
+                <button type="button" class="btn-add-primary" (click)="openAddQuestionModal()">
+                  + ADD QUESTION
+                </button>
+              </div>
+
+              <div *ngIf="schema.questions.length === 0" class="empty-tab-box">
+                <p>No dynamic questions configured. Click "+ ADD QUESTION" or "RESET 2026 DEFAULTS" above.</p>
+              </div>
+
+              <div *ngIf="schema.questions.length > 0" class="questions-table-wrap">
+                <table class="questions-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 60px;">Order</th>
+                      <th>Question Prompt & Key</th>
+                      <th>Type</th>
+                      <th>Options / Rules</th>
+                      <th>Required</th>
+                      <th>Status</th>
+                      <th style="width: 140px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let q of schema.questions; let i = index" [class.inactive-row]="!q.isActive">
+                      <td class="order-cell">
+                        <div class="order-btn-group">
+                          <button type="button" class="btn-arrow-mini" [disabled]="i === 0" (click)="moveQuestion(i, 'up')">&uarr;</button>
+                          <span>{{ q.displayOrder }}</span>
+                          <button type="button" class="btn-arrow-mini" [disabled]="i === schema.questions.length - 1" (click)="moveQuestion(i, 'down')">&darr;</button>
+                        </div>
+                      </td>
+
+                      <td class="prompt-cell">
+                        <div class="prompt-title">{{ q.title }}</div>
+                        <div class="prompt-key">Key: <code>{{ q.key }}</code></div>
+                        <div *ngIf="q.conditionalOnKey" class="condition-tag">
+                          ⚡ Depends on <code>{{ q.conditionalOnKey }}</code> === {{ q.conditionalValue }}
+                        </div>
+                      </td>
+
+                      <td class="type-cell">
+                        <span class="qtype-badge" [class.choice]="q.type.includes('Choice')" [class.yesno]="q.type === 'YesNo'">
+                          {{ q.type }}
+                        </span>
+                      </td>
+
+                      <td class="options-cell">
+                        <div *ngIf="q.options && q.options.length > 0">
+                          <strong>{{ q.options.length }} options</strong>
+                          <span *ngIf="q.allowOther" class="other-pill">+ Other</span>
+                        </div>
+                        <span *ngIf="!q.options || q.options.length === 0" class="text-muted">—</span>
+                      </td>
+
+                      <td class="req-cell">
+                        <span class="status-indicator" [class.yes]="q.isRequired" [class.no]="!q.isRequired">
+                          {{ q.isRequired ? 'Yes' : 'Optional' }}
+                        </span>
+                      </td>
+
+                      <td class="active-cell">
+                        <span class="status-indicator" [class.yes]="q.isActive" [class.no]="!q.isActive">
+                          {{ q.isActive ? 'Active' : 'Disabled' }}
+                        </span>
+                      </td>
+
+                      <td class="actions-cell">
+                        <button type="button" class="btn-edit-inline" (click)="openEditQuestionModal(q)">EDIT</button>
+                        <button type="button" class="btn-delete-inline" (click)="deleteQuestion(q.id)">DEL</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Tab 5: Registrations Review, Documents & Export (Milestone 7) -->
+        <section *ngIf="activeTab === 'registrations'" class="tab-content">
+          <div class="registrations-management-container">
+
+            <!-- Filter Controls Bar -->
+            <div class="reg-filters-bar">
+              <div class="reg-filter-field search-box">
+                <label for="registration-search">Search applications</label>
+                <input
+                  id="registration-search"
+                  type="text"
+                  placeholder="Search by name, email, phone, reference..."
+                  [value]="regSearch"
+                  (input)="regSearch = $any($event.target).value"
+                  (keyup.enter)="onRegistrationSearch($any($event.target).value)"
+                  class="reg-search-input"
+                />
+                <button type="button" class="btn-search" (click)="onRegistrationSearch(regSearch)">Search</button>
+              </div>
+
+              <div class="filter-selectors">
+                <div class="reg-filter-field">
+                  <label for="registration-university">University</label>
+                  <select id="registration-university" [value]="regUniversityIdFilter" (change)="setRegistrationUniversityFilter($any($event.target).value)" class="reg-select">
+                    <option value="">All universities</option>
+                    <option *ngFor="let university of (registrationUniversities$ | async)" [value]="university.id">{{ university.englishName }}</option>
+                  </select>
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-faculty">Faculty</label>
+                  <select id="registration-faculty" [value]="regFacultyIdFilter" (change)="setRegistrationFacultyFilter($any($event.target).value)" class="reg-select" [disabled]="!regUniversityIdFilter">
+                    <option value="">All faculties</option>
+                    <option *ngFor="let faculty of (registrationFaculties$ | async)" [value]="faculty.facultyId">{{ faculty.englishName }}</option>
+                  </select>
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-grad-year">Graduation year</label>
+                  <select id="registration-grad-year" [value]="regGradYearFilter || ''" (change)="setRegistrationGradYearFilter($any($event.target).value ? +$any($event.target).value : null)" class="reg-select">
+                    <option value="">All years</option>
+                    <option *ngFor="let yearOption of [2024, 2025, 2026, 2027, 2028, 2029, 2030]" [value]="yearOption">{{ yearOption }}</option>
+                  </select>
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-from">Submitted from</label>
+                  <input id="registration-from" type="date" class="reg-select" [value]="regSubmittedFrom" [max]="regSubmittedTo || null" (change)="setRegistrationDateFilter('from', $any($event.target).value)" />
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-to">Submitted to</label>
+                  <input id="registration-to" type="date" class="reg-select" [value]="regSubmittedTo" [min]="regSubmittedFrom || null" (change)="setRegistrationDateFilter('to', $any($event.target).value)" />
+                </div>
+                <button type="button" class="btn-clear-filters" (click)="clearRegistrationFilters()">Clear filters</button>
+              </div>
+            </div>
+
+            <p class="export-scope-note">CSV export uses the current search and filters across all matching pages. Private document links, National ID values, and free-text answers are excluded.</p>
+
+            <!-- Status Aggregation Pills -->
+            <div *ngIf="(registrations$ | async) as regData" class="status-counts-row">
+              <button type="button" class="status-count-btn" [class.active]="regStatusFilter === 'All'" (click)="setRegistrationStatusFilter('All')">
+                All ({{ regData.statusCounts.all || regData.totalCount }})
+              </button>
+              <button type="button" class="status-count-btn submitted" [class.active]="regStatusFilter === 'Submitted'" (click)="setRegistrationStatusFilter('Submitted')">
+                Submitted ({{ regData.statusCounts.submitted || 0 }})
+              </button>
+              <button type="button" class="status-count-btn under-review" [class.active]="regStatusFilter === 'UnderReview'" (click)="setRegistrationStatusFilter('UnderReview')">
+                Under Review ({{ regData.statusCounts.underReview || 0 }})
+              </button>
+              <button type="button" class="status-count-btn accepted" [class.active]="regStatusFilter === 'Accepted'" (click)="setRegistrationStatusFilter('Accepted')">
+                Accepted ({{ regData.statusCounts.accepted || 0 }})
+              </button>
+              <button type="button" class="status-count-btn waitlisted" [class.active]="regStatusFilter === 'Waitlisted'" (click)="setRegistrationStatusFilter('Waitlisted')">
+                Waitlisted ({{ regData.statusCounts.waitlisted || 0 }})
+              </button>
+              <button type="button" class="status-count-btn rejected" [class.active]="regStatusFilter === 'Rejected'" (click)="setRegistrationStatusFilter('Rejected')">
+                Rejected ({{ regData.statusCounts.rejected || 0 }})
+              </button>
+              <button type="button" class="status-count-btn cancelled" [class.active]="regStatusFilter === 'Cancelled'" (click)="setRegistrationStatusFilter('Cancelled')">
+                Cancelled ({{ regData.statusCounts.cancelled || 0 }})
+              </button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div *ngIf="isLoadingRegistrations$ | async" class="loading-inline">
+              <div class="spinner-small"></div>
+              <span>Fetching applications...</span>
+            </div>
+
+            <div *ngIf="(registrationLoadState$ | async) === 'forbidden'" class="registration-state-card forbidden" role="alert">
+              <strong>Registration access is restricted.</strong>
+              <span>{{ registrationErrorMessage$ | async }}</span>
+            </div>
+
+            <div *ngIf="(registrationLoadState$ | async) === 'error'" class="registration-state-card error" role="alert">
+              <div><strong>Applications could not be loaded.</strong><span>{{ registrationErrorMessage$ | async }}</span></div>
+              <button type="button" class="btn-retry" (click)="loadRegistrations()">Retry</button>
+            </div>
+
+            <!-- Registrations Table -->
+            <div *ngIf="((registrationLoadState$ | async) === 'loaded' || (registrationLoadState$ | async) === 'empty') && (registrations$ | async) as regData" class="reg-table-card">
+              <div *ngIf="regData.items.length === 0" class="empty-tab-box">
+                <p>No registrations found matching the active filters.</p>
+              </div>
+
+              <div *ngIf="regData.items.length > 0" class="reg-table-wrap">
+                <table class="reg-table">
+                  <thead>
+                    <tr>
+                      <th>Ref Number</th>
+                      <th>Applicant Name</th>
+                      <th>University & Faculty</th>
+                      <th>Grad</th>
+                      <th>Submitted At</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of regData.items" class="reg-row">
+                      <td class="ref-cell">
+                        <code>{{ item.referenceNumber }}</code>
+                      </td>
+
+                      <td class="name-cell">
+                        <div class="name-en">{{ item.nameEnglish }}</div>
+                        <div class="name-ar" dir="rtl">{{ item.nameArabic }}</div>
+                      </td>
+
+                      <td class="academic-cell">
+                        <div class="uni-name">{{ item.universityName }}</div>
+                        <div class="fac-name">{{ item.facultyName }}</div>
+                      </td>
+
+                      <td class="grad-cell">
+                        <span class="grad-badge">{{ item.graduationYear }}</span>
+                      </td>
+
+                      <td class="date-cell">
+                        {{ item.submittedAt | date:'mediumDate' }}
+                        <div class="time-sub">{{ item.submittedAt | date:'shortTime' }}</div>
+                      </td>
+
+                      <td class="status-cell">
+                        <span class="reg-status-pill" [class.submitted]="item.status === 'Submitted'" [class.under-review]="item.status === 'UnderReview'" [class.accepted]="item.status === 'Accepted'" [class.cancelled]="item.status === 'Cancelled'" [class.rejected]="item.status === 'Rejected'" [class.waitlisted]="item.status === 'Waitlisted'">
+                          {{ registrationStatusLabel(item.status) }}
+                        </span>
+                      </td>
+
+                      <td class="action-cell">
+                        <button type="button" class="btn-review-app" (click)="openRegistrationDetail(item.id)">
+                          Review &rarr;
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination Footer -->
+              <div *ngIf="regData.totalPages > 1" class="reg-pagination-footer">
+                <div class="pagination-meta">
+                  Showing page <strong>{{ regData.page }}</strong> of <strong>{{ regData.totalPages }}</strong> ({{ regData.totalCount }} total applicants)
+                </div>
+                <div class="pagination-controls">
+                  <button type="button" class="btn-page" [disabled]="regData.page <= 1" (click)="goToRegistrationPage(regData.page - 1)">&larr; Previous</button>
+                  <button type="button" class="btn-page" [disabled]="regData.page >= regData.totalPages" (click)="goToRegistrationPage(regData.page + 1)">Next &rarr;</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </ng-container>
+
+    <!-- Registration Detail Modal / Drawer (Milestone 7) -->
+    <div *ngIf="isDetailModalOpen$ | async" class="detail-modal-overlay" (click)="closeRegistrationDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+      <div class="detail-drawer-card" (click)="$event.stopPropagation()">
+
+        <div *ngIf="isLoadingDetail$ | async" class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading applicant details...</p>
+        </div>
+
+        <div *ngIf="!(isLoadingDetail$ | async) && (registrationDetailError$ | async) as detailError" class="detail-error-state" role="alert">
+          <strong>Applicant details could not be opened.</strong>
+          <p>{{ detailError }}</p>
+          <div class="detail-error-actions">
+            <button *ngIf="selectedRegistrationId" type="button" class="btn-retry" (click)="openRegistrationDetail(selectedRegistrationId)">Retry</button>
+            <button type="button" class="btn-secondary" (click)="closeRegistrationDetail()">Close</button>
+          </div>
+        </div>
+
+        <div *ngIf="!(isLoadingDetail$ | async) && (selectedRegistration$ | async) as detail" class="detail-content">
+          <header class="detail-header">
+            <div>
+              <div class="detail-ref-badge">{{ detail.referenceNumber }}</div>
+              <h2 id="detail-modal-title" class="detail-name">{{ detail.nameEnglish }}</h2>
+              <div class="detail-name-ar" dir="rtl">{{ detail.nameArabic }}</div>
+            </div>
+            <button type="button" class="btn-close" (click)="closeRegistrationDetail()" aria-label="Close detail view">&times;</button>
+          </header>
+
+          <!-- Contact & Masked ID Row -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">1. Applicant Identity & Contact</h3>
+            <div class="detail-grid two-cols">
+              <div class="detail-item">
+                <span class="detail-label">Email</span>
+                <span class="detail-val"><a [href]="'mailto:' + detail.email">{{ detail.email }}</a></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Phone Number</span>
+                <span class="detail-val"><a [href]="'tel:' + detail.phoneNumber">{{ detail.phoneNumber }}</a></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-val">{{ detail.gender }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">National ID (Masked)</span>
+                <span class="detail-val"><code>{{ detail.maskedNationalId }}</code></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Academic Snapshot -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">2. Academic Information</h3>
+            <div class="detail-grid two-cols">
+              <div class="detail-item">
+                <span class="detail-label">University</span>
+                <span class="detail-val">{{ detail.academicSnapshot.universityName }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Faculty</span>
+                <span class="detail-val">{{ detail.academicSnapshot.facultyName }}</span>
+              </div>
+              <div *ngIf="detail.academicSnapshot.departmentName" class="detail-item">
+                <span class="detail-label">Department</span>
+                <span class="detail-val">{{ detail.academicSnapshot.departmentName }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Expected Graduation</span>
+                <span class="detail-val">{{ detail.academicSnapshot.graduationYear }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Answers -->
+          <div *ngIf="detail.answers && detail.answers.length > 0" class="detail-section">
+            <h3 class="detail-section-title">3. Dynamic Questions & Answers</h3>
+            <div class="detail-answers-list">
+              <div *ngFor="let ans of detail.answers" class="detail-answer-card">
+                <div class="ans-prompt">{{ ans.questionTitle }}</div>
+                <div class="ans-value">
+                  <span *ngIf="ans.answerText">{{ ans.answerText }}</span>
+                  <span *ngIf="ans.booleanAnswer !== undefined && ans.booleanAnswer !== null" class="badge-boolean" [class.yes]="ans.booleanAnswer" [class.no]="!ans.booleanAnswer">
+                    {{ ans.booleanAnswer ? 'Yes' : 'No' }}
+                  </span>
+                  <div *ngIf="ans.selectedOptions && ans.selectedOptions.length > 0" class="selected-options-wrap">
+                    <span *ngFor="let opt of ans.selectedOptions" class="opt-pill">{{ opt }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Authorized Private Documents -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">4. Verification Documents (Authorized On-Demand Access)</h3>
+            <div class="doc-actions-grid">
+              <button *ngIf="detail.hasNationalIdPhoto" type="button" class="btn-doc-action" (click)="openPrivateDocument(detail.id, 'national-id', 'National ID Photo - ' + detail.nameEnglish)">
+                🪪 View National ID Photo
+              </button>
+
+              <button *ngIf="detail.hasUniversityIdPhoto" type="button" class="btn-doc-action" (click)="openPrivateDocument(detail.id, 'university-id', 'University Student ID - ' + detail.nameEnglish)">
+                🎓 View Student ID Card
+              </button>
+
+              <button *ngIf="detail.hasCvFile" type="button" class="btn-doc-action cv" [disabled]="downloadingDocument$ | async" (click)="downloadPrivateDocument(detail.id, 'cv', registrationDocumentFileName(detail, 'Cv', detail.nameEnglish.replace(' ', '_') + '_CV'))">
+                📄 {{ (downloadingDocument$ | async) === 'cv' ? 'Downloading CV...' : 'Download Applicant CV' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Status & Reviewer Actions -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">5. Status Management & Audit History</h3>
+            <form [formGroup]="statusUpdateForm" (ngSubmit)="submitStatusUpdate()" class="status-change-box">
+              <div class="status-form-row">
+                <div class="form-group status-select-group">
+                  <label for="update-status">Application Status <span class="req">*</span></label>
+                  <select id="update-status" formControlName="status">
+                    <option *ngFor="let status of getAllowedRegistrationStatuses(detail.status)" [value]="status">{{ registrationStatusLabel(status) }}</option>
+                  </select>
+                </div>
+
+                <div class="form-group note-input-group">
+                  <label for="update-note">Internal Audit / Review Note</label>
+                  <input id="update-note" type="text" formControlName="note" placeholder="e.g. Verified university ID, qualified for CAD workshop" />
+                </div>
+              </div>
+
+              <div class="status-submit-row">
+                <button type="submit" class="btn-update-status" [disabled]="(isUpdatingStatus$ | async) || statusUpdateForm.invalid">
+                  {{ (isUpdatingStatus$ | async) ? 'Updating Status...' : 'Save Status Update' }}
+                </button>
+              </div>
+            </form>
+
+            <!-- Status Audit Timeline -->
+            <div *ngIf="detail.statusHistory && detail.statusHistory.length > 0" class="status-timeline">
+              <h4 class="timeline-title">Audit History</h4>
+              <div *ngFor="let h of detail.statusHistory" class="timeline-item">
+                <div class="timeline-badge"></div>
+                <div class="timeline-content">
+                  <div class="timeline-meta">
+                    <strong>{{ registrationStatusLabel(h.fromStatus) }} &rarr; {{ registrationStatusLabel(h.toStatus) }}</strong>
+                    <span class="timeline-by">by {{ h.changedBy }} &bull; {{ h.changedAt | date:'short' }}</span>
+                  </div>
+                  <div *ngIf="h.note" class="timeline-note">{{ h.note }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Controlled Document Lightbox Modal (Milestone 7) -->
+    <div *ngIf="(documentViewer$ | async)?.isOpen" class="doc-lightbox-overlay" (click)="closeDocumentViewer()" role="dialog" aria-modal="true">
+      <div class="doc-lightbox-card" (click)="$event.stopPropagation()">
+        <header class="doc-lightbox-header">
+          <h3>{{ (documentViewer$ | async)?.title }}</h3>
+          <button type="button" class="btn-close-lightbox" (click)="closeDocumentViewer()">&times;</button>
+        </header>
+
+        <div class="doc-lightbox-body">
+          <div *ngIf="(documentViewer$ | async)?.isLoading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Fetching authorized document...</p>
+          </div>
+
+          <div *ngIf="(documentViewer$ | async)?.error as err" class="error-banner">
+            {{ err }}
+          </div>
+
+          <div *ngIf="(documentViewer$ | async)?.objectUrl as url" class="doc-img-wrap">
+            <img [src]="url" alt="Private document" class="doc-lightbox-img" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Program Item Modal -->
+    <div *ngIf="isProgramItemModalOpen$ | async" class="modal-overlay" (click)="closeProgramItemModal()" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="item-modal-title">{{ editingProgramItemId ? 'Edit Program Item' : 'Add Program Item' }}</h2>
+          <button type="button" class="btn-close" (click)="closeProgramItemModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="programItemForm" (ngSubmit)="saveProgramItem()" class="modal-form">
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="item-cat">Category <span class="req">*</span></label>
+              <select id="item-cat" formControlName="category">
+                <option value="PanelDiscussion">Panel Discussion</option>
+                <option value="Talk">Keynote / Technical Talk</option>
+                <option value="Workshop">Workshop</option>
+                <option value="MentorshipCircle">Mentorship Circle</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="item-visible">Visibility</label>
+              <select id="item-visible" formControlName="isVisible">
+                <option [ngValue]="true">Visible on Public Page</option>
+                <option [ngValue]="false">Hidden (Draft Item)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="item-title">Title <span class="req">*</span></label>
+            <input id="item-title" type="text" formControlName="title" placeholder="e.g. Navigating Thermal Systems Engineering" />
+          </div>
+
+          <div class="form-group">
+            <label for="item-desc">Description <span class="req">*</span></label>
+            <textarea id="item-desc" rows="3" formControlName="description" placeholder="Item summary and takeaways..."></textarea>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="item-starts">Starts At</label>
+              <input id="item-starts" type="datetime-local" formControlName="startsAt" />
+            </div>
+
+            <div class="form-group">
+              <label for="item-ends">Ends At</label>
+              <input id="item-ends" type="datetime-local" formControlName="endsAt" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="item-loc">Location / Room</label>
+            <input id="item-loc" type="text" formControlName="location" placeholder="e.g. Hall 3, Main Building" />
+          </div>
+
+          <!-- Assign Speakers -->
+          <div *ngIf="vm$ | async as vm" class="form-group">
+            <label>Assign Speakers / Mentors</label>
+            <div *ngIf="vm.edition?.people?.length === 0" class="helper-text">
+              No speakers exist yet. You can add them from the Speakers Roster.
+            </div>
+            <div *ngIf="(vm.edition?.people?.length || 0) > 0" class="checkbox-selection-grid">
+              <label *ngFor="let person of vm.edition?.people" class="checkbox-label">
+                <input type="checkbox" [checked]="(programItemForm.get('personIds')?.value || []).includes(person.id)" (change)="togglePersonAssignmentInItem(person.id)" />
+                <span>{{ person.name }} ({{ person.jobTitle }})</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeProgramItemModal()" [disabled]="isSaving$ | async">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="programItemForm.invalid || (isSaving$ | async)">
+              {{ (isSaving$ | async) ? 'Saving...' : 'Save Program Item' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Person Modal -->
+    <div *ngIf="isPersonModalOpen$ | async" class="modal-overlay" (click)="closePersonModal()" role="dialog" aria-modal="true" aria-labelledby="person-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="person-modal-title">{{ editingPersonId ? 'Edit Speaker Profile' : 'Add Speaker / Mentor' }}</h2>
+          <button type="button" class="btn-close" (click)="closePersonModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="personForm" (ngSubmit)="savePerson()" class="modal-form">
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="person-name">Full Name <span class="req">*</span></label>
+              <input id="person-name" type="text" formControlName="name" placeholder="Dr. Jane Doe" />
+            </div>
+
+            <div class="form-group">
+              <label for="person-title">Job Title / Company <span class="req">*</span></label>
+              <input id="person-title" type="text" formControlName="jobTitle" placeholder="Lead Aerodynamics Engineer, NASA" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="person-bio">Short Bio <span class="req">*</span></label>
+            <textarea id="person-bio" rows="3" formControlName="shortBio" placeholder="Speaker expertise and background..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="person-linkedin">LinkedIn URL</label>
+            <input id="person-linkedin" type="url" formControlName="linkedInUrl" placeholder="https://linkedin.com/in/janedoe" />
+          </div>
+
+          <!-- Assign Program Items -->
+          <div *ngIf="vm$ | async as vm" class="form-group">
+            <label>Participating in Program Items</label>
+            <div *ngIf="vm.edition?.programItems?.length === 0" class="helper-text">
+              No program items exist yet. You can assign this speaker later.
+            </div>
+            <div *ngIf="(vm.edition?.programItems?.length || 0) > 0" class="checkbox-selection-grid">
+              <label *ngFor="let item of vm.edition?.programItems" class="checkbox-label">
+                <input type="checkbox" [checked]="(personForm.get('programItemIds')?.value || []).includes(item.id)" (change)="toggleItemAssignmentInPerson(item.id)" />
+                <span>{{ item.title }} ({{ item.category }})</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closePersonModal()" [disabled]="isSaving$ | async">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="personForm.invalid || (isSaving$ | async)">
+              {{ (isSaving$ | async) ? 'Saving...' : 'Save Speaker Profile' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Organization Modal -->
+    <div *ngIf="isOrgModalOpen$ | async" class="modal-overlay" (click)="closeOrgModal()" role="dialog" aria-modal="true" aria-labelledby="org-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="org-modal-title">{{ editingOrgId ? 'Edit Organization' : 'Add Organization' }}</h2>
+          <button type="button" class="btn-close" (click)="closeOrgModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="orgForm" (ngSubmit)="saveOrg()" class="modal-form">
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="org-name">Organization Name <span class="req">*</span></label>
+              <input id="org-name" type="text" formControlName="name" placeholder="e.g. Siemens Energy" />
+            </div>
+
+            <div class="form-group">
+              <label for="org-category">Category <span class="req">*</span></label>
+              <select id="org-category" formControlName="category">
+                <option value="Sponsor">Sponsor</option>
+                <option value="Partner">Collaboration Partner</option>
+                <option value="CareerFair">Career Fair Company</option>
+                <option value="CvReviewAndMockInterview">CV Review & Mock Interview Firm</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div *ngIf="orgForm.get('category')?.value === 'Sponsor'" class="form-group">
+              <label for="sponsor-tier">Sponsorship Tier <span class="req">*</span></label>
+              <select id="sponsor-tier" formControlName="sponsorTier">
+                <option value="Strategic">Strategic (Top Tier)</option>
+                <option value="Platinum">Platinum</option>
+                <option value="Gold">Gold</option>
+                <option value="Silver">Silver</option>
+                <option value="Bronze">Bronze</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="org-vis">Visibility</label>
+              <select id="org-vis" formControlName="isVisible">
+                <option [ngValue]="true">Visible on Public Page</option>
+                <option [ngValue]="false">Hidden (Draft)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="org-web">Website URL</label>
+            <input id="org-web" type="url" formControlName="websiteUrl" placeholder="https://example.com" />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeOrgModal()" [disabled]="isSaving$ | async">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="orgForm.invalid || (isSaving$ | async)">
+              {{ (isSaving$ | async) ? 'Saving...' : 'Save Organization' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Question Builder Modal (Milestone 6) -->
+    <div *ngIf="isQuestionModalOpen$ | async" class="modal-overlay" (click)="closeQuestionModal()" role="dialog" aria-modal="true" aria-labelledby="q-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="q-modal-title">{{ editingQuestionId ? 'Edit Question' : 'Add Registration Question' }}</h2>
+          <button type="button" class="btn-close" (click)="closeQuestionModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="questionForm" (ngSubmit)="saveQuestion()" class="modal-form">
+          <div class="form-group">
+            <label for="q-title">Question Prompt / Title <span class="req">*</span></label>
+            <input id="q-title" type="text" formControlName="title" placeholder="e.g. What is your primary engineering interest area?" />
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="q-key">Unique Identifier Key <span class="req">*</span></label>
+              <input id="q-key" type="text" formControlName="key" placeholder="e.g. primary_interest" />
+              <span class="helper-text">Lowercase alphanumeric with underscores (e.g. <code>team_choice</code>).</span>
+            </div>
+
+            <div class="form-group">
+              <label for="q-type">Question Type <span class="req">*</span></label>
+              <select id="q-type" formControlName="type">
+                <option value="ShortText">Short Text (Input)</option>
+                <option value="LongText">Long Text (Textarea)</option>
+                <option value="SingleChoice">Single Choice (Radio Group)</option>
+                <option value="MultipleChoice">Multiple Choice (Checkboxes)</option>
+                <option value="YesNo">Yes / No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="q-desc">Helper Description / Note</label>
+            <input id="q-desc" type="text" formControlName="description" placeholder="Optional context or instructions..." />
+          </div>
+
+          <div *ngIf="questionForm.get('type')?.value === 'ShortText' || questionForm.get('type')?.value === 'LongText'" class="form-row two-cols">
+            <div class="form-group">
+              <label for="q-placeholder">Placeholder Text</label>
+              <input id="q-placeholder" type="text" formControlName="placeholder" placeholder="e.g. Type your answer here..." />
+            </div>
+
+            <div class="form-group">
+              <label for="q-max">Max Length (Characters)</label>
+              <input id="q-max" type="number" formControlName="maxLength" placeholder="e.g. 500" />
+            </div>
+          </div>
+
+          <!-- Options Manager for SingleChoice and MultipleChoice -->
+          <div *ngIf="questionForm.get('type')?.value === 'SingleChoice' || questionForm.get('type')?.value === 'MultipleChoice'" class="options-builder-box">
+            <div class="options-builder-header">
+              <h4>Choice Options ({{ questionOptionsArray.length }})</h4>
+              <button type="button" class="btn-add-opt" (click)="addQuestionOption()">+ Add Option</button>
+            </div>
+
+            <div *ngIf="questionOptionsArray.length === 0" class="empty-opt-note">
+              No options added yet. Click "+ Add Option" to define selectable choices.
+            </div>
+
+            <div class="options-list-editor" formArrayName="options">
+              <div *ngFor="let optCtrl of questionOptionsArray.controls; let optIdx = index" [formGroupName]="optIdx" class="option-row-card">
+                <input type="text" formControlName="label" placeholder="Option Label (e.g. Mechanical Design)" class="opt-label-input" />
+                <input type="text" formControlName="value" placeholder="Value Code (e.g. MechanicalDesign)" class="opt-val-input" />
+
+                <div class="opt-actions">
+                  <button type="button" class="btn-arrow-mini" [disabled]="optIdx === 0" (click)="moveQuestionOption(optIdx, 'up')">&uarr;</button>
+                  <button type="button" class="btn-arrow-mini" [disabled]="optIdx === questionOptionsArray.length - 1" (click)="moveQuestionOption(optIdx, 'down')">&darr;</button>
+                  <button type="button" class="btn-delete-opt" (click)="removeQuestionOption(optIdx)">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="allowOther" />
+                <span>Allow applicant to write in custom "Other" text value</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Conditional Display Rules -->
+          <div class="conditional-rules-box">
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="hasCondition" />
+                <span>Show this question conditionally based on previous question answer</span>
+              </label>
+            </div>
+
+            <div *ngIf="questionForm.get('hasCondition')?.value" class="condition-params-grid">
+              <div class="form-group">
+                <label for="cond-target">Depends on Question <span class="req">*</span></label>
+                <select id="cond-target" formControlName="conditionalOnKey">
+                  <option value="">Select target question...</option>
+                  <option *ngFor="let cand of getPreviousConditionCandidates(editingQuestionId)" [value]="cand.key">
+                    {{ cand.title }} ({{ cand.key }})
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="cond-val">Trigger Answer Value <span class="req">*</span></label>
+                <input id="cond-val" type="text" formControlName="conditionalValue" placeholder="e.g. true or specific option value" />
+                <span class="helper-text">For Yes/No questions, enter <code>true</code> or <code>false</code>.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isRequired" />
+                <span>Required for submission</span>
+              </label>
+            </div>
+
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isActive" />
+                <span>Active (Included in form)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeQuestionModal()">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="questionForm.invalid">
+              Save Question
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Live Applicant Question Preview Modal (Milestone 6) -->
+    <div *ngIf="isSchemaPreviewOpen$ | async" class="preview-modal-overlay" (click)="closeSchemaPreview()" role="dialog" aria-modal="true" aria-labelledby="schema-prev-title">
+      <div class="preview-modal-card" (click)="$event.stopPropagation()">
+        <header class="preview-modal-header">
+          <div>
+            <span class="preview-badge">APPLICANT EXPERIENCE PREVIEW &bull; STEP 3</span>
+            <h2 id="schema-prev-title">Dynamic Registration Questions</h2>
+          </div>
+          <button type="button" class="btn-close" (click)="closeSchemaPreview()" aria-label="Close preview">&times;</button>
+        </header>
+
+        <div *ngIf="schema$ | async as schema" class="preview-body">
+          <div class="preview-hero" style="padding: 20px 24px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #c9dcff; font-size: 14px;">
+              This simulates the exact questions and layout configured for <strong>{{ (vm$ | async)?.edition?.title || 'Main Segment' }}</strong> applicants.
+            </p>
+          </div>
+
+          <div class="applicant-preview-flow">
+            <div *ngFor="let q of schema.questions" class="preview-q-card">
+              <label class="q-label">
+                {{ q.title }}
+                <span *ngIf="q.isRequired" class="req">*</span>
+              </label>
+              <p *ngIf="q.description" class="q-desc">{{ q.description }}</p>
+
+              <!-- ShortText -->
+              <input *ngIf="q.type === 'ShortText'" type="text" [placeholder]="q.placeholder || 'Type here...'" class="prev-input" disabled />
+
+              <!-- LongText -->
+              <textarea *ngIf="q.type === 'LongText'" rows="3" [placeholder]="q.placeholder || 'Type here...'" class="prev-input" disabled></textarea>
+
+              <!-- SingleChoice -->
+              <div *ngIf="q.type === 'SingleChoice' && q.options" class="prev-options-group">
+                <label *ngFor="let opt of q.options" class="radio-label">
+                  <input type="radio" name="preview_{{ q.key }}" disabled />
+                  <span>{{ opt.label }}</span>
+                </label>
+                <label *ngIf="q.allowOther" class="radio-label">
+                  <input type="radio" name="preview_{{ q.key }}" disabled />
+                  <span>Other (Write-in text)</span>
+                </label>
+              </div>
+
+              <!-- MultipleChoice -->
+              <div *ngIf="q.type === 'MultipleChoice' && q.options" class="prev-options-group">
+                <label *ngFor="let opt of q.options" class="checkbox-label">
+                  <input type="checkbox" disabled />
+                  <span>{{ opt.label }}</span>
+                </label>
+              </div>
+
+              <!-- YesNo -->
+              <div *ngIf="q.type === 'YesNo'" class="prev-options-group" style="display: flex; gap: 16px;">
+                <label class="radio-label"><input type="radio" name="prev_{{ q.key }}" disabled /> <span>Yes</span></label>
+                <label class="radio-label"><input type="radio" name="prev_{{ q.key }}" disabled /> <span>No</span></label>
+              </div>
+
+              <div *ngIf="q.conditionalOnKey" class="condition-note">
+                ⓘ Displayed conditionally when <code>{{ q.conditionalOnKey }}</code> matches <code>{{ q.conditionalValue }}</code>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edition Live Preview Modal -->
+    <div *ngIf="isPreviewModalOpen$ | async" class="preview-modal-overlay" (click)="closePreview()" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+      <div class="preview-modal-card" (click)="$event.stopPropagation()">
+        <header class="preview-modal-header">
+          <div>
+            <span class="preview-badge">LIVE AUTHENTICATED PREVIEW</span>
+            <h2 id="preview-title">{{ (previewData$ | async)?.title }} ({{ (previewData$ | async)?.year }})</h2>
+          </div>
+          <button type="button" class="btn-close" (click)="closePreview()" aria-label="Close preview">&times;</button>
+        </header>
+
+        <div *ngIf="previewData$ | async as prev" class="preview-body">
+          <div class="preview-hero">
+            <div class="prev-eyebrow">ASME CAIRO UNIVERSITY &bull; {{ prev.year }}</div>
+            <h1 class="prev-title">{{ prev.title }}</h1>
+            <p class="prev-hero-copy">{{ prev.heroContent }}</p>
+            <div class="prev-meta-bar">
+              <div><strong>Dates:</strong> {{ prev.startsAt | date:'mediumDate' }}</div>
+              <div><strong>Location:</strong> {{ prev.location }}</div>
+              <div><strong>Status:</strong> <span class="badge">{{ prev.status }}</span></div>
+              <div><strong>Registration:</strong> <span class="badge">{{ prev.isRegistrationAvailable ? 'OPEN' : 'CLOSED' }}</span></div>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <h3>Why Main Segment Matters</h3>
+            <p class="prev-story">{{ prev.storyContent }}</p>
+          </div>
+
+          <div *ngIf="prev.programItems && prev.programItems.length > 0" class="preview-section">
+            <h3>Configured Program Items ({{ prev.programItems.length }})</h3>
+            <ul>
+              <li *ngFor="let pi of prev.programItems">
+                <strong>[{{ pi.category }}]</strong> {{ pi.title }} <span *ngIf="pi.location">({{ pi.location }})</span>
+              </li>
+            </ul>
+          </div>
+
+          <div *ngIf="prev.organizations && prev.organizations.length > 0" class="preview-section">
+            <h3>Configured Organizations ({{ prev.organizations.length }})</h3>
+            <ul>
+              <li *ngFor="let org of prev.organizations">
+                <strong>[{{ org.category }}]</strong> {{ org.name }} <span *ngIf="org.sponsorTier">({{ org.sponsorTier }})</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</app-admin-nav>

@@ -22,6 +22,10 @@
       <button type="button" class="sidebar-item" [class.active]="active === 'projects'" routerLink="/admin/projects">
         PROJECTS
       </button>
+      <button type="button" class="sidebar-item" [class.active]="active === 'main-segment'" routerLink="/admin/main-segment">
+        <span class="desktop-label">MAIN SEGMENT</span>
+        <span class="mobile-label">SEGMENT</span>
+      </button>
       <button type="button" class="sidebar-item" [class.active]="active === 'create' || active === 'edit'" routerLink="/admin/create-project">
         <span class="desktop-label">+ CREATE PROJECT</span>
         <span class="mobile-label">+ CREATE</span>

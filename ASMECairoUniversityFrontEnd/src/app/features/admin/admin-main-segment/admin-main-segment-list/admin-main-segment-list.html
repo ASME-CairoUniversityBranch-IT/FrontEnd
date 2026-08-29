@@ -1,0 +1,166 @@
+<app-admin-nav active="main-segment">
+  <main class="page-content">
+    <div class="content-header">
+      <div class="header-left">
+        <span class="eyebrow">ADMINISTRATION</span>
+        <h1 class="page-title">MAIN SEGMENT EDITIONS</h1>
+        <p class="page-desc">
+          Manage annual Main Segment edition storytelling, programs, sponsors, and registration settings.
+        </p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn-create" (click)="openCreateModal()">
+          + CREATE NEW EDITION
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="vm$ | async as vm">
+      <!-- Loading State -->
+      <div *ngIf="vm.status === 'loading'" class="loading-state" aria-live="polite">
+        <div class="spinner"></div>
+        <p>Loading Main Segment editions...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="vm.status === 'error'" class="error-banner" role="alert">
+        <div class="error-content">
+          <strong>Error loading editions:</strong> {{ vm.message }}
+        </div>
+        <button type="button" class="btn-retry" (click)="reload()">Retry</button>
+      </div>
+
+      <!-- Loaded State -->
+      <div *ngIf="vm.status === 'loaded'" class="editions-container">
+        <!-- Empty State -->
+        <div *ngIf="vm.editions.length === 0" class="empty-state">
+          <div class="empty-icon">📁</div>
+          <h3>No Main Segment editions yet</h3>
+          <p>Create your first annual edition (e.g. Main Segment 2026) to configure story, schedule, and registration.</p>
+          <button type="button" class="btn-create" (click)="openCreateModal()">Create Main Segment Edition</button>
+        </div>
+
+        <!-- Editions Grid -->
+        <div *ngIf="vm.editions.length > 0" class="editions-grid">
+          <article *ngFor="let ed of vm.editions" class="edition-card">
+            <div class="card-header">
+              <div class="year-badge">{{ ed.year }}</div>
+              <div class="status-tags">
+                <span class="status-pill" [class.published]="ed.status === 'Published'" [class.draft]="ed.status === 'Draft'" [class.archived]="ed.status === 'Archived'">
+                  {{ ed.status }}
+                </span>
+                <span class="reg-pill" [class.open]="ed.isRegistrationAvailable" [class.closed]="!ed.isRegistrationAvailable">
+                  {{ ed.isRegistrationAvailable ? 'Reg Open' : 'Reg Closed' }}
+                </span>
+              </div>
+            </div>
+
+            <h2 class="edition-title">{{ ed.title }}</h2>
+            <div class="edition-slug">/main-segment/{{ ed.year }} &bull; {{ ed.slug }}</div>
+
+            <div class="edition-meta-grid">
+              <div class="meta-row">
+                <span class="meta-label">DATES:</span>
+                <span class="meta-val">{{ ed.startsAt | date:'mediumDate' }} - {{ ed.endsAt | date:'mediumDate' }}</span>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <a [routerLink]="['/admin/main-segment', ed.year]" class="btn-workspace">
+                MANAGE WORKSPACE &rarr;
+              </a>
+              <a *ngIf="ed.status === 'Published'" [routerLink]="['/main-segment', ed.year]" target="_blank" class="btn-view-live">
+                VIEW LIVE ↗
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Create Edition Modal -->
+    <div *ngIf="isCreateModalOpen$ | async" class="modal-overlay" (click)="closeCreateModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="modal-title">Create Main Segment Edition</h2>
+          <button type="button" class="btn-close" (click)="closeCreateModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="modal-form">
+          <div *ngIf="createError$ | async as err" class="modal-error-alert" role="alert">
+            {{ err }}
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="create-year">Edition Year <span class="req">*</span></label>
+              <input id="create-year" type="number" formControlName="year" placeholder="2026" />
+              <div *ngIf="createForm.get('year')?.touched && createForm.get('year')?.errors" class="field-error">
+                Valid year is required.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="create-slug">URL Slug <span class="req">*</span></label>
+              <input id="create-slug" type="text" formControlName="slug" placeholder="main-segment-2026" />
+              <div *ngIf="createForm.get('slug')?.touched && createForm.get('slug')?.errors" class="field-error">
+                Valid lowercase slug is required (e.g. main-segment-2026).
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="create-title">Edition Title <span class="req">*</span></label>
+            <input id="create-title" type="text" formControlName="title" placeholder="Main Segment 2026" />
+            <div *ngIf="createForm.get('title')?.touched && createForm.get('title')?.errors" class="field-error">
+              Title is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="create-hero">Hero Content <span class="req">*</span></label>
+            <textarea id="create-hero" formControlName="heroContent" rows="2" placeholder="Hero summary headline..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="create-story">Story Narrative (Why Main Segment Matters) <span class="req">*</span></label>
+            <textarea id="create-story" formControlName="storyContent" rows="3" placeholder="Why this edition matters..."></textarea>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="create-starts">Starts At <span class="req">*</span></label>
+              <input id="create-starts" type="datetime-local" formControlName="startsAt" />
+            </div>
+
+            <div class="form-group">
+              <label for="create-ends">Ends At <span class="req">*</span></label>
+              <input id="create-ends" type="datetime-local" formControlName="endsAt" />
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="create-location">Location <span class="req">*</span></label>
+              <input id="create-location" type="text" formControlName="location" placeholder="Faculty of Engineering, Cairo University" />
+            </div>
+
+            <div class="form-group">
+              <label for="create-capacity">Capacity</label>
+              <input id="create-capacity" type="number" formControlName="capacity" placeholder="500" />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeCreateModal()" [disabled]="isCreating$ | async">
+              Cancel
+            </button>
+            <button type="submit" class="btn-submit" [disabled]="createForm.invalid || (isCreating$ | async)">
+              {{ (isCreating$ | async) ? 'Creating...' : 'Create & Open Workspace' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</app-admin-nav>

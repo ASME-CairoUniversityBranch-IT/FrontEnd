@@ -1,11 +1,22 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { mainSegmentRedirectGuard } from './core/guards/main-segment-redirect.guard';
+import { pendingChangesGuard } from './core/guards/pending-changes.guard';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     loadComponent: () => import('./features/home/home-page/home-page').then(m => m.HomePage),
+  },
+  {
+    path: 'main-segment',
+    canActivate: [mainSegmentRedirectGuard],
+    loadComponent: () => import('./features/main-segment/main-segment-page/main-segment-page').then(m => m.MainSegmentPageComponent),
+  },
+  {
+    path: 'main-segment/:year',
+    loadComponent: () => import('./features/main-segment/main-segment-page/main-segment-page').then(m => m.MainSegmentPageComponent),
   },
   {
     path: 'projects',
@@ -46,6 +57,23 @@ export const routes: Routes = [
     path: 'admin/projects',
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/admin-projects/admin-projects').then(m => m.AdminProjectsComponent),
+  },
+  {
+    path: 'admin/main-segment',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import(
+        './features/admin/admin-main-segment/admin-main-segment-list/admin-main-segment-list'
+      ).then((m) => m.AdminMainSegmentListComponent),
+  },
+  {
+    path: 'admin/main-segment/:year',
+    canActivate: [authGuard],
+    canDeactivate: [pendingChangesGuard],
+    loadComponent: () =>
+      import(
+        './features/admin/admin-main-segment/admin-main-segment-workspace/admin-main-segment-workspace'
+      ).then((m) => m.AdminMainSegmentWorkspaceComponent),
   },
   {
     path: 'admin/create-project',

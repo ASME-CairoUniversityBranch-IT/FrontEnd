@@ -1,0 +1,389 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <!-- Loading State -->
+  <main id="main-content" class="main-segment-page loading-view" *ngIf="vm.status === 'loading'" aria-busy="true" aria-label="Loading edition details">
+    <div class="loading-container">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loading-text">Loading Main Segment edition...</p>
+    </div>
+  </main>
+
+  <!-- Not Found State -->
+  <ng-container *ngIf="vm.status === 'notFound'">
+    <app-not-found></app-not-found>
+  </ng-container>
+
+  <!-- Error State -->
+  <main id="main-content" class="main-segment-page error-view" *ngIf="vm.status === 'error'">
+    <div class="error-card">
+      <p class="error-eyebrow">Connection Notice</p>
+      <h1>Unable to Load Edition</h1>
+      <p class="error-copy">{{ vm.message || 'An unexpected error occurred while loading this edition.' }}</p>
+      <div class="error-actions">
+        <button type="button" class="primary-btn" (click)="retry()">Try Again</button>
+        <a class="secondary-link" routerLink="/">Return Home</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Loaded Storytelling Page -->
+  <main id="main-content" class="main-segment-page" *ngIf="vm.status === 'loaded'">
+    <!-- 1. Hero Section -->
+    <header class="ms-hero" [class.has-image]="!!vm.edition.heroImageUrl">
+      <div class="ms-hero-grid-bg" aria-hidden="true"></div>
+      <div class="ms-hero-backdrop" *ngIf="vm.edition.heroImageUrl" [style.backgroundImage]="'url(' + vm.edition.heroImageUrl + ')'"></div>
+
+      <div class="ms-hero-inner">
+        <div class="ms-hero-content">
+          <div class="ms-eyebrow">
+            <span class="ms-badge">ASME Cairo University</span>
+            <span class="ms-year-badge">Edition {{ vm.edition.year }}</span>
+          </div>
+
+          <h1 class="ms-title">{{ vm.edition.title }}</h1>
+
+          <p class="ms-hero-copy" *ngIf="vm.edition.heroContent">
+            {{ vm.edition.heroContent }}
+          </p>
+
+          <div class="ms-meta-bar" aria-label="Event summary">
+            <div class="ms-meta-item" *ngIf="vm.edition.startsAt">
+              <span class="meta-label">Date & Time</span>
+              <span class="meta-value">{{ vm.edition.startsAt | date: 'EEEE, MMMM d, y' }}</span>
+            </div>
+
+            <div class="ms-meta-item" *ngIf="vm.edition.location">
+              <span class="meta-label">Location</span>
+              <span class="meta-value">{{ vm.edition.location }}</span>
+            </div>
+
+            <div class="ms-meta-item">
+              <span class="meta-label">Registration</span>
+              <span class="meta-badge" [class.open]="vm.edition.registration.isAvailable">
+                {{ vm.edition.registration.isAvailable ? 'Open Now' : (isRegistrationScheduled(vm.edition) ? 'Opening Soon' : 'Closed') }}
+              </span>
+            </div>
+          </div>
+
+          <div class="ms-hero-actions">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="ms-primary-cta" (click)="openRegistrationModal()">
+              Register for Main Segment {{ vm.edition.year }}
+            </button>
+            <span *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" class="ms-disabled-cta">
+              Opens {{ vm.edition.registration.opensAt | date: 'mediumDate' }}
+            </span>
+            <span *ngIf="!vm.edition.registration.isAvailable && !isRegistrationScheduled(vm.edition)" class="ms-disabled-cta">
+              Registration Closed
+            </span>
+
+            <a href="#story" class="ms-secondary-cta">
+              Explore Event Story
+            </a>
+          </div>
+        </div>
+
+        <div class="ms-hero-visual" *ngIf="vm.edition.heroImageUrl">
+          <div class="ms-visual-frame">
+            <img [src]="vm.edition.heroImageUrl" [alt]="'Main Segment ' + vm.edition.year + ' Event Visual'" class="ms-visual-img" loading="eager" decoding="async">
+            <div class="ms-visual-glare" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Why Main Segment Matters -->
+    <section id="story" class="ms-section ms-story-section" *ngIf="vm.edition.storyContent">
+      <div class="ms-container">
+        <div class="ms-section-header">
+          <span class="section-eyebrow">Why Main Segment Matters</span>
+          <h2>The Premiere Mechanical Engineering Gathering</h2>
+        </div>
+
+        <div class="ms-story-card">
+          <div class="ms-story-lead-line" aria-hidden="true"></div>
+          <div class="ms-story-body">
+            <p class="ms-story-paragraph">{{ vm.edition.storyContent }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Experience Journey Roadmap -->
+    <section id="journey" class="ms-section ms-journey-section">
+      <div class="ms-container">
+        <div class="ms-section-header">
+          <span class="section-eyebrow">Experience Roadmap</span>
+          <h2>From Insight To Career Opportunity</h2>
+          <p class="section-subtitle">
+            A structured multi-stage progression designed to prepare, inspire, and connect mechanical engineers with industry leaders.
+          </p>
+        </div>
+
+        <div class="ms-journey-grid">
+          <article class="ms-journey-card" *ngFor="let step of journeySteps">
+            <div class="ms-journey-card-header">
+              <span class="journey-step-num">{{ step.step }}</span>
+              <span class="journey-eyebrow">{{ step.eyebrow }}</span>
+            </div>
+            <div class="journey-icon-wrap" aria-hidden="true">
+              <i [class]="step.iconClass"></i>
+            </div>
+            <h3 class="journey-title">{{ step.title }}</h3>
+            <p class="journey-desc">{{ step.description }}</p>
+            <a [href]="'#' + step.sectionId" class="journey-anchor-link" [attr.aria-label]="'Jump to ' + step.title + ' section'">
+              View Details <span class="arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Detailed Sections Rendered in API Display Order -->
+    <ng-container *ngFor="let section of vm.edition.sections">
+      <section
+        *ngIf="hasSectionContent(section)"
+        [id]="'section-' + section.sectionKey"
+        class="ms-section"
+        [class.ms-program-section]="isProgramSection(section.sectionKey)"
+        [class.ms-orgs-section]="isOrgGridSection(section.sectionKey)"
+        [class.ms-sponsors-section]="isSponsorSection(section.sectionKey)"
+        [class.ms-partners-section]="isPartnerSection(section.sectionKey)">
+        <div class="ms-container">
+
+          <!-- Section Heading Header -->
+          <div class="ms-section-header">
+            <span class="section-eyebrow">{{ getSectionEyebrow(section.sectionKey) }}</span>
+            <h2>{{ getSectionTitle(section.sectionKey) }}</h2>
+            <p class="section-intro" *ngIf="section.intro">{{ section.intro }}</p>
+          </div>
+
+          <!-- A. Program Items (Panel Discussions, Talks, Workshops, Mentorship Circles) -->
+          <div class="ms-program-items-list" *ngIf="isProgramSection(section.sectionKey) && section.programItems.length > 0">
+            <article class="ms-program-item-card" *ngFor="let item of section.programItems">
+              <div class="item-header">
+                <div class="item-meta">
+                  <span class="item-category-tag">{{ item.category }}</span>
+                  <span class="item-time-tag" *ngIf="item.startsAt">
+                    <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                    {{ item.startsAt | date: 'shortTime' }}
+                    <ng-container *ngIf="item.endsAt"> – {{ item.endsAt | date: 'shortTime' }}</ng-container>
+                  </span>
+                  <span class="item-loc-tag" *ngIf="item.location">
+                    <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                    {{ item.location }}
+                  </span>
+                </div>
+                <h3 class="item-title">{{ item.title }}</h3>
+              </div>
+
+              <p class="item-desc" *ngIf="item.description">{{ item.description }}</p>
+
+              <!-- Speakers / People -->
+              <div class="item-people-block" *ngIf="item.people.length > 0">
+                <h4 class="people-block-title">Session Speakers & Mentors</h4>
+                <div class="people-grid">
+                  <div class="person-card" *ngFor="let person of item.people">
+                    <div class="person-avatar-wrap">
+                      <img
+                        *ngIf="person.photoUrl"
+                        [src]="person.photoUrl"
+                        [alt]="person.name + ' - ' + person.jobTitle"
+                        class="person-photo"
+                        loading="lazy"
+                        decoding="async">
+                      <div class="person-fallback-avatar" *ngIf="!person.photoUrl" aria-hidden="true">
+                        {{ getPersonInitials(person.name) }}
+                      </div>
+                    </div>
+
+                    <div class="person-details">
+                      <div class="person-name-row">
+                        <h4 class="person-name">{{ person.name }}</h4>
+                        <a
+                          *ngIf="person.linkedInUrl"
+                          [href]="person.linkedInUrl"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="linkedin-btn"
+                          [attr.aria-label]="'Visit ' + person.name + ' on LinkedIn (opens in new tab)'">
+                          <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+                        </a>
+                      </div>
+
+                      <p class="person-title">{{ person.jobTitle }}</p>
+                      <p class="person-bio" *ngIf="person.shortBio">{{ person.shortBio }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- B. Career Fair & CV Review Organizations Grids (Equal Visual Stages) -->
+          <div class="ms-orgs-grid" *ngIf="isOrgGridSection(section.sectionKey) && section.organizations.length > 0">
+            <article class="ms-org-card" *ngFor="let org of section.organizations">
+              <div class="org-logo-stage">
+                <img
+                  *ngIf="org.logoUrl"
+                  [src]="org.logoUrl"
+                  [alt]="org.name + ' logo'"
+                  class="org-logo"
+                  loading="lazy"
+                  decoding="async">
+                <div class="org-fallback-logo" *ngIf="!org.logoUrl">
+                  <span class="org-initials">{{ getOrgInitials(org.name) }}</span>
+                </div>
+              </div>
+
+              <div class="org-info">
+                <h3 class="org-name">{{ org.name }}</h3>
+                <a
+                  *ngIf="org.websiteUrl"
+                  [href]="org.websiteUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="org-website-link"
+                  [attr.aria-label]="'Visit ' + org.name + ' website (opens in new tab)'">
+                  Visit Website <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+              </div>
+            </article>
+          </div>
+
+          <!-- C. Sponsors Section with Explicit Tier Hierarchy -->
+          <div class="ms-sponsors-tier-container" *ngIf="isSponsorSection(section.sectionKey)">
+            <div class="ms-sponsor-tier-group" *ngFor="let group of groupSponsors(section.organizations)">
+              <div class="sponsor-tier-header">
+                <span class="tier-divider-line" aria-hidden="true"></span>
+                <h3 class="sponsor-tier-title">{{ group.tierName }}</h3>
+                <span class="tier-divider-line" aria-hidden="true"></span>
+              </div>
+
+              <div [class]="'sponsors-grid ' + group.tierClass">
+                <article class="sponsor-card" *ngFor="let sponsor of group.organizations">
+                  <div class="sponsor-logo-stage">
+                    <img
+                      *ngIf="sponsor.logoUrl"
+                      [src]="sponsor.logoUrl"
+                      [alt]="sponsor.name + ' logo'"
+                      class="sponsor-logo"
+                      loading="lazy"
+                      decoding="async">
+                    <div class="sponsor-fallback-logo" *ngIf="!sponsor.logoUrl">
+                      <span class="sponsor-initials">{{ getOrgInitials(sponsor.name) }}</span>
+                      <span class="sponsor-name-text">{{ sponsor.name }}</span>
+                    </div>
+                  </div>
+
+                  <a
+                    *ngIf="sponsor.websiteUrl"
+                    [href]="sponsor.websiteUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="sponsor-link"
+                    [attr.aria-label]="'Visit sponsor ' + sponsor.name + ' (opens in new tab)'">
+                    <span class="sponsor-name-caption">{{ sponsor.name }}</span>
+                  </a>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <!-- D. Partners Section (Equal Logo Stages) -->
+          <div class="ms-partners-grid" *ngIf="isPartnerSection(section.sectionKey) && section.organizations.length > 0">
+            <article class="partner-card" *ngFor="let partner of section.organizations">
+              <div class="partner-logo-stage">
+                <img
+                  *ngIf="partner.logoUrl"
+                  [src]="partner.logoUrl"
+                  [alt]="partner.name + ' logo'"
+                  class="partner-logo"
+                  loading="lazy"
+                  decoding="async">
+                <div class="partner-fallback-logo" *ngIf="!partner.logoUrl">
+                  <span class="partner-initials">{{ getOrgInitials(partner.name) }}</span>
+                </div>
+              </div>
+
+              <div class="partner-info">
+                <h3 class="partner-name">{{ partner.name }}</h3>
+                <a
+                  *ngIf="partner.websiteUrl"
+                  [href]="partner.websiteUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="partner-link"
+                  [attr.aria-label]="'Visit partner ' + partner.name + ' (opens in new tab)'">
+                  Visit Website <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+              </div>
+            </article>
+          </div>
+
+        </div>
+      </section>
+    </ng-container>
+
+    <!-- 9. Final Registration Call-To-Action & Status Card -->
+    <section id="registration" class="ms-section ms-registration-section">
+      <div class="ms-container">
+        <div class="ms-registration-card">
+          <div class="reg-eyebrow-row">
+            <span class="section-eyebrow">Join Us</span>
+            <span class="reg-status-pill" [class.open]="vm.edition.registration.isAvailable" [class.scheduled]="isRegistrationScheduled(vm.edition)">
+              {{ vm.edition.registration.isAvailable ? 'Registration Open' : (isRegistrationScheduled(vm.edition) ? 'Registration Opening Soon' : 'Registration Closed') }}
+            </span>
+          </div>
+
+          <h2 class="reg-title">Be Part of Main Segment {{ vm.edition.year }}</h2>
+          <p class="reg-copy">
+            Unlock technical depth, expand your professional horizon, and connect directly with industry engineering leaders.
+          </p>
+
+          <div class="reg-details-grid">
+            <div class="reg-detail-item" *ngIf="vm.edition.startsAt">
+              <span class="detail-label">Date & Time</span>
+              <span class="detail-val">{{ vm.edition.startsAt | date: 'EEEE, MMMM d, y' }}</span>
+            </div>
+
+            <div class="reg-detail-item" *ngIf="vm.edition.location">
+              <span class="detail-label">Location</span>
+              <span class="detail-val">{{ vm.edition.location }}</span>
+            </div>
+
+            <div class="reg-detail-item" *ngIf="vm.edition.registration.capacity">
+              <span class="detail-label">Attendee Capacity</span>
+              <span class="detail-val">{{ vm.edition.registration.capacity }} Available Seats</span>
+            </div>
+
+            <div class="reg-detail-item" *ngIf="vm.edition.registration.closesAt">
+              <span class="detail-label">Registration Deadline</span>
+              <span class="detail-val">{{ vm.edition.registration.closesAt | date: 'mediumDate' }}</span>
+            </div>
+          </div>
+
+          <div class="reg-cta-wrapper">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="reg-btn-primary" (click)="openRegistrationModal()">
+              Register for Main Segment {{ vm.edition.year }}
+            </button>
+
+            <button *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" type="button" class="reg-btn-disabled" disabled>
+              Registration Opens on {{ vm.edition.registration.opensAt | date: 'mediumDate' }}
+            </button>
+
+            <button *ngIf="!vm.edition.registration.isAvailable && !isRegistrationScheduled(vm.edition)" type="button" class="reg-btn-disabled" disabled>
+              Registration is Currently Closed
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Registration Interactive Modal -->
+    <app-main-segment-registration-modal
+      *ngIf="isRegistrationModalOpen && vm.status === 'loaded'"
+      [year]="vm.edition.year"
+      [editionTitle]="vm.edition.title"
+      (closed)="closeRegistrationModal()">
+    </app-main-segment-registration-modal>
+  </main>
+</ng-container>
