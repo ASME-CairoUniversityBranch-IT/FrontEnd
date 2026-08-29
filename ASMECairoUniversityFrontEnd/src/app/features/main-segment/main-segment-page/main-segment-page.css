@@ -322,33 +322,34 @@
   mask-image: radial-gradient(circle at 70% 25%, #000, transparent 72%);
 }
 
-.story-kinetic-mark {
+.story-edition-mark {
   position: absolute;
-  top: -58px;
-  right: -30px;
-  width: 250px;
-  height: 250px;
+  top: 28px;
+  right: 32px;
+  display: grid;
+  justify-items: end;
+  padding-top: 9px;
+  border-top: 1px solid rgb(126 168 248 / 45%);
+  color: var(--accent-light);
+  font-family: var(--font-display);
+  line-height: 1;
+  opacity: .46;
 }
 
-.kinetic-ring,
-.kinetic-core { position: absolute; border-radius: 50%; }
-.kinetic-ring { inset: 0; border: 1px solid rgb(126 168 248 / 32%); }
-.ring-outer {
-  background:
-    conic-gradient(from 20deg, transparent 0 14%, var(--accent) 15% 16%, transparent 17% 48%, var(--accent) 49% 50%, transparent 51% 82%, var(--accent) 83% 84%, transparent 85%);
-  animation: kineticSpin 16s linear infinite;
+.story-edition-mark span {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
 }
-.ring-inner {
-  inset: 48px;
-  border-style: dashed;
-  border-color: rgb(126 168 248 / 50%);
-  animation: kineticSpinReverse 11s linear infinite;
-}
-.kinetic-core {
-  inset: 106px;
-  background: var(--accent);
-  box-shadow: 0 0 30px rgb(126 168 248 / 85%);
-  animation: kineticBreathe 2.4s ease-in-out infinite;
+
+.story-edition-mark strong {
+  margin-top: 5px;
+  color: transparent;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -.05em;
+  -webkit-text-stroke: 1px var(--accent-light);
 }
 
 .story-stage-content { position: relative; z-index: 1; width: 100%; }
@@ -446,9 +447,6 @@
   text-transform: uppercase;
 }
 
-@keyframes kineticSpin { to { transform: rotate(360deg); } }
-@keyframes kineticSpinReverse { to { transform: rotate(-360deg); } }
-@keyframes kineticBreathe { 50% { transform: scale(1.7); opacity: .55; } }
 @keyframes signalPing { 70% { box-shadow: 0 0 0 8px rgb(126 168 248 / 0%); } }
 @keyframes currentTravel {
   0%, 8% { left: 0; opacity: 0; }
@@ -552,7 +550,7 @@
   .story-chapter-row { margin-bottom: 24px; }
   .ms-story-heading h2 { font-size: clamp(40px, 13vw, 58px); }
   .ms-story-stage { min-height: 390px; padding: 32px 24px; clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)); }
-  .story-kinetic-mark { top: -82px; right: -78px; transform: scale(.76); }
+  .story-edition-mark { top: 22px; right: 22px; }
   .ms-story-paragraph { font-size: 17px; line-height: 1.65; }
   .story-motion-map { margin-top: 34px; }
   .story-stop-label { font-size: 8px; letter-spacing: .45px; }
@@ -568,5 +566,5 @@
   .spinner { animation-duration: .01ms; }
   .ms-journey-card, .ms-org-card, .partner-card, .sponsor-card, .ms-primary-cta, .reg-btn-primary { transition: none; transform: none; }
   .ms-story-heading, .ms-story-stage { opacity: 1; transform: none; transition: none; }
-  .ring-outer, .ring-inner, .kinetic-core, .live-signal, .story-track span { animation: none; }
+  .live-signal, .story-track span { animation: none; }
 }
