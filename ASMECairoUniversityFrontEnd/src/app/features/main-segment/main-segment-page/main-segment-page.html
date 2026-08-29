@@ -28,9 +28,9 @@
   <!-- Loaded Storytelling Page -->
   <main id="main-content" class="main-segment-page" *ngIf="vm.status === 'loaded'">
     <!-- 1. Hero Section -->
-    <header class="ms-hero" [class.has-image]="!!vm.edition.heroImageUrl">
+    <header class="ms-hero" [class.has-image]="!!getHeroMediaUrl(vm.edition)">
       <div class="ms-hero-grid-bg" aria-hidden="true"></div>
-      <div class="ms-hero-backdrop" *ngIf="vm.edition.heroImageUrl" [style.backgroundImage]="'url(' + vm.edition.heroImageUrl + ')'"></div>
+      <div class="ms-hero-backdrop" *ngIf="getHeroMediaUrl(vm.edition)" [style.backgroundImage]="'url(' + getHeroMediaUrl(vm.edition) + ')'"></div>
 
       <div class="ms-hero-inner">
         <div class="ms-hero-content">
@@ -75,15 +75,18 @@
               Registration Closed
             </span>
 
-            <a href="#story" class="ms-secondary-cta">
+            <a
+              [routerLink]="['/main-segment', vm.edition.year]"
+              fragment="story"
+              class="ms-secondary-cta">
               Explore Event Story
             </a>
           </div>
         </div>
 
-        <div class="ms-hero-visual" *ngIf="vm.edition.heroImageUrl">
+        <div class="ms-hero-visual" *ngIf="getHeroMediaUrl(vm.edition)">
           <div class="ms-visual-frame">
-            <img [src]="vm.edition.heroImageUrl" [alt]="'Main Segment ' + vm.edition.year + ' Event Visual'" class="ms-visual-img" loading="eager" decoding="async">
+            <img [src]="getHeroMediaUrl(vm.edition)" [alt]="'Main Segment ' + vm.edition.year + ' Event Visual'" class="ms-visual-img" loading="eager" decoding="async">
             <div class="ms-visual-glare" aria-hidden="true"></div>
           </div>
         </div>
@@ -129,7 +132,11 @@
             </div>
             <h3 class="journey-title">{{ step.title }}</h3>
             <p class="journey-desc">{{ step.description }}</p>
-            <a [href]="'#' + step.sectionId" class="journey-anchor-link" [attr.aria-label]="'Jump to ' + step.title + ' section'">
+            <a
+              [routerLink]="['/main-segment', vm.edition.year]"
+              [fragment]="step.sectionId"
+              class="journey-anchor-link"
+              [attr.aria-label]="'Jump to ' + step.title + ' section'">
               View Details <span class="arrow" aria-hidden="true">&rarr;</span>
             </a>
           </article>
@@ -184,13 +191,13 @@
                   <div class="person-card" *ngFor="let person of item.people">
                     <div class="person-avatar-wrap">
                       <img
-                        *ngIf="person.photoUrl"
-                        [src]="person.photoUrl"
+                        *ngIf="person.photoUrl || showPreviewMedia"
+                        [src]="getPersonMediaUrl(person)"
                         [alt]="person.name + ' - ' + person.jobTitle"
                         class="person-photo"
                         loading="lazy"
                         decoding="async">
-                      <div class="person-fallback-avatar" *ngIf="!person.photoUrl" aria-hidden="true">
+                      <div class="person-fallback-avatar" *ngIf="!person.photoUrl && !showPreviewMedia" aria-hidden="true">
                         {{ getPersonInitials(person.name) }}
                       </div>
                     </div>
@@ -223,13 +230,13 @@
             <article class="ms-org-card" *ngFor="let org of section.organizations">
               <div class="org-logo-stage">
                 <img
-                  *ngIf="org.logoUrl"
-                  [src]="org.logoUrl"
+                  *ngIf="org.logoUrl || showPreviewMedia"
+                  [src]="getOrganizationMediaUrl(org)"
                   [alt]="org.name + ' logo'"
                   class="org-logo"
                   loading="lazy"
                   decoding="async">
-                <div class="org-fallback-logo" *ngIf="!org.logoUrl">
+                <div class="org-fallback-logo" *ngIf="!org.logoUrl && !showPreviewMedia">
                   <span class="org-initials">{{ getOrgInitials(org.name) }}</span>
                 </div>
               </div>
@@ -262,13 +269,13 @@
                 <article class="sponsor-card" *ngFor="let sponsor of group.organizations">
                   <div class="sponsor-logo-stage">
                     <img
-                      *ngIf="sponsor.logoUrl"
-                      [src]="sponsor.logoUrl"
+                      *ngIf="sponsor.logoUrl || showPreviewMedia"
+                      [src]="getOrganizationMediaUrl(sponsor)"
                       [alt]="sponsor.name + ' logo'"
                       class="sponsor-logo"
                       loading="lazy"
                       decoding="async">
-                    <div class="sponsor-fallback-logo" *ngIf="!sponsor.logoUrl">
+                    <div class="sponsor-fallback-logo" *ngIf="!sponsor.logoUrl && !showPreviewMedia">
                       <span class="sponsor-initials">{{ getOrgInitials(sponsor.name) }}</span>
                       <span class="sponsor-name-text">{{ sponsor.name }}</span>
                     </div>
@@ -293,13 +300,13 @@
             <article class="partner-card" *ngFor="let partner of section.organizations">
               <div class="partner-logo-stage">
                 <img
-                  *ngIf="partner.logoUrl"
-                  [src]="partner.logoUrl"
+                  *ngIf="partner.logoUrl || showPreviewMedia"
+                  [src]="getOrganizationMediaUrl(partner)"
                   [alt]="partner.name + ' logo'"
                   class="partner-logo"
                   loading="lazy"
                   decoding="async">
-                <div class="partner-fallback-logo" *ngIf="!partner.logoUrl">
+                <div class="partner-fallback-logo" *ngIf="!partner.logoUrl && !showPreviewMedia">
                   <span class="partner-initials">{{ getOrgInitials(partner.name) }}</span>
                 </div>
               </div>

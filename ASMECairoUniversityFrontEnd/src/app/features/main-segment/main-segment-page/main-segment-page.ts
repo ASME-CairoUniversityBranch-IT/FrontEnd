@@ -8,9 +8,11 @@ import { MainSegmentService } from '../../../core/services/main-segment.service'
 import {
   MainSegmentEdition,
   MainSegmentOrganization,
+  MainSegmentPerson,
   MainSegmentSection,
   MainSegmentSectionKey,
 } from '../../../core/models/main-segment.model';
+import { environment } from '../../../../environments/environment';
 import {
   getOrgInitials,
   getPersonInitials,
@@ -64,6 +66,15 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
 
   private metaSubscription?: Subscription;
   isRegistrationModalOpen = false;
+  /** Local preview media is only used by non-production builds until admins upload approved assets. */
+  readonly showPreviewMedia = !environment.production;
+
+  private readonly previewPersonAssets = [
+    '/images/main-segment/speaker-portrait-blue.svg',
+    '/images/main-segment/speaker-portrait-gold.svg',
+    '/images/main-segment/speaker-portrait-teal.svg',
+    '/images/main-segment/speaker-portrait-purple.svg',
+  ];
 
   readonly journeySteps: JourneyStep[] = [
     {
@@ -178,8 +189,33 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
     return getPersonInitials(name);
   }
 
+  getPersonMediaUrl(person: MainSegmentPerson): string {
+    if (person.photoUrl) return person.photoUrl;
+    const source = `${person.id}:${person.name}`;
+    const hash = Array.from(source).reduce((total, character) => total + character.charCodeAt(0), 0);
+    return this.previewPersonAssets[hash % this.previewPersonAssets.length];
+  }
+
   getOrgInitials(name: string): string {
     return getOrgInitials(name);
+  }
+
+  getOrganizationMediaUrl(organization: MainSegmentOrganization): string {
+    if (organization.logoUrl) return organization.logoUrl;
+
+    const name = organization.name.toLowerCase();
+    if (name.includes('altium')) return '/images/main-segment/logo-altium.svg';
+    if (name.includes('simscale')) return '/images/main-segment/logo-simscale.svg';
+    if (name.includes('marakby')) return '/images/main-segment/logo-elmarakby.svg';
+    if (name.includes('symbios')) return '/images/main-segment/logo-symbios.svg';
+    if (name.includes('informatics') || name.includes('eui')) return '/images/main-segment/logo-eui.svg';
+    if (name.includes('gdg')) return '/images/main-segment/logo-gdg.svg';
+    if (name.includes('cairo university')) return '/images/main-segment/logo-cairo-career.svg';
+    return '/images/main-segment/logo-generic.svg';
+  }
+
+  getHeroMediaUrl(edition: MainSegmentEdition): string | null {
+    return edition.heroImageUrl || (this.showPreviewMedia ? '/images/team.jpg' : null);
   }
 
   groupSponsors(sponsors: MainSegmentOrganization[]): SponsorGroup[] {

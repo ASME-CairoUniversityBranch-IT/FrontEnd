@@ -150,6 +150,13 @@ describe('MainSegmentService', () => {
       `${environment.apiUrl.replace(/\/+$/, '')}/uploads/logo.png`
     );
 
+    expect(service.resolveImageUrl('images/main-segment/logo-eui.svg')).toBe(
+      '/images/main-segment/logo-eui.svg'
+    );
+    expect(service.resolveImageUrl('/assets/main-segment/speaker.svg')).toBe(
+      '/assets/main-segment/speaker.svg'
+    );
+
     expect(service.resolveImageUrl(null)).toBe('');
     expect(service.resolveImageUrl(undefined)).toBe('');
   });

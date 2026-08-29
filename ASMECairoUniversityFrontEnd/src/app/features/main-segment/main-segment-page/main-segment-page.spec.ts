@@ -235,7 +235,9 @@ describe('MainSegmentPageComponent', () => {
     const speakerCards = panelSection?.querySelectorAll('.person-card');
     expect(speakerCards?.length).toBe(2);
     expect(speakerCards?.[0].textContent).toContain('Dr. Jane Smith');
-    expect(speakerCards?.[1].querySelector('.person-fallback-avatar')?.textContent?.trim()).toBe('ET');
+    expect(speakerCards?.[1].querySelector('.person-photo')?.getAttribute('src')).toContain(
+      '/images/main-segment/speaker-portrait-'
+    );
 
     // 5. Career Fair with equal stages & fallbacks
     const careerFairSection = compiled.querySelector('#section-CareerFair');
@@ -243,7 +245,9 @@ describe('MainSegmentPageComponent', () => {
     const orgCards = careerFairSection?.querySelectorAll('.ms-org-card');
     expect(orgCards?.length).toBe(2);
     expect(orgCards?.[0].textContent).toContain('ABB Robotics');
-    expect(orgCards?.[1].querySelector('.org-fallback-logo')?.textContent?.trim()).toBe('SE');
+    expect(orgCards?.[1].querySelector('.org-logo')?.getAttribute('src')).toContain(
+      '/images/main-segment/logo-generic.svg'
+    );
 
     // 7. Sponsors with explicit tier hierarchy (Strategic before Gold)
     const sponsorsSection = compiled.querySelector('#section-Sponsors');

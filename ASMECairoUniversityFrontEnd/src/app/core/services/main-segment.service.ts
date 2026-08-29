@@ -8,6 +8,9 @@ import {
   MainSegmentProgramItem,
   MainSegmentPerson,
   MainSegmentOrganization,
+  MainSegmentOrganizationCategory,
+  MainSegmentProgramCategory,
+  MainSegmentSectionKey,
 } from '../models/main-segment.model';
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +54,13 @@ export class MainSegmentService {
       return `https://${cleanPath}`;
     }
 
+    // Some preview images live with the Angular app before an administrator
+    // uploads the final public asset. Keep those paths on the frontend origin;
+    // API-owned storage paths continue through the backend below.
+    if (/^(?:\/)?(?:assets|images)\//i.test(cleanPath)) {
+      return `/${cleanPath.replace(/^\/+/, '')}`;
+    }
+
     return `${apiUrl}/${cleanPath.replace(/^\/+/, '')}`;
   }
 
@@ -68,7 +78,11 @@ export class MainSegmentService {
   private mapProgramItem(raw: any): MainSegmentProgramItem {
     return {
       id: raw.id,
-      category: raw.category,
+      category: this.mapEnum(
+        Object.values(MainSegmentProgramCategory),
+        raw.category,
+        MainSegmentProgramCategory.Talk
+      ),
       title: raw.title ?? '',
       description: raw.description ?? '',
       startsAt: raw.startsAt ?? null,
@@ -82,16 +96,26 @@ export class MainSegmentService {
     return {
       id: raw.id,
       name: raw.name ?? '',
-      category: raw.category,
+      category: this.mapEnum(
+        Object.values(MainSegmentOrganizationCategory),
+        raw.category,
+        MainSegmentOrganizationCategory.Partner
+      ),
       logoUrl: raw.logoUrl ? this.resolveImageUrl(raw.logoUrl) : null,
       websiteUrl: raw.websiteUrl ?? null,
-      sponsorTier: raw.sponsorTier ?? null,
+      sponsorTier: raw.sponsorTier == null
+        ? null
+        : this.mapEnum(['Strategic', 'Gold', 'Silver', 'Bronze', 'Platinum'], raw.sponsorTier, 'Strategic'),
     };
   }
 
   private mapSection(raw: any): MainSegmentSection {
     return {
-      sectionKey: raw.sectionKey,
+      sectionKey: this.mapEnum(
+        Object.values(MainSegmentSectionKey),
+        raw.sectionKey,
+        MainSegmentSectionKey.PanelDiscussion
+      ),
       displayOrder: raw.displayOrder ?? 0,
       intro: raw.intro ?? null,
       programItems: (raw.programItems ?? []).map((p: any) => this.mapProgramItem(p)),
@@ -121,5 +145,18 @@ export class MainSegmentService {
         .map((s: any) => this.mapSection(s))
         .sort((a: MainSegmentSection, b: MainSegmentSection) => a.displayOrder - b.displayOrder),
     };
+  }
+
+  /**
+   * ASP.NET's default enum JSON representation is numeric, while newer API
+   * deployments may opt into string enums. Accept both so the public page keeps
+   * working during that rollout.
+   */
+  private mapEnum<T extends string>(values: readonly T[], raw: unknown, fallback: T): T {
+    if (typeof raw === 'number' && Number.isInteger(raw)) {
+      return values[raw] ?? fallback;
+    }
+
+    return typeof raw === 'string' && values.includes(raw as T) ? (raw as T) : fallback;
   }
 }
