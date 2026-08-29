@@ -221,6 +221,10 @@ describe('MainSegmentPageComponent', () => {
     expect(compiled.querySelector('.ms-story-paragraph')?.textContent).toContain(
       'The premiere mechanical engineering gathering'
     );
+    expect(compiled.querySelector('.ms-story-heading h2')?.textContent).toContain(
+      'A career in motion.'
+    );
+    expect(compiled.querySelectorAll('.story-stop').length).toBe(4);
 
     // 3. Experience Journey Roadmap (6 steps)
     const journeyCards = compiled.querySelectorAll('.ms-journey-card');

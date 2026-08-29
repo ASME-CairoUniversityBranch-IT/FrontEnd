@@ -1,4 +1,13 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Title, Meta } from '@angular/platform-browser';
@@ -63,9 +72,12 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
   private readonly mainSegmentService = inject(MainSegmentService);
   private readonly titleService = inject(Title);
   private readonly metaService = inject(Meta);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   private metaSubscription?: Subscription;
+  private storyObserver?: IntersectionObserver;
   isRegistrationModalOpen = false;
+  storyIsVisible = false;
   /** Local preview media is only used by non-production builds until admins upload approved assets. */
   readonly showPreviewMedia = !environment.production;
 
@@ -165,11 +177,34 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
     })
   );
 
+  @ViewChild('storySection')
+  set storySection(section: ElementRef<HTMLElement> | undefined) {
+    this.storyObserver?.disconnect();
+    if (!section) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      this.storyIsVisible = true;
+      return;
+    }
+
+    this.storyObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        this.storyIsVisible = true;
+        this.changeDetector.markForCheck();
+        this.storyObserver?.disconnect();
+      },
+      { threshold: 0.2 },
+    );
+    this.storyObserver.observe(section.nativeElement);
+  }
+
   ngOnInit(): void {
     // VM stream handles initialization and meta updates through tap()
   }
 
   ngOnDestroy(): void {
+    this.storyObserver?.disconnect();
     this.metaSubscription?.unsubscribe();
     this.titleService.setTitle(DEFAULT_TITLE);
     this.metaService.updateTag({ name: 'description', content: DEFAULT_DESCRIPTION });

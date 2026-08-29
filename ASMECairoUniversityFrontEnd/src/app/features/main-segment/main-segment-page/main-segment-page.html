@@ -94,17 +94,60 @@
     </header>
 
     <!-- 2. Why Main Segment Matters -->
-    <section id="story" class="ms-section ms-story-section" *ngIf="vm.edition.storyContent">
-      <div class="ms-container">
-        <div class="ms-section-header">
+    <section
+      #storySection
+      id="story"
+      class="ms-section ms-story-section"
+      [class.is-visible]="storyIsVisible"
+      *ngIf="vm.edition.storyContent">
+      <div class="story-blueprint-grid" aria-hidden="true"></div>
+      <div class="story-ghost-type" aria-hidden="true">WHY</div>
+
+      <div class="ms-container ms-story-layout">
+        <div class="ms-story-heading">
+          <div class="story-chapter-row">
+            <span class="story-chapter">01 / The why</span>
+            <span class="story-chapter-line" aria-hidden="true"></span>
+          </div>
           <span class="section-eyebrow">Why Main Segment Matters</span>
-          <h2>The Premiere Mechanical Engineering Gathering</h2>
+          <h2>One day.<br><em>A career in motion.</em></h2>
+          <p class="story-heading-note">Where engineering knowledge starts moving toward real opportunity.</p>
         </div>
 
-        <div class="ms-story-card">
-          <div class="ms-story-lead-line" aria-hidden="true"></div>
-          <div class="ms-story-body">
+        <div class="ms-story-stage">
+          <div class="story-stage-grid" aria-hidden="true"></div>
+          <div class="story-kinetic-mark" aria-hidden="true">
+            <span class="kinetic-ring ring-outer"></span>
+            <span class="kinetic-ring ring-inner"></span>
+            <span class="kinetic-core"></span>
+          </div>
+
+          <div class="story-stage-content">
+            <div class="story-stage-label">
+              <span class="live-signal" aria-hidden="true"></span>
+              The engineering current
+            </div>
             <p class="ms-story-paragraph">{{ vm.edition.storyContent }}</p>
+
+            <div class="story-motion-map" aria-label="From questions to career opportunity">
+              <div class="story-track" aria-hidden="true"><span></span></div>
+              <div class="story-stop">
+                <span class="story-stop-node">01</span>
+                <span class="story-stop-label">Question</span>
+              </div>
+              <div class="story-stop">
+                <span class="story-stop-node">02</span>
+                <span class="story-stop-label">Skill</span>
+              </div>
+              <div class="story-stop">
+                <span class="story-stop-node">03</span>
+                <span class="story-stop-label">Conversation</span>
+              </div>
+              <div class="story-stop">
+                <span class="story-stop-node">04</span>
+                <span class="story-stop-label">Opportunity</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
