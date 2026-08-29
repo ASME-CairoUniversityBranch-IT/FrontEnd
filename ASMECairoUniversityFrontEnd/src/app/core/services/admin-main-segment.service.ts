@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -16,9 +16,14 @@ import {
   UpdateMainSegmentEditionRequest,
 } from '../models/main-segment.model';
 import {
+  AdminRegistrationDetailResponse,
+  AdminRegistrationListResponse,
   AdminRegistrationSchemaResponse,
   DEFAULT_ADMIN_SCHEMA,
+  PrivateDocumentType,
+  RegistrationListFilterParams,
   UpdateRegistrationSchemaRequest,
+  UpdateRegistrationStatusRequest,
 } from '../models/registration.model';
 
 @Injectable({
@@ -300,7 +305,7 @@ export class AdminMainSegmentService {
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
-  /* ── Registration Form & Question Builder Schema ── */
+  /* ── Registration Form & Question Builder Schema (Milestone 6) ── */
   getRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
     return this.http
       .get<AdminRegistrationSchemaResponse>(`${this.baseUrl}/${year}/schema`)
@@ -331,6 +336,79 @@ export class AdminMainSegmentService {
         {}
       )
       .pipe(catchError(() => of(DEFAULT_ADMIN_SCHEMA)));
+  }
+
+  /* ── Registration Review, Detail, Documents & Export (Milestone 7) ── */
+  getRegistrations(
+    year: number,
+    params: RegistrationListFilterParams
+  ): Observable<AdminRegistrationListResponse> {
+    let httpParams = new HttpParams()
+      .set('page', params.page.toString())
+      .set('pageSize', params.pageSize.toString());
+
+    if (params.search) httpParams = httpParams.set('search', params.search.trim());
+    if (params.status && params.status !== 'All') httpParams = httpParams.set('status', params.status);
+    if (params.universityId) httpParams = httpParams.set('universityId', params.universityId);
+    if (params.facultyId) httpParams = httpParams.set('facultyId', params.facultyId);
+    if (params.graduationYear) httpParams = httpParams.set('graduationYear', params.graduationYear.toString());
+    if (params.submittedFrom) httpParams = httpParams.set('submittedFrom', params.submittedFrom);
+    if (params.submittedTo) httpParams = httpParams.set('submittedTo', params.submittedTo);
+
+    return this.http.get<AdminRegistrationListResponse>(
+      `${this.baseUrl}/${year}/registrations`,
+      { params: httpParams }
+    );
+  }
+
+  getRegistrationDetail(
+    year: number,
+    registrationId: string
+  ): Observable<AdminRegistrationDetailResponse> {
+    return this.http.get<AdminRegistrationDetailResponse>(
+      `${this.baseUrl}/${year}/registrations/${registrationId}`
+    );
+  }
+
+  updateRegistrationStatus(
+    year: number,
+    registrationId: string,
+    request: UpdateRegistrationStatusRequest
+  ): Observable<AdminRegistrationDetailResponse> {
+    return this.http.patch<AdminRegistrationDetailResponse>(
+      `${this.baseUrl}/${year}/registrations/${registrationId}/status`,
+      request
+    );
+  }
+
+  getPrivateDocument(
+    year: number,
+    registrationId: string,
+    docType: PrivateDocumentType
+  ): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/${year}/registrations/${registrationId}/documents/${docType}`,
+      { responseType: 'blob' }
+    );
+  }
+
+  exportRegistrationsCsv(
+    year: number,
+    params: Partial<RegistrationListFilterParams>
+  ): Observable<Blob> {
+    let httpParams = new HttpParams();
+    if (params.search) httpParams = httpParams.set('search', params.search.trim());
+    if (params.status && params.status !== 'All') httpParams = httpParams.set('status', params.status);
+    if (params.universityId) httpParams = httpParams.set('universityId', params.universityId);
+    if (params.facultyId) httpParams = httpParams.set('facultyId', params.facultyId);
+    if (params.graduationYear) httpParams = httpParams.set('graduationYear', params.graduationYear.toString());
+    if (params.submittedFrom) httpParams = httpParams.set('submittedFrom', params.submittedFrom);
+    if (params.submittedTo) httpParams = httpParams.set('submittedTo', params.submittedTo);
+
+    return this.http.get(`${this.baseUrl}/${year}/registrations/export`, {
+      params: httpParams,
+      responseType: 'blob',
+    });
   }
 
   /* ── Helper Normalization ── */

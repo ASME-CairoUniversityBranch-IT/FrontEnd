@@ -59,6 +59,10 @@
               <button *ngIf="activeTab === 'form-builder'" type="button" class="btn-save" (click)="saveDraftSchema()" [disabled]="(isSavingSchema$ | async)">
                 {{ (isSavingSchema$ | async) ? 'SAVING SCHEMA...' : 'SAVE SCHEMA DRAFT' }}
               </button>
+
+              <button *ngIf="activeTab === 'registrations'" type="button" class="btn-export-csv" (click)="exportRegistrationsCsv()" [disabled]="isExporting$ | async">
+                {{ (isExporting$ | async) ? 'EXPORTING CSV...' : '⬇ EXPORT CSV' }}
+              </button>
             </div>
           </div>
 
@@ -667,18 +671,320 @@
           </div>
         </section>
 
-        <!-- Tab 5: Registrations Review & Export (Teaser / Milestone 7) -->
-        <section *ngIf="activeTab === 'registrations'" class="tab-content placeholder-tab">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">👥</div>
-            <h2>Attendee Registrations & Review</h2>
-            <p>Review registrations, accept/reject applicants, verify uploads, and export data.</p>
-            <p class="sub-note">Available in Milestone #7.</p>
+        <!-- Tab 5: Registrations Review, Documents & Export (Milestone 7) -->
+        <section *ngIf="activeTab === 'registrations'" class="tab-content">
+          <div class="registrations-management-container">
+
+            <!-- Filter Controls Bar -->
+            <div class="reg-filters-bar">
+              <div class="search-box">
+                <input
+                  type="text"
+                  placeholder="Search by name, email, phone, reference..."
+                  [value]="regSearch"
+                  (keyup.enter)="onRegistrationSearch($any($event.target).value)"
+                  class="reg-search-input"
+                />
+                <button type="button" class="btn-search" (click)="onRegistrationSearch(regSearch)">Search</button>
+              </div>
+
+              <div class="filter-selectors">
+                <select [value]="regGradYearFilter || ''" (change)="setRegistrationGradYearFilter($any($event.target).value ? +$any($event.target).value : null)" class="reg-select">
+                  <option value="">All Graduation Years</option>
+                  <option value="2024">Grad 2024</option>
+                  <option value="2025">Grad 2025</option>
+                  <option value="2026">Grad 2026</option>
+                  <option value="2027">Grad 2027</option>
+                  <option value="2028">Grad 2028</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Status Aggregation Pills -->
+            <div *ngIf="(registrations$ | async) as regData" class="status-counts-row">
+              <button type="button" class="status-count-btn" [class.active]="regStatusFilter === 'All'" (click)="setRegistrationStatusFilter('All')">
+                All ({{ regData.statusCounts.all || regData.totalCount }})
+              </button>
+              <button type="button" class="status-count-btn received" [class.active]="regStatusFilter === 'Received'" (click)="setRegistrationStatusFilter('Received')">
+                Received ({{ regData.statusCounts.received || 0 }})
+              </button>
+              <button type="button" class="status-count-btn under-review" [class.active]="regStatusFilter === 'UnderReview'" (click)="setRegistrationStatusFilter('UnderReview')">
+                Under Review ({{ regData.statusCounts.underReview || 0 }})
+              </button>
+              <button type="button" class="status-count-btn accepted" [class.active]="regStatusFilter === 'Accepted'" (click)="setRegistrationStatusFilter('Accepted')">
+                Accepted ({{ regData.statusCounts.accepted || 0 }})
+              </button>
+              <button type="button" class="status-count-btn confirmed" [class.active]="regStatusFilter === 'Confirmed'" (click)="setRegistrationStatusFilter('Confirmed')">
+                Confirmed ({{ regData.statusCounts.confirmed || 0 }})
+              </button>
+              <button type="button" class="status-count-btn waitlisted" [class.active]="regStatusFilter === 'Waitlisted'" (click)="setRegistrationStatusFilter('Waitlisted')">
+                Waitlisted ({{ regData.statusCounts.waitlisted || 0 }})
+              </button>
+              <button type="button" class="status-count-btn rejected" [class.active]="regStatusFilter === 'Rejected'" (click)="setRegistrationStatusFilter('Rejected')">
+                Rejected ({{ regData.statusCounts.rejected || 0 }})
+              </button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div *ngIf="isLoadingRegistrations$ | async" class="loading-inline">
+              <div class="spinner-small"></div>
+              <span>Fetching applications...</span>
+            </div>
+
+            <!-- Registrations Table -->
+            <div *ngIf="!(isLoadingRegistrations$ | async) && (registrations$ | async) as regData" class="reg-table-card">
+              <div *ngIf="regData.items.length === 0" class="empty-tab-box">
+                <p>No registrations found matching the active filters.</p>
+              </div>
+
+              <div *ngIf="regData.items.length > 0" class="reg-table-wrap">
+                <table class="reg-table">
+                  <thead>
+                    <tr>
+                      <th>Ref Number</th>
+                      <th>Applicant Name</th>
+                      <th>University & Faculty</th>
+                      <th>Grad</th>
+                      <th>Submitted At</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of regData.items" class="reg-row">
+                      <td class="ref-cell">
+                        <code>{{ item.referenceNumber }}</code>
+                      </td>
+
+                      <td class="name-cell">
+                        <div class="name-en">{{ item.nameEnglish }}</div>
+                        <div class="name-ar" dir="rtl">{{ item.nameArabic }}</div>
+                      </td>
+
+                      <td class="academic-cell">
+                        <div class="uni-name">{{ item.universityName }}</div>
+                        <div class="fac-name">{{ item.facultyName }}</div>
+                      </td>
+
+                      <td class="grad-cell">
+                        <span class="grad-badge">{{ item.graduationYear }}</span>
+                      </td>
+
+                      <td class="date-cell">
+                        {{ item.submittedAt | date:'mediumDate' }}
+                        <div class="time-sub">{{ item.submittedAt | date:'shortTime' }}</div>
+                      </td>
+
+                      <td class="status-cell">
+                        <span class="reg-status-pill" [class.received]="item.status === 'Received'" [class.under-review]="item.status === 'UnderReview'" [class.accepted]="item.status === 'Accepted'" [class.confirmed]="item.status === 'Confirmed'" [class.rejected]="item.status === 'Rejected'" [class.waitlisted]="item.status === 'Waitlisted'">
+                          {{ item.status }}
+                        </span>
+                      </td>
+
+                      <td class="action-cell">
+                        <button type="button" class="btn-review-app" (click)="openRegistrationDetail(item.id)">
+                          Review &rarr;
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination Footer -->
+              <div *ngIf="regData.totalPages > 1" class="reg-pagination-footer">
+                <div class="pagination-meta">
+                  Showing page <strong>{{ regData.page }}</strong> of <strong>{{ regData.totalPages }}</strong> ({{ regData.totalCount }} total applicants)
+                </div>
+                <div class="pagination-controls">
+                  <button type="button" class="btn-page" [disabled]="regData.page <= 1" (click)="goToRegistrationPage(regData.page - 1)">&larr; Previous</button>
+                  <button type="button" class="btn-page" [disabled]="regData.page >= regData.totalPages" (click)="goToRegistrationPage(regData.page + 1)">Next &rarr;</button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </section>
 
       </div>
     </ng-container>
+
+    <!-- Registration Detail Modal / Drawer (Milestone 7) -->
+    <div *ngIf="isDetailModalOpen$ | async" class="detail-modal-overlay" (click)="closeRegistrationDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+      <div class="detail-drawer-card" (click)="$event.stopPropagation()">
+        
+        <div *ngIf="isLoadingDetail$ | async" class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading applicant details...</p>
+        </div>
+
+        <div *ngIf="!(isLoadingDetail$ | async) && (selectedRegistration$ | async) as detail" class="detail-content">
+          <header class="detail-header">
+            <div>
+              <div class="detail-ref-badge">{{ detail.referenceNumber }}</div>
+              <h2 id="detail-modal-title" class="detail-name">{{ detail.nameEnglish }}</h2>
+              <div class="detail-name-ar" dir="rtl">{{ detail.nameArabic }}</div>
+            </div>
+            <button type="button" class="btn-close" (click)="closeRegistrationDetail()" aria-label="Close detail view">&times;</button>
+          </header>
+
+          <!-- Contact & Masked ID Row -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">1. Applicant Identity & Contact</h3>
+            <div class="detail-grid two-cols">
+              <div class="detail-item">
+                <span class="detail-label">Email</span>
+                <span class="detail-val"><a [href]="'mailto:' + detail.email">{{ detail.email }}</a></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Phone Number</span>
+                <span class="detail-val"><a [href]="'tel:' + detail.phoneNumber">{{ detail.phoneNumber }}</a></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Gender</span>
+                <span class="detail-val">{{ detail.gender }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">National ID (Masked)</span>
+                <span class="detail-val"><code>{{ detail.maskedNationalId }}</code></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Academic Snapshot -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">2. Academic Information</h3>
+            <div class="detail-grid two-cols">
+              <div class="detail-item">
+                <span class="detail-label">University</span>
+                <span class="detail-val">{{ detail.academicSnapshot.universityName }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Faculty</span>
+                <span class="detail-val">{{ detail.academicSnapshot.facultyName }}</span>
+              </div>
+              <div *ngIf="detail.academicSnapshot.departmentName" class="detail-item">
+                <span class="detail-label">Department</span>
+                <span class="detail-val">{{ detail.academicSnapshot.departmentName }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Expected Graduation</span>
+                <span class="detail-val">{{ detail.academicSnapshot.graduationYear }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Answers -->
+          <div *ngIf="detail.answers && detail.answers.length > 0" class="detail-section">
+            <h3 class="detail-section-title">3. Dynamic Questions & Answers</h3>
+            <div class="detail-answers-list">
+              <div *ngFor="let ans of detail.answers" class="detail-answer-card">
+                <div class="ans-prompt">{{ ans.questionTitle }}</div>
+                <div class="ans-value">
+                  <span *ngIf="ans.answerText">{{ ans.answerText }}</span>
+                  <span *ngIf="ans.booleanAnswer !== undefined && ans.booleanAnswer !== null" class="badge-boolean" [class.yes]="ans.booleanAnswer" [class.no]="!ans.booleanAnswer">
+                    {{ ans.booleanAnswer ? 'Yes' : 'No' }}
+                  </span>
+                  <div *ngIf="ans.selectedOptions && ans.selectedOptions.length > 0" class="selected-options-wrap">
+                    <span *ngFor="let opt of ans.selectedOptions" class="opt-pill">{{ opt }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Authorized Private Documents -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">4. Verification Documents (Authorized On-Demand Access)</h3>
+            <div class="doc-actions-grid">
+              <button *ngIf="detail.hasNationalIdPhoto" type="button" class="btn-doc-action" (click)="openPrivateDocument(detail.id, 'national-id', 'National ID Photo - ' + detail.nameEnglish)">
+                🪪 View National ID Photo
+              </button>
+
+              <button *ngIf="detail.hasUniversityIdPhoto" type="button" class="btn-doc-action" (click)="openPrivateDocument(detail.id, 'university-id', 'University Student ID - ' + detail.nameEnglish)">
+                🎓 View Student ID Card
+              </button>
+
+              <button *ngIf="detail.hasCvFile" type="button" class="btn-doc-action cv" (click)="downloadPrivateDocument(detail.id, 'cv', detail.nameEnglish.replace(' ', '_') + '_CV.pdf')">
+                📄 Download Applicant CV
+              </button>
+            </div>
+          </div>
+
+          <!-- Status & Reviewer Actions -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">5. Status Management & Audit History</h3>
+            <form [formGroup]="statusUpdateForm" (ngSubmit)="submitStatusUpdate()" class="status-change-box">
+              <div class="status-form-row">
+                <div class="form-group status-select-group">
+                  <label for="update-status">Application Status <span class="req">*</span></label>
+                  <select id="update-status" formControlName="status">
+                    <option value="Received">Received</option>
+                    <option value="UnderReview">Under Review</option>
+                    <option value="Accepted">Accepted</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Waitlisted">Waitlisted</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+
+                <div class="form-group note-input-group">
+                  <label for="update-note">Internal Audit / Review Note</label>
+                  <input id="update-note" type="text" formControlName="note" placeholder="e.g. Verified university ID, qualified for CAD workshop" />
+                </div>
+              </div>
+
+              <div class="status-submit-row">
+                <button type="submit" class="btn-update-status" [disabled]="(isUpdatingStatus$ | async) || statusUpdateForm.invalid">
+                  {{ (isUpdatingStatus$ | async) ? 'Updating Status...' : 'Save Status Update' }}
+                </button>
+              </div>
+            </form>
+
+            <!-- Status Audit Timeline -->
+            <div *ngIf="detail.statusHistory && detail.statusHistory.length > 0" class="status-timeline">
+              <h4 class="timeline-title">Audit History</h4>
+              <div *ngFor="let h of detail.statusHistory" class="timeline-item">
+                <div class="timeline-badge"></div>
+                <div class="timeline-content">
+                  <div class="timeline-meta">
+                    <strong>{{ h.fromStatus }} &rarr; {{ h.toStatus }}</strong>
+                    <span class="timeline-by">by {{ h.changedBy }} &bull; {{ h.changedAt | date:'short' }}</span>
+                  </div>
+                  <div *ngIf="h.note" class="timeline-note">{{ h.note }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Controlled Document Lightbox Modal (Milestone 7) -->
+    <div *ngIf="(documentViewer$ | async)?.isOpen" class="doc-lightbox-overlay" (click)="closeDocumentViewer()" role="dialog" aria-modal="true">
+      <div class="doc-lightbox-card" (click)="$event.stopPropagation()">
+        <header class="doc-lightbox-header">
+          <h3>{{ (documentViewer$ | async)?.title }}</h3>
+          <button type="button" class="btn-close-lightbox" (click)="closeDocumentViewer()">&times;</button>
+        </header>
+
+        <div class="doc-lightbox-body">
+          <div *ngIf="(documentViewer$ | async)?.isLoading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Fetching authorized document...</p>
+          </div>
+
+          <div *ngIf="(documentViewer$ | async)?.error as err" class="error-banner">
+            {{ err }}
+          </div>
+
+          <div *ngIf="(documentViewer$ | async)?.objectUrl as url" class="doc-img-wrap">
+            <img [src]="url" alt="Private document" class="doc-lightbox-img" />
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Program Item Modal -->
     <div *ngIf="isProgramItemModalOpen$ | async" class="modal-overlay" (click)="closeProgramItemModal()" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">

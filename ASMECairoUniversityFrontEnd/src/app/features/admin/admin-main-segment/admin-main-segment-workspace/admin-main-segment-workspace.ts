@@ -37,13 +37,20 @@ import {
   UpdateMainSegmentEditionRequest,
 } from '../../../../core/models/main-segment.model';
 import {
+  AdminRegistrationDetailResponse,
+  AdminRegistrationListItem,
+  AdminRegistrationListResponse,
   AdminRegistrationQuestion,
   AdminRegistrationSchemaResponse,
   DEFAULT_ADMIN_SCHEMA,
+  PrivateDocumentType,
+  RegistrationListFilterParams,
   RegistrationQuestionOption,
   RegistrationQuestionType,
   RegistrationSettings,
+  RegistrationStatus,
   UpdateRegistrationSchemaRequest,
+  UpdateRegistrationStatusRequest,
 } from '../../../../core/models/registration.model';
 import {
   getOrgInitials,
@@ -163,6 +170,42 @@ export class AdminMainSegmentWorkspaceComponent
     return this.questionForm.get('options') as FormArray;
   }
 
+  /* ── Registrations Review & Export State (Milestone 7) ── */
+  readonly registrations$ = new BehaviorSubject<AdminRegistrationListResponse | null>(null);
+  readonly isLoadingRegistrations$ = new BehaviorSubject<boolean>(false);
+  readonly isExporting$ = new BehaviorSubject<boolean>(false);
+
+  regSearch = '';
+  regStatusFilter: RegistrationStatus | 'All' = 'All';
+  regGradYearFilter: number | null = null;
+  regPage = 1;
+  regPageSize = 10;
+
+  readonly isDetailModalOpen$ = new BehaviorSubject<boolean>(false);
+  readonly selectedRegistration$ = new BehaviorSubject<AdminRegistrationDetailResponse | null>(null);
+  readonly isLoadingDetail$ = new BehaviorSubject<boolean>(false);
+  readonly isUpdatingStatus$ = new BehaviorSubject<boolean>(false);
+
+  readonly statusUpdateForm: FormGroup = this.fb.group({
+    status: ['Received', [Validators.required]],
+    note: [''],
+  });
+
+  // Controlled Private Document Lightbox
+  readonly documentViewer$ = new BehaviorSubject<{
+    isOpen: boolean;
+    title: string;
+    objectUrl: string | null;
+    isLoading: boolean;
+    error: string | null;
+  }>({
+    isOpen: false,
+    title: '',
+    objectUrl: null,
+    isLoading: false,
+    error: null,
+  });
+
   /* ── Filter Categories ── */
   programFilter = 'All';
   orgFilter = 'All';
@@ -220,6 +263,7 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   ngOnDestroy(): void {
+    this.revokeDocumentUrl();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -237,6 +281,8 @@ export class AdminMainSegmentWorkspaceComponent
     this.activeTab = tab;
     if (tab === 'form-builder' && !this.schema$.value) {
       this.loadSchema(this.year);
+    } else if (tab === 'registrations' && !this.registrations$.value) {
+      this.loadRegistrations();
     }
   }
 
@@ -1183,6 +1229,206 @@ export class AdminMainSegmentWorkspaceComponent
 
   closeSchemaPreview(): void {
     this.isSchemaPreviewOpen$.next(false);
+  }
+
+  /* ── Registrations Review, Detail & Export (Milestone 7) ── */
+  loadRegistrations(): void {
+    this.isLoadingRegistrations$.next(true);
+    const params: RegistrationListFilterParams = {
+      search: this.regSearch,
+      status: this.regStatusFilter,
+      graduationYear: this.regGradYearFilter,
+      page: this.regPage,
+      pageSize: this.regPageSize,
+    };
+
+    this.adminService
+      .getRegistrations(this.year, params)
+      .pipe(
+        tap((res) => {
+          this.registrations$.next(res);
+          this.isLoadingRegistrations$.next(false);
+        }),
+        catchError((err) => {
+          this.isLoadingRegistrations$.next(false);
+          this.errorMessage$.next(err?.error?.message || 'Failed to load attendee registrations.');
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
+  setRegistrationStatusFilter(status: RegistrationStatus | 'All'): void {
+    this.regStatusFilter = status;
+    this.regPage = 1;
+    this.loadRegistrations();
+  }
+
+  onRegistrationSearch(query: string): void {
+    this.regSearch = query;
+    this.regPage = 1;
+    this.loadRegistrations();
+  }
+
+  setRegistrationGradYearFilter(year: number | null): void {
+    this.regGradYearFilter = year;
+    this.regPage = 1;
+    this.loadRegistrations();
+  }
+
+  goToRegistrationPage(page: number): void {
+    const totalPages = this.registrations$.value?.totalPages || 1;
+    if (page < 1 || page > totalPages) return;
+    this.regPage = page;
+    this.loadRegistrations();
+  }
+
+  openRegistrationDetail(regId: string): void {
+    this.isLoadingDetail$.next(true);
+    this.isDetailModalOpen$.next(true);
+    this.statusUpdateForm.reset({ status: 'Received', note: '' });
+
+    this.adminService.getRegistrationDetail(this.year, regId).subscribe({
+      next: (detail) => {
+        this.selectedRegistration$.next(detail);
+        this.statusUpdateForm.patchValue({ status: detail.status });
+        this.isLoadingDetail$.next(false);
+      },
+      error: (err) => {
+        this.isLoadingDetail$.next(false);
+        this.errorMessage$.next(err?.error?.message || 'Failed to load registration details.');
+      },
+    });
+  }
+
+  closeRegistrationDetail(): void {
+    this.isDetailModalOpen$.next(false);
+    this.selectedRegistration$.next(null);
+    this.closeDocumentViewer();
+  }
+
+  submitStatusUpdate(): void {
+    const detail = this.selectedRegistration$.value;
+    if (!detail || this.statusUpdateForm.invalid) return;
+
+    const val = this.statusUpdateForm.value;
+    const req: UpdateRegistrationStatusRequest = {
+      status: val.status,
+      note: val.note ? val.note.trim() : null,
+    };
+
+    this.isUpdatingStatus$.next(true);
+    this.adminService.updateRegistrationStatus(this.year, detail.id, req).subscribe({
+      next: (updated) => {
+        this.isUpdatingStatus$.next(false);
+        this.selectedRegistration$.next(updated);
+        this.showSuccess(`Applicant status updated to ${updated.status}.`);
+        this.loadRegistrations(); // refresh counters and table
+      },
+      error: (err) => {
+        this.isUpdatingStatus$.next(false);
+        this.errorMessage$.next(err?.error?.message || 'Failed to update registration status.');
+      },
+    });
+  }
+
+  /* ── Private Document Handling ── */
+  openPrivateDocument(regId: string, docType: PrivateDocumentType, title: string): void {
+    this.revokeDocumentUrl();
+    this.documentViewer$.next({
+      isOpen: true,
+      title,
+      objectUrl: null,
+      isLoading: true,
+      error: null,
+    });
+
+    this.adminService.getPrivateDocument(this.year, regId, docType).subscribe({
+      next: (blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        this.documentViewer$.next({
+          isOpen: true,
+          title,
+          objectUrl,
+          isLoading: false,
+          error: null,
+        });
+      },
+      error: (err) => {
+        this.documentViewer$.next({
+          isOpen: true,
+          title,
+          objectUrl: null,
+          isLoading: false,
+          error: err?.status === 403 ? 'Unauthorized: You do not have permission to view private documents.' : 'Failed to retrieve requested document.',
+        });
+      },
+    });
+  }
+
+  downloadPrivateDocument(regId: string, docType: PrivateDocumentType, defaultFileName: string): void {
+    this.adminService.getPrivateDocument(this.year, regId, docType).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = defaultFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: (err) => {
+        alert(err?.status === 403 ? 'Unauthorized to download document.' : 'Failed to download document.');
+      },
+    });
+  }
+
+  closeDocumentViewer(): void {
+    this.revokeDocumentUrl();
+    this.documentViewer$.next({
+      isOpen: false,
+      title: '',
+      objectUrl: null,
+      isLoading: false,
+      error: null,
+    });
+  }
+
+  private revokeDocumentUrl(): void {
+    const current = this.documentViewer$.value.objectUrl;
+    if (current) {
+      URL.revokeObjectURL(current);
+    }
+  }
+
+  /* ── CSV Export ── */
+  exportRegistrationsCsv(): void {
+    this.isExporting$.next(true);
+    const params: Partial<RegistrationListFilterParams> = {
+      search: this.regSearch,
+      status: this.regStatusFilter,
+      graduationYear: this.regGradYearFilter,
+    };
+
+    this.adminService.exportRegistrationsCsv(this.year, params).subscribe({
+      next: (blob) => {
+        this.isExporting$.next(false);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `main-segment-${this.year}-registrations.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.showSuccess('Registrations CSV exported successfully.');
+      },
+      error: (err) => {
+        this.isExporting$.next(false);
+        this.errorMessage$.next(err?.error?.message || 'Failed to export registrations CSV.');
+      },
+    });
   }
 
   /* ── Filter Helpers ── */

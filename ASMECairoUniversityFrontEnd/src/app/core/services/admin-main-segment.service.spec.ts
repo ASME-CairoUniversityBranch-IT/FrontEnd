@@ -231,4 +231,55 @@ describe('AdminMainSegmentService', () => {
       questions: [],
     });
   });
+
+  it('should handle getRegistrations, getRegistrationDetail, updateStatus, getDocument, and exportCsv', () => {
+    service.getRegistrations(2026, { page: 1, pageSize: 10, status: 'Received', search: 'Youssef' }).subscribe((res) => {
+      expect(res.totalCount).toBe(1);
+    });
+    const listReq = httpMock.expectOne((req) => req.url === `${baseUrl}/2026/registrations` && req.params.get('search') === 'Youssef');
+    expect(listReq.request.method).toBe('GET');
+    listReq.flush({
+      items: [],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+      statusCounts: { all: 1, received: 1, underReview: 0, accepted: 0, rejected: 0, waitlisted: 0, confirmed: 0 },
+    });
+
+    service.getRegistrationDetail(2026, 'reg-1').subscribe((res) => {
+      expect(res.referenceNumber).toBe('REG-2026-0001');
+    });
+    const detailReq = httpMock.expectOne(`${baseUrl}/2026/registrations/reg-1`);
+    expect(detailReq.request.method).toBe('GET');
+    detailReq.flush({
+      id: 'reg-1',
+      referenceNumber: 'REG-2026-0001',
+      status: 'Received',
+    });
+
+    service.updateRegistrationStatus(2026, 'reg-1', { status: 'Accepted', note: 'Approved' }).subscribe((res) => {
+      expect(res.status).toBe('Accepted');
+    });
+    const statusReq = httpMock.expectOne(`${baseUrl}/2026/registrations/reg-1/status`);
+    expect(statusReq.request.method).toBe('PATCH');
+    statusReq.flush({
+      id: 'reg-1',
+      status: 'Accepted',
+    });
+
+    service.getPrivateDocument(2026, 'reg-1', 'national-id').subscribe((blob) => {
+      expect(blob).toBeTruthy();
+    });
+    const docReq = httpMock.expectOne(`${baseUrl}/2026/registrations/reg-1/documents/national-id`);
+    expect(docReq.request.method).toBe('GET');
+    docReq.flush(new Blob(['mock-binary'], { type: 'image/png' }));
+
+    service.exportRegistrationsCsv(2026, { status: 'All' }).subscribe((blob) => {
+      expect(blob).toBeTruthy();
+    });
+    const exportReq = httpMock.expectOne((req) => req.url === `${baseUrl}/2026/registrations/export`);
+    expect(exportReq.request.method).toBe('GET');
+    exportReq.flush(new Blob(['CSV DATA'], { type: 'text/csv' }));
+  });
 });

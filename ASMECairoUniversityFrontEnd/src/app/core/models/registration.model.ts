@@ -238,3 +238,116 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
     },
   ],
 };
+
+/* ── Milestone 7: Registration Review, Document & Export Models ── */
+export type RegistrationStatus =
+  | 'Received'
+  | 'UnderReview'
+  | 'Accepted'
+  | 'Rejected'
+  | 'Waitlisted'
+  | 'Confirmed';
+
+export interface RegistrationListFilterParams {
+  search?: string;
+  status?: RegistrationStatus | 'All';
+  universityId?: string;
+  facultyId?: string;
+  graduationYear?: number | null;
+  submittedFrom?: string | null;
+  submittedTo?: string | null;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminRegistrationListItem {
+  id: string;
+  referenceNumber: string;
+  nameEnglish: string;
+  nameArabic: string;
+  email: string;
+  phoneNumber: string;
+  universityName: string;
+  facultyName: string;
+  graduationYear: number;
+  status: RegistrationStatus;
+  submittedAt: string;
+  updatedAt?: string | null;
+}
+
+export interface RegistrationStatusCount {
+  all: number;
+  received: number;
+  underReview: number;
+  accepted: number;
+  rejected: number;
+  waitlisted: number;
+  confirmed: number;
+}
+
+export interface AdminRegistrationListResponse {
+  items: AdminRegistrationListItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  statusCounts: RegistrationStatusCount;
+}
+
+export interface RegistrationStatusHistoryEntry {
+  id: string;
+  fromStatus: RegistrationStatus;
+  toStatus: RegistrationStatus;
+  changedBy: string;
+  changedAt: string;
+  note?: string | null;
+}
+
+export interface AdminRegistrationAnswerDetail {
+  questionId: string;
+  questionKey: string;
+  questionTitle: string;
+  questionType: string;
+  answerText?: string | null;
+  selectedOptions?: string[] | null;
+  booleanAnswer?: boolean | null;
+}
+
+export interface AdminRegistrationAcademicSnapshot {
+  universityName: string;
+  facultyName: string;
+  departmentName?: string | null;
+  isUniversityOther: boolean;
+  isFacultyOther: boolean;
+  isDepartmentOther: boolean;
+  graduationYear: number;
+}
+
+export interface AdminRegistrationDetailResponse {
+  id: string;
+  editionYear: number;
+  referenceNumber: string;
+  status: RegistrationStatus;
+  submittedAt: string;
+  updatedAt: string;
+  nameEnglish: string;
+  nameArabic: string;
+  email: string;
+  phoneNumber: string;
+  gender: string;
+  maskedNationalId: string;
+  academicSnapshot: AdminRegistrationAcademicSnapshot;
+  answers: AdminRegistrationAnswerDetail[];
+  hasNationalIdPhoto: boolean;
+  hasUniversityIdPhoto: boolean;
+  hasCvFile: boolean;
+  statusHistory: RegistrationStatusHistoryEntry[];
+  internalNotes?: string | null;
+}
+
+export interface UpdateRegistrationStatusRequest {
+  status: RegistrationStatus;
+  note?: string | null;
+}
+
+export type PrivateDocumentType = 'national-id' | 'university-id' | 'cv';

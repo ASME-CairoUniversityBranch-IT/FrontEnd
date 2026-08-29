@@ -52,6 +52,11 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     updateRegistrationSchema: ReturnType<typeof vi.fn>;
     publishRegistrationSchema: ReturnType<typeof vi.fn>;
     seedDefaultRegistrationSchema: ReturnType<typeof vi.fn>;
+    getRegistrations: ReturnType<typeof vi.fn>;
+    getRegistrationDetail: ReturnType<typeof vi.fn>;
+    updateRegistrationStatus: ReturnType<typeof vi.fn>;
+    getPrivateDocument: ReturnType<typeof vi.fn>;
+    exportRegistrationsCsv: ReturnType<typeof vi.fn>;
   };
   let mockAuthService: {
     currentUser: ReturnType<typeof vi.fn>;
@@ -158,6 +163,18 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       updateRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
       publishRegistrationSchema: vi.fn().mockReturnValue(of({ ...DEFAULT_ADMIN_SCHEMA, isPublished: true, version: 2 })),
       seedDefaultRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
+      getRegistrations: vi.fn().mockReturnValue(of({
+        items: [],
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        statusCounts: { all: 0, received: 0, underReview: 0, accepted: 0, confirmed: 0, waitlisted: 0, rejected: 0 },
+      })),
+      getRegistrationDetail: vi.fn().mockReturnValue(of(null)),
+      updateRegistrationStatus: vi.fn().mockReturnValue(of(null)),
+      getPrivateDocument: vi.fn().mockReturnValue(of(new Blob())),
+      exportRegistrationsCsv: vi.fn().mockReturnValue(of(new Blob())),
     };
 
     mockAuthService = {
@@ -369,5 +386,153 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
 
     component.seedDefaultQuestions();
     expect(mockAdminService.seedDefaultRegistrationSchema).toHaveBeenCalledWith(2026);
+  });
+
+  it('should load registrations list, change status filter, and paginate', () => {
+    const mockListResponse = {
+      items: [
+        {
+          id: 'reg-1',
+          referenceNumber: 'REG-2026-0001',
+          nameEnglish: 'Youssef Ahmed',
+          nameArabic: 'يوسف أحمد',
+          email: 'youssef@example.com',
+          phoneNumber: '01012345678',
+          universityName: 'Cairo University',
+          facultyName: 'Faculty of Engineering',
+          graduationYear: 2026,
+          status: 'Received' as const,
+          submittedAt: '2026-09-02T14:32:00Z',
+        },
+      ],
+      totalCount: 25,
+      page: 1,
+      pageSize: 10,
+      totalPages: 3,
+      statusCounts: {
+        all: 25,
+        received: 10,
+        underReview: 5,
+        accepted: 6,
+        confirmed: 2,
+        waitlisted: 1,
+        rejected: 1,
+      },
+    };
+
+    mockAdminService.getRegistrations = vi.fn().mockReturnValue(of(mockListResponse));
+
+    component.setTab('registrations');
+    expect(component.activeTab).toBe('registrations');
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ page: 1 }));
+
+    // Change status filter
+    component.setRegistrationStatusFilter('Accepted');
+    expect(component.regStatusFilter).toBe('Accepted');
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ status: 'Accepted' }));
+
+    // Search query
+    component.onRegistrationSearch('Youssef');
+    expect(component.regSearch).toBe('Youssef');
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ search: 'Youssef' }));
+
+    // Paginate
+    component.goToRegistrationPage(2);
+    expect(component.regPage).toBe(2);
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ page: 2 }));
+  });
+
+  it('should open applicant detail drawer, update status, and close', () => {
+    const mockDetail = {
+      id: 'reg-1',
+      editionYear: 2026,
+      referenceNumber: 'REG-2026-0001',
+      status: 'Received' as const,
+      submittedAt: '2026-09-02T14:32:00Z',
+      updatedAt: '2026-09-02T14:32:00Z',
+      nameEnglish: 'Youssef Ahmed',
+      nameArabic: 'يوسف أحمد',
+      email: 'youssef@example.com',
+      phoneNumber: '01012345678',
+      gender: 'Male',
+      maskedNationalId: '2990101******4',
+      academicSnapshot: {
+        universityName: 'Cairo University',
+        facultyName: 'Faculty of Engineering',
+        isUniversityOther: false,
+        isFacultyOther: false,
+        isDepartmentOther: false,
+        graduationYear: 2026,
+      },
+      answers: [
+        {
+          questionId: 'q-1',
+          questionKey: 'referral_source',
+          questionTitle: 'How did you hear about us?',
+          questionType: 'SingleChoice',
+          answerText: 'Social Media',
+        },
+      ],
+      hasNationalIdPhoto: true,
+      hasUniversityIdPhoto: true,
+      hasCvFile: true,
+      statusHistory: [
+        {
+          id: 'h-1',
+          fromStatus: 'Received' as const,
+          toStatus: 'Received' as const,
+          changedBy: 'System',
+          changedAt: '2026-09-02T14:32:00Z',
+        },
+      ],
+    };
+
+    mockAdminService.getRegistrationDetail = vi.fn().mockReturnValue(of(mockDetail));
+    mockAdminService.updateRegistrationStatus = vi.fn().mockReturnValue(
+      of({ ...mockDetail, status: 'Accepted' as const })
+    );
+
+    component.openRegistrationDetail('reg-1');
+    expect(component.isDetailModalOpen$.value).toBe(true);
+    expect(component.selectedRegistration$.value?.referenceNumber).toBe('REG-2026-0001');
+
+    // Update status
+    component.statusUpdateForm.patchValue({
+      status: 'Accepted',
+      note: 'Verified student ID card',
+    });
+    component.submitStatusUpdate();
+    expect(mockAdminService.updateRegistrationStatus).toHaveBeenCalledWith(2026, 'reg-1', {
+      status: 'Accepted',
+      note: 'Verified student ID card',
+    });
+    expect(component.selectedRegistration$.value?.status).toBe('Accepted');
+
+    component.closeRegistrationDetail();
+    expect(component.isDetailModalOpen$.value).toBe(false);
+  });
+
+  it('should view private document in lightbox and export CSV file', () => {
+    mockAdminService.getPrivateDocument = vi.fn().mockReturnValue(
+      of(new Blob(['image-binary'], { type: 'image/png' }))
+    );
+    mockAdminService.exportRegistrationsCsv = vi.fn().mockReturnValue(
+      of(new Blob(['CSV,DATA\n1,2'], { type: 'text/csv' }))
+    );
+
+    const createUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/doc');
+    const revokeUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    component.openPrivateDocument('reg-1', 'national-id', 'National ID Photo');
+    expect(component.documentViewer$.value.isOpen).toBe(true);
+    expect(component.documentViewer$.value.objectUrl).toBe('blob:http://localhost/doc');
+
+    component.closeDocumentViewer();
+    expect(component.documentViewer$.value.isOpen).toBe(false);
+    expect(revokeUrlSpy).toHaveBeenCalled();
+
+    // Export CSV
+    component.exportRegistrationsCsv();
+    expect(mockAdminService.exportRegistrationsCsv).toHaveBeenCalledWith(2026, expect.anything());
   });
 });
