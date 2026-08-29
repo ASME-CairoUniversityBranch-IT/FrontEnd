@@ -199,4 +199,36 @@ describe('AdminMainSegmentService', () => {
     expect(deleteReq.request.method).toBe('DELETE');
     deleteReq.flush(sampleAdminResponse);
   });
+
+  it('should handle registration schema GET, PUT, publish, and seed-defaults', () => {
+    service.getRegistrationSchema(2026).subscribe((res) => {
+      expect(res.version).toBe(1);
+    });
+    const getReq = httpMock.expectOne(`${baseUrl}/2026/schema`);
+    expect(getReq.request.method).toBe('GET');
+    getReq.flush({
+      version: 1,
+      isPublished: true,
+      settings: {
+        minGraduationYear: 2020,
+        maxGraduationYear: 2035,
+        privacyNoticeVersion: '2026.1',
+        submissionWorkflow: 'ReviewFirst',
+      },
+      questions: [],
+    });
+
+    service.publishRegistrationSchema(2026).subscribe((res) => {
+      expect(res.isPublished).toBe(true);
+    });
+    const pubReq = httpMock.expectOne(`${baseUrl}/2026/schema/publish`);
+    expect(pubReq.request.method).toBe('POST');
+    pubReq.flush({
+      version: 2,
+      isPublished: true,
+      publishedVersion: 2,
+      settings: {},
+      questions: [],
+    });
+  });
 });

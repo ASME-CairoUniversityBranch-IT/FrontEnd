@@ -84,3 +84,157 @@ export interface RegistrationSubmissionResponse {
   editionYear: number;
   message?: string;
 }
+
+export type SubmissionWorkflowType = 'InstantConfirmation' | 'ReviewFirst';
+
+export interface RegistrationSettings {
+  registrationOpensAt?: string | null;
+  registrationClosesAt?: string | null;
+  availabilityOverride?: boolean | null;
+  capacity?: number | null;
+  minGraduationYear: number;
+  maxGraduationYear: number;
+  eligibilityText?: string | null;
+  privacyNoticeVersion: string;
+  privacyNoticeUrl?: string | null;
+  submissionWorkflow: SubmissionWorkflowType;
+}
+
+export interface AdminRegistrationQuestion {
+  id: string;
+  key: string;
+  title: string;
+  description?: string | null;
+  type: RegistrationQuestionType;
+  isRequired: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  placeholder?: string | null;
+  maxLength?: number | null;
+  options?: RegistrationQuestionOption[] | null;
+  allowOther?: boolean;
+  conditionalOnKey?: string | null;
+  conditionalValue?: string | boolean | null;
+}
+
+export interface AdminRegistrationSchemaResponse {
+  version: number;
+  isPublished: boolean;
+  publishedVersion?: number | null;
+  publishedAt?: string | null;
+  updatedAt?: string | null;
+  settings: RegistrationSettings;
+  questions: AdminRegistrationQuestion[];
+}
+
+export interface UpdateRegistrationSchemaRequest {
+  settings: RegistrationSettings;
+  questions: AdminRegistrationQuestion[];
+}
+
+export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
+  version: 1,
+  isPublished: true,
+  publishedVersion: 1,
+  publishedAt: new Date().toISOString(),
+  settings: {
+    registrationOpensAt: '2026-09-01T00:00:00Z',
+    registrationClosesAt: '2026-10-10T23:59:59Z',
+    availabilityOverride: null,
+    capacity: 500,
+    minGraduationYear: 2020,
+    maxGraduationYear: 2035,
+    eligibilityText: 'Undergraduate and recent graduate engineering students across Egyptian universities.',
+    privacyNoticeVersion: '2026.1',
+    privacyNoticeUrl: 'https://asme-cu.org/privacy',
+    submissionWorkflow: 'ReviewFirst',
+  },
+  questions: [
+    {
+      id: 'q-source',
+      key: 'referral_source',
+      title: 'How did you hear about Main Segment 2026?',
+      description: 'Let us know how you discovered this edition.',
+      type: 'SingleChoice',
+      isRequired: true,
+      isActive: true,
+      displayOrder: 1,
+      allowOther: true,
+      options: [
+        { id: 'opt-fb', label: 'Facebook / Social Media', value: 'SocialMedia' },
+        { id: 'opt-friends', label: 'University Friends / Colleagues', value: 'Friends' },
+        { id: 'opt-prof', label: 'Faculty Professors / Teaching Assistants', value: 'Professors' },
+        { id: 'opt-booth', label: 'On-Campus ASME Booth', value: 'OnCampusBooth' },
+        { id: 'opt-other', label: 'Other', value: 'Other' },
+      ],
+    },
+    {
+      id: 'q-track',
+      key: 'primary_interest',
+      title: 'What is your primary engineering interest area?',
+      description: 'Helps us tailor session capacity and recommendations.',
+      type: 'SingleChoice',
+      isRequired: true,
+      isActive: true,
+      displayOrder: 2,
+      options: [
+        { id: 'track-design', label: 'Mechanical & CAD Design', value: 'MechanicalDesign' },
+        { id: 'track-thermal', label: 'Thermal & Fluid Systems', value: 'ThermalFluids' },
+        { id: 'track-mechatronics', label: 'Robotics & Mechatronics', value: 'Mechatronics' },
+        { id: 'track-mfg', label: 'Manufacturing & Materials', value: 'Manufacturing' },
+        { id: 'track-energy', label: 'Renewable & Power Energy', value: 'Energy' },
+        { id: 'track-auto', label: 'Automotive & Aerospace', value: 'Automotive' },
+      ],
+    },
+    {
+      id: 'q-prev-attended',
+      key: 'previous_attendance',
+      title: 'Have you attended a previous ASME Cairo University Main Segment edition?',
+      description: 'Helps us understand returning audience demographics.',
+      type: 'YesNo',
+      isRequired: true,
+      isActive: true,
+      displayOrder: 3,
+    },
+    {
+      id: 'q-join-asme',
+      key: 'join_asme_cu',
+      title: 'Would you like to join the ASME Cairo University Student Branch team?',
+      description: 'Open to undergraduate engineering students who want to develop leadership and technical skills.',
+      type: 'YesNo',
+      isRequired: true,
+      isActive: true,
+      displayOrder: 4,
+    },
+    {
+      id: 'q-team-interest',
+      key: 'asme_team_preference',
+      title: 'Which ASME committee or team are you interested in joining?',
+      description: 'Select your preferred branch team.',
+      type: 'SingleChoice',
+      isRequired: true,
+      isActive: true,
+      displayOrder: 5,
+      conditionalOnKey: 'join_asme_cu',
+      conditionalValue: true,
+      options: [
+        { id: 'team-tech', label: 'Technical Projects & Workshops', value: 'Technical' },
+        { id: 'team-it', label: 'IT & Software Development', value: 'IT' },
+        { id: 'team-pr', label: 'Public Relations & Partnerships', value: 'PR' },
+        { id: 'team-media', label: 'Media, Graphic Design & Marketing', value: 'Media' },
+        { id: 'team-hr', label: 'Human Resources & Logistics', value: 'HR' },
+      ],
+    },
+    {
+      id: 'q-expectations',
+      key: 'expectations_goals',
+      title: 'What are your core expectations for Main Segment 2026?',
+      description: 'Share any specific talks, companies, or workshops you hope to engage with.',
+      type: 'LongText',
+      isRequired: false,
+      isActive: true,
+      displayOrder: 6,
+      placeholder: 'Describe what you hope to gain from this experience...',
+    },
+  ],
+};

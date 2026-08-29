@@ -37,6 +37,15 @@ import {
   UpdateMainSegmentEditionRequest,
 } from '../../../../core/models/main-segment.model';
 import {
+  AdminRegistrationQuestion,
+  AdminRegistrationSchemaResponse,
+  DEFAULT_ADMIN_SCHEMA,
+  RegistrationQuestionOption,
+  RegistrationQuestionType,
+  RegistrationSettings,
+  UpdateRegistrationSchemaRequest,
+} from '../../../../core/models/registration.model';
+import {
   getOrgInitials,
   getPersonInitials,
   getSectionDisplayTitle,
@@ -117,9 +126,46 @@ export class AdminMainSegmentWorkspaceComponent
     isVisible: [true],
   });
 
+  /* ── Registration Form Builder State (Milestone 6) ── */
+  readonly schema$ = new BehaviorSubject<AdminRegistrationSchemaResponse | null>(null);
+  readonly isLoadingSchema$ = new BehaviorSubject<boolean>(false);
+  readonly isSavingSchema$ = new BehaviorSubject<boolean>(false);
+  readonly isSchemaPreviewOpen$ = new BehaviorSubject<boolean>(false);
+
+  readonly schemaSettingsForm: FormGroup = this.fb.group({
+    minGraduationYear: [2020, [Validators.required, Validators.min(1990), Validators.max(2040)]],
+    maxGraduationYear: [2035, [Validators.required, Validators.min(1990), Validators.max(2050)]],
+    eligibilityText: [''],
+    privacyNoticeVersion: ['2026.1', [Validators.required]],
+    privacyNoticeUrl: [''],
+    submissionWorkflow: ['ReviewFirst', [Validators.required]],
+  });
+
+  readonly isQuestionModalOpen$ = new BehaviorSubject<boolean>(false);
+  editingQuestionId: string | null = null;
+  readonly questionForm: FormGroup = this.fb.group({
+    title: ['', [Validators.required]],
+    key: ['', [Validators.required, Validators.pattern(/^[a-z0-9_]+$/)]],
+    description: [''],
+    type: ['ShortText', [Validators.required]],
+    placeholder: [''],
+    maxLength: [null],
+    isRequired: [true],
+    isActive: [true],
+    allowOther: [false],
+    hasCondition: [false],
+    conditionalOnKey: [''],
+    conditionalValue: [''],
+    options: this.fb.array([]),
+  });
+
+  get questionOptionsArray(): FormArray {
+    return this.questionForm.get('options') as FormArray;
+  }
+
   /* ── Filter Categories ── */
-  programFilter: string = 'All';
-  orgFilter: string = 'All';
+  programFilter = 'All';
+  orgFilter = 'All';
 
   readonly form: FormGroup = this.fb.group({
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
@@ -179,7 +225,7 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   canDeactivate(): boolean {
-    if (this.form.dirty) {
+    if (this.form.dirty || this.schemaSettingsForm.dirty) {
       return confirm(
         'You have unsaved changes in this edition workspace. Are you sure you want to navigate away?'
       );
@@ -189,6 +235,17 @@ export class AdminMainSegmentWorkspaceComponent
 
   setTab(tab: WorkspaceTab): void {
     this.activeTab = tab;
+    if (tab === 'form-builder' && !this.schema$.value) {
+      this.loadSchema(this.year);
+    }
+  }
+
+  setProgramFilter(filter: string): void {
+    this.programFilter = filter;
+  }
+
+  setOrgFilter(filter: string): void {
+    this.orgFilter = filter;
   }
 
   loadEdition(year: number): Observable<MainSegmentAdminResponse | null> {
@@ -794,11 +851,341 @@ export class AdminMainSegmentWorkspaceComponent
     });
   }
 
+  /* ── Registration Form Builder (Milestone 6) ── */
+  loadSchema(year: number): void {
+    this.isLoadingSchema$.next(true);
+    this.adminService
+      .getRegistrationSchema(year)
+      .pipe(
+        tap((schema) => {
+          this.schema$.next(schema);
+          this.populateSchemaSettings(schema.settings);
+          this.isLoadingSchema$.next(false);
+        }),
+        catchError(() => {
+          this.isLoadingSchema$.next(false);
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
+  populateSchemaSettings(settings: RegistrationSettings): void {
+    this.schemaSettingsForm.patchValue({
+      minGraduationYear: settings.minGraduationYear || 2020,
+      maxGraduationYear: settings.maxGraduationYear || 2035,
+      eligibilityText: settings.eligibilityText || '',
+      privacyNoticeVersion: settings.privacyNoticeVersion || '2026.1',
+      privacyNoticeUrl: settings.privacyNoticeUrl || '',
+      submissionWorkflow: settings.submissionWorkflow || 'ReviewFirst',
+    });
+    this.schemaSettingsForm.markAsPristine();
+  }
+
+  saveDraftSchema(): void {
+    if (this.schemaSettingsForm.invalid) {
+      this.schemaSettingsForm.markAllAsTouched();
+      this.errorMessage$.next('Please resolve errors in registration settings before saving.');
+      return;
+    }
+
+    const currentSchema = this.schema$.value;
+    if (!currentSchema) return;
+
+    const settingsVal = this.schemaSettingsForm.value;
+    const request: UpdateRegistrationSchemaRequest = {
+      settings: {
+        ...currentSchema.settings,
+        minGraduationYear: Number(settingsVal.minGraduationYear),
+        maxGraduationYear: Number(settingsVal.maxGraduationYear),
+        eligibilityText: settingsVal.eligibilityText?.trim() || null,
+        privacyNoticeVersion: settingsVal.privacyNoticeVersion.trim(),
+        privacyNoticeUrl: settingsVal.privacyNoticeUrl?.trim() || null,
+        submissionWorkflow: settingsVal.submissionWorkflow,
+      },
+      questions: currentSchema.questions,
+    };
+
+    this.isSavingSchema$.next(true);
+    this.errorMessage$.next(null);
+
+    this.adminService.updateRegistrationSchema(this.year, request).subscribe({
+      next: (updated) => {
+        this.isSavingSchema$.next(false);
+        this.schema$.next(updated);
+        this.populateSchemaSettings(updated.settings);
+        this.showSuccess('Registration schema draft saved.');
+      },
+      error: (err) => {
+        this.isSavingSchema$.next(false);
+        this.errorMessage$.next(err?.error?.message || 'Failed to save schema draft.');
+      },
+    });
+  }
+
+  publishSchema(): void {
+    const conf = confirm(
+      'Publishing this registration form schema will make it live for all future applicants. ' +
+        'Existing registrations will remain linked to their previous submission versions. Continue?'
+    );
+    if (!conf) return;
+
+    this.isSavingSchema$.next(true);
+    this.errorMessage$.next(null);
+
+    this.adminService.publishRegistrationSchema(this.year).subscribe({
+      next: (published) => {
+        this.isSavingSchema$.next(false);
+        this.schema$.next(published);
+        this.populateSchemaSettings(published.settings);
+        this.showSuccess(`Schema v${published.version} published live.`);
+      },
+      error: (err) => {
+        this.isSavingSchema$.next(false);
+        this.errorMessage$.next(err?.error?.message || 'Failed to publish registration schema.');
+      },
+    });
+  }
+
+  seedDefaultQuestions(): void {
+    const conf = confirm('Reset question builder to the standard 2026 default question set?');
+    if (!conf) return;
+
+    this.isSavingSchema$.next(true);
+    this.adminService.seedDefaultRegistrationSchema(this.year).subscribe({
+      next: (seeded) => {
+        this.isSavingSchema$.next(false);
+        this.schema$.next(seeded);
+        this.populateSchemaSettings(seeded.settings);
+        this.showSuccess('Standard 2026 questions successfully applied.');
+      },
+      error: (err) => {
+        this.isSavingSchema$.next(false);
+        this.errorMessage$.next(err?.error?.message || 'Failed to seed questions.');
+      },
+    });
+  }
+
+  openAddQuestionModal(): void {
+    this.editingQuestionId = null;
+    this.questionOptionsArray.clear();
+    this.questionForm.reset({
+      title: '',
+      key: '',
+      description: '',
+      type: 'ShortText',
+      placeholder: '',
+      maxLength: null,
+      isRequired: true,
+      isActive: true,
+      allowOther: false,
+      hasCondition: false,
+      conditionalOnKey: '',
+      conditionalValue: '',
+    });
+    this.isQuestionModalOpen$.next(true);
+  }
+
+  openEditQuestionModal(q: AdminRegistrationQuestion): void {
+    this.editingQuestionId = q.id;
+    this.questionOptionsArray.clear();
+
+    const options = q.options || [];
+    for (const opt of options) {
+      this.questionOptionsArray.push(
+        this.fb.group({
+          label: [opt.label, [Validators.required]],
+          value: [opt.value, [Validators.required]],
+        })
+      );
+    }
+
+    this.questionForm.patchValue({
+      title: q.title,
+      key: q.key,
+      description: q.description || '',
+      type: q.type,
+      placeholder: q.placeholder || '',
+      maxLength: q.maxLength || null,
+      isRequired: q.isRequired,
+      isActive: q.isActive,
+      allowOther: Boolean(q.allowOther),
+      hasCondition: Boolean(q.conditionalOnKey),
+      conditionalOnKey: q.conditionalOnKey || '',
+      conditionalValue: q.conditionalValue !== undefined && q.conditionalValue !== null ? String(q.conditionalValue) : '',
+    });
+
+    this.isQuestionModalOpen$.next(true);
+  }
+
+  closeQuestionModal(): void {
+    this.isQuestionModalOpen$.next(false);
+    this.editingQuestionId = null;
+  }
+
+  addQuestionOption(): void {
+    this.questionOptionsArray.push(
+      this.fb.group({
+        label: ['', [Validators.required]],
+        value: ['', [Validators.required]],
+      })
+    );
+  }
+
+  removeQuestionOption(index: number): void {
+    this.questionOptionsArray.removeAt(index);
+  }
+
+  moveQuestionOption(currentIndex: number, direction: 'up' | 'down'): void {
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= this.questionOptionsArray.length) return;
+
+    const currentCtrl = this.questionOptionsArray.at(currentIndex);
+    this.questionOptionsArray.removeAt(currentIndex);
+    this.questionOptionsArray.insert(targetIndex, currentCtrl);
+  }
+
+  saveQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+
+    const currentSchema = this.schema$.value;
+    if (!currentSchema) return;
+
+    const val = this.questionForm.value;
+    const isChoice = val.type === 'SingleChoice' || val.type === 'MultipleChoice';
+
+    const options: RegistrationQuestionOption[] = isChoice
+      ? val.options.map((opt: any, idx: number) => ({
+          id: `opt-${idx + 1}`,
+          label: opt.label.trim(),
+          value: opt.value.trim(),
+        }))
+      : [];
+
+    let conditionalValue: string | boolean | null = null;
+    if (val.hasCondition && val.conditionalOnKey) {
+      if (val.conditionalValue === 'true') {
+        conditionalValue = true;
+      } else if (val.conditionalValue === 'false') {
+        conditionalValue = false;
+      } else {
+        conditionalValue = val.conditionalValue ? val.conditionalValue.trim() : null;
+      }
+    }
+
+    const question: AdminRegistrationQuestion = {
+      id: this.editingQuestionId || `q-${Date.now()}`,
+      key: val.key.trim().toLowerCase(),
+      title: val.title.trim(),
+      description: val.description ? val.description.trim() : null,
+      type: val.type as RegistrationQuestionType,
+      placeholder: val.placeholder ? val.placeholder.trim() : null,
+      maxLength: val.maxLength ? Number(val.maxLength) : null,
+      isRequired: Boolean(val.isRequired),
+      isActive: Boolean(val.isActive),
+      displayOrder: this.editingQuestionId
+        ? currentSchema.questions.find((q) => q.id === this.editingQuestionId)?.displayOrder || 1
+        : currentSchema.questions.length + 1,
+      options: options.length > 0 ? options : null,
+      allowOther: Boolean(val.allowOther),
+      conditionalOnKey: val.hasCondition && val.conditionalOnKey ? val.conditionalOnKey : null,
+      conditionalValue,
+    };
+
+    let nextQuestions = [...currentSchema.questions];
+    if (this.editingQuestionId) {
+      nextQuestions = nextQuestions.map((q) => (q.id === this.editingQuestionId ? question : q));
+    } else {
+      nextQuestions.push(question);
+    }
+
+    const updatedSchema: AdminRegistrationSchemaResponse = {
+      ...currentSchema,
+      questions: nextQuestions,
+    };
+
+    this.schema$.next(updatedSchema);
+    this.closeQuestionModal();
+    this.showSuccess('Question updated. Remember to save or publish your schema draft.');
+  }
+
+  deleteQuestion(id: string): void {
+    if (!confirm('Are you sure you want to remove this question from the registration form?')) return;
+
+    const currentSchema = this.schema$.value;
+    if (!currentSchema) return;
+
+    const questionToDelete = currentSchema.questions.find((q) => q.id === id);
+    if (!questionToDelete) return;
+
+    // Check if any other question conditionally depends on this question
+    const dependents = currentSchema.questions.filter((q) => q.conditionalOnKey === questionToDelete.key);
+    if (dependents.length > 0) {
+      alert(
+        `Cannot delete "${questionToDelete.title}" because the question "${dependents[0].title}" depends on its answer.`
+      );
+      return;
+    }
+
+    const nextQuestions = currentSchema.questions
+      .filter((q) => q.id !== id)
+      .map((q, idx) => ({ ...q, displayOrder: idx + 1 }));
+
+    this.schema$.next({
+      ...currentSchema,
+      questions: nextQuestions,
+    });
+    this.showSuccess('Question removed.');
+  }
+
+  moveQuestion(currentIndex: number, direction: 'up' | 'down'): void {
+    const currentSchema = this.schema$.value;
+    if (!currentSchema) return;
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= currentSchema.questions.length) return;
+
+    const copy = [...currentSchema.questions];
+    const [moved] = copy.splice(currentIndex, 1);
+    copy.splice(targetIndex, 0, moved);
+
+    const reordered = copy.map((q, idx) => ({ ...q, displayOrder: idx + 1 }));
+    this.schema$.next({
+      ...currentSchema,
+      questions: reordered,
+    });
+  }
+
+  getPreviousConditionCandidates(currentQuestionId?: string | null): AdminRegistrationQuestion[] {
+    const currentSchema = this.schema$.value;
+    if (!currentSchema) return [];
+
+    return currentSchema.questions.filter(
+      (q) => (q.type === 'YesNo' || q.type === 'SingleChoice') && q.id !== currentQuestionId
+    );
+  }
+
+  getConditionQuestionOptions(targetKey?: string): RegistrationQuestionOption[] {
+    if (!targetKey) return [];
+    const currentSchema = this.schema$.value;
+    if (!currentSchema) return [];
+
+    const target = currentSchema.questions.find((q) => q.key === targetKey);
+    return target?.options || [];
+  }
+
+  openSchemaPreview(): void {
+    this.isSchemaPreviewOpen$.next(true);
+  }
+
+  closeSchemaPreview(): void {
+    this.isSchemaPreviewOpen$.next(false);
+  }
+
   /* ── Filter Helpers ── */
-  setProgramFilter(filter: string): void { this.programFilter = filter; }
-
-  setOrgFilter(filter: string): void { this.orgFilter = filter; }
-
   getFilteredProgramItems(items: MainSegmentAdminProgramItemResponse[]): MainSegmentAdminProgramItemResponse[] {
     if (!items) return [];
     if (this.programFilter === 'All' || this.programFilter === 'Speakers') return items;

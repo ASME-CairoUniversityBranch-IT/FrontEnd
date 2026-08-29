@@ -14,6 +14,11 @@ import {
   MainSegmentProgramCategory,
   MainSegmentSectionKey,
 } from '../../../../core/models/main-segment.model';
+import {
+  AdminRegistrationQuestion,
+  AdminRegistrationSchemaResponse,
+  DEFAULT_ADMIN_SCHEMA,
+} from '../../../../core/models/registration.model';
 
 describe('AdminMainSegmentWorkspaceComponent', () => {
   let component: AdminMainSegmentWorkspaceComponent;
@@ -43,6 +48,10 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     reorderOrganizations: ReturnType<typeof vi.fn>;
     uploadOrganizationLogo: ReturnType<typeof vi.fn>;
     deleteOrganizationLogo: ReturnType<typeof vi.fn>;
+    getRegistrationSchema: ReturnType<typeof vi.fn>;
+    updateRegistrationSchema: ReturnType<typeof vi.fn>;
+    publishRegistrationSchema: ReturnType<typeof vi.fn>;
+    seedDefaultRegistrationSchema: ReturnType<typeof vi.fn>;
   };
   let mockAuthService: {
     currentUser: ReturnType<typeof vi.fn>;
@@ -145,6 +154,10 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       reorderOrganizations: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       uploadOrganizationLogo: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       deleteOrganizationLogo: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, organizations: [{ ...sampleOrg, logoUrl: null }] })),
+      getRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
+      updateRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
+      publishRegistrationSchema: vi.fn().mockReturnValue(of({ ...DEFAULT_ADMIN_SCHEMA, isPublished: true, version: 2 })),
+      seedDefaultRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
     };
 
     mockAuthService = {
@@ -179,12 +192,13 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     expect(mockAdminService.getAdminByYear).toHaveBeenCalledWith(2026);
   });
 
-  it('should switch between workspace subtabs', () => {
+  it('should switch between workspace subtabs and load schema on form-builder tab', () => {
     expect(component.activeTab).toBe('overview');
     component.setTab('program');
     expect(component.activeTab).toBe('program');
-    component.setTab('companies');
-    expect(component.activeTab).toBe('companies');
+    component.setTab('form-builder');
+    expect(component.activeTab).toBe('form-builder');
+    expect(mockAdminService.getRegistrationSchema).toHaveBeenCalledWith(2026);
   });
 
   it('should open and submit program item modal for creation and editing', () => {
@@ -277,5 +291,83 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
 
     component.moveOrg(0, 'down', [org1, org2]);
     expect(mockAdminService.reorderOrganizations).toHaveBeenCalledWith(2026, ['o2', 'o1']);
+  });
+
+  it('should save registration schema settings and draft', () => {
+    component.setTab('form-builder');
+    component.schemaSettingsForm.patchValue({
+      minGraduationYear: 2022,
+      maxGraduationYear: 2030,
+      eligibilityText: 'All Engineering students',
+      submissionWorkflow: 'InstantConfirmation',
+    });
+
+    component.saveDraftSchema();
+    expect(mockAdminService.updateRegistrationSchema).toHaveBeenCalledWith(2026, expect.objectContaining({
+      settings: expect.objectContaining({
+        minGraduationYear: 2022,
+        maxGraduationYear: 2030,
+        submissionWorkflow: 'InstantConfirmation',
+      }),
+    }));
+  });
+
+  it('should create, edit, reorder, and delete questions in question builder', () => {
+    component.setTab('form-builder');
+    component.schema$.next(DEFAULT_ADMIN_SCHEMA);
+
+    component.openAddQuestionModal();
+    expect(component.isQuestionModalOpen$.value).toBe(true);
+
+    component.questionForm.patchValue({
+      title: 'T-Shirt Size',
+      key: 'tshirt_size',
+      type: 'SingleChoice',
+      isRequired: true,
+      isActive: true,
+    });
+    component.addQuestionOption();
+    component.questionOptionsArray.at(0).patchValue({ label: 'Medium', value: 'M' });
+
+    component.saveQuestion();
+    expect(component.schema$.value?.questions.some((q) => q.key === 'tshirt_size')).toBe(true);
+
+    // Edit question
+    const addedQ = component.schema$.value?.questions.find((q) => q.key === 'tshirt_size')!;
+    component.openEditQuestionModal(addedQ);
+    component.questionForm.patchValue({ title: 'Preferred T-Shirt Size' });
+    component.saveQuestion();
+    expect(component.schema$.value?.questions.find((q) => q.key === 'tshirt_size')?.title).toBe(
+      'Preferred T-Shirt Size'
+    );
+
+    // Delete question
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    component.deleteQuestion(addedQ.id);
+    expect(component.schema$.value?.questions.some((q) => q.key === 'tshirt_size')).toBe(false);
+  });
+
+  it('should prevent deleting questions that have conditional dependents', () => {
+    component.setTab('form-builder');
+    component.schema$.next(DEFAULT_ADMIN_SCHEMA);
+
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    // Question q-join-asme has dependent q-team-interest
+    component.deleteQuestion('q-join-asme');
+    expect(alertSpy).toHaveBeenCalled();
+    expect(component.schema$.value?.questions.some((q) => q.id === 'q-join-asme')).toBe(true);
+  });
+
+  it('should publish schema and seed defaults with confirmation', () => {
+    component.setTab('form-builder');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.publishSchema();
+    expect(mockAdminService.publishRegistrationSchema).toHaveBeenCalledWith(2026);
+
+    component.seedDefaultQuestions();
+    expect(mockAdminService.seedDefaultRegistrationSchema).toHaveBeenCalledWith(2026);
   });
 });

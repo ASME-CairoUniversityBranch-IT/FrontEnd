@@ -55,6 +55,10 @@
               <button *ngIf="activeTab === 'overview'" type="button" class="btn-save" (click)="saveDraft()" [disabled]="(isSaving$ | async) || !form.dirty">
                 {{ (isSaving$ | async) ? 'SAVING...' : 'SAVE DRAFT' }}
               </button>
+
+              <button *ngIf="activeTab === 'form-builder'" type="button" class="btn-save" (click)="saveDraftSchema()" [disabled]="(isSavingSchema$ | async)">
+                {{ (isSavingSchema$ | async) ? 'SAVING SCHEMA...' : 'SAVE SCHEMA DRAFT' }}
+              </button>
             </div>
           </div>
 
@@ -322,7 +326,7 @@
             </div>
           </div>
 
-          <!-- Speakers Roster View (when selected) -->
+          <!-- Speakers Roster View -->
           <div *ngIf="programFilter === 'Speakers'" class="speakers-roster-view">
             <div *ngIf="edition.people.length === 0" class="empty-tab-box">
               <p>No speakers or mentors added yet. Click "+ ADD SPEAKER / MENTOR" to create the first speaker.</p>
@@ -500,13 +504,166 @@
           </div>
         </section>
 
-        <!-- Tab 4: Registration Form Builder (Teaser / Milestone 6) -->
-        <section *ngIf="activeTab === 'form-builder'" class="tab-content placeholder-tab">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">📝</div>
-            <h2>Custom Registration Question Builder</h2>
-            <p>Build customized registration steps, form fields, and required document uploads for this edition.</p>
-            <p class="sub-note">Available in Milestone #6.</p>
+        <!-- Tab 4: Registration Form Builder & Settings (Milestone 6) -->
+        <section *ngIf="activeTab === 'form-builder'" class="tab-content">
+          <div *ngIf="schema$ | async as schema" class="form-builder-container">
+
+            <!-- Schema Version & Status Banner -->
+            <div class="schema-status-banner">
+              <div class="schema-meta">
+                <div class="schema-badge-row">
+                  <span class="schema-ver-badge">SCHEMA VERSION {{ schema.version }}</span>
+                  <span class="schema-live-badge" [class.published]="schema.isPublished" [class.draft]="!schema.isPublished">
+                    {{ schema.isPublished ? '● Live Published' : '○ Draft (Unpublished Changes)' }}
+                  </span>
+                </div>
+                <p class="schema-meta-desc">
+                  Changes made here configure Step 3 of the public registration modal. Publishing will advance the schema version for new applicants without altering historical registrations.
+                </p>
+              </div>
+
+              <div class="schema-actions-bar">
+                <button type="button" class="btn-preview-schema" (click)="openSchemaPreview()">
+                  👁 PREVIEW APPLICANT FORM
+                </button>
+                <button type="button" class="btn-seed-schema" (click)="seedDefaultQuestions()" [disabled]="isSavingSchema$ | async">
+                  RESET 2026 DEFAULTS
+                </button>
+                <button type="button" class="btn-publish-schema" (click)="publishSchema()" [disabled]="isSavingSchema$ | async">
+                  {{ (isSavingSchema$ | async) ? 'PUBLISHING...' : 'PUBLISH LIVE SCHEMA' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Global Registration Parameters & Eligibility -->
+            <form [formGroup]="schemaSettingsForm" class="schema-settings-card">
+              <h2 class="card-title">1. Registration Bounds & Application Parameters</h2>
+              <p class="card-desc">Set allowable graduation years, eligibility guidelines, privacy notice version, and confirmation workflow.</p>
+
+              <div class="form-grid two-cols">
+                <div class="form-group">
+                  <label for="min-grad">Minimum Graduation Year <span class="req">*</span></label>
+                  <input id="min-grad" type="number" formControlName="minGraduationYear" />
+                  <span class="helper-text">Earliest allowable graduation year (e.g. 2020).</span>
+                </div>
+
+                <div class="form-group">
+                  <label for="max-grad">Maximum Graduation Year <span class="req">*</span></label>
+                  <input id="max-grad" type="number" formControlName="maxGraduationYear" />
+                  <span class="helper-text">Latest allowable graduation year (e.g. 2035).</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="eligibility">Eligibility Notice / Text</label>
+                <textarea id="eligibility" rows="2" formControlName="eligibilityText" placeholder="e.g. Undergraduate and recent graduate engineering students across all Egyptian universities..."></textarea>
+              </div>
+
+              <div class="form-grid two-cols">
+                <div class="form-group">
+                  <label for="priv-ver">Privacy Notice Version <span class="req">*</span></label>
+                  <input id="priv-ver" type="text" formControlName="privacyNoticeVersion" placeholder="2026.1" />
+                </div>
+
+                <div class="form-group">
+                  <label for="workflow">Submission Workflow <span class="req">*</span></label>
+                  <select id="workflow" formControlName="submissionWorkflow">
+                    <option value="ReviewFirst">Review-First (Team manually accepts/rejects applications)</option>
+                    <option value="InstantConfirmation">Instant Confirmation (Auto-confirmed upon submit)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-save-row">
+                <button type="button" class="btn-save-inline" (click)="saveDraftSchema()" [disabled]="(isSavingSchema$ | async) || !schemaSettingsForm.dirty">
+                  {{ (isSavingSchema$ | async) ? 'Saving Settings...' : 'Save Settings' }}
+                </button>
+              </div>
+            </form>
+
+            <!-- Dynamic Question Builder -->
+            <div class="question-builder-card">
+              <div class="qb-header">
+                <div>
+                  <h2 class="card-title">2. Dynamic Registration Questions (Step 3)</h2>
+                  <p class="card-desc">Configure the questions presented dynamically to applicants on the final step.</p>
+                </div>
+                <button type="button" class="btn-add-primary" (click)="openAddQuestionModal()">
+                  + ADD QUESTION
+                </button>
+              </div>
+
+              <div *ngIf="schema.questions.length === 0" class="empty-tab-box">
+                <p>No dynamic questions configured. Click "+ ADD QUESTION" or "RESET 2026 DEFAULTS" above.</p>
+              </div>
+
+              <div *ngIf="schema.questions.length > 0" class="questions-table-wrap">
+                <table class="questions-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 60px;">Order</th>
+                      <th>Question Prompt & Key</th>
+                      <th>Type</th>
+                      <th>Options / Rules</th>
+                      <th>Required</th>
+                      <th>Status</th>
+                      <th style="width: 140px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let q of schema.questions; let i = index" [class.inactive-row]="!q.isActive">
+                      <td class="order-cell">
+                        <div class="order-btn-group">
+                          <button type="button" class="btn-arrow-mini" [disabled]="i === 0" (click)="moveQuestion(i, 'up')">&uarr;</button>
+                          <span>{{ q.displayOrder }}</span>
+                          <button type="button" class="btn-arrow-mini" [disabled]="i === schema.questions.length - 1" (click)="moveQuestion(i, 'down')">&darr;</button>
+                        </div>
+                      </td>
+
+                      <td class="prompt-cell">
+                        <div class="prompt-title">{{ q.title }}</div>
+                        <div class="prompt-key">Key: <code>{{ q.key }}</code></div>
+                        <div *ngIf="q.conditionalOnKey" class="condition-tag">
+                          ⚡ Depends on <code>{{ q.conditionalOnKey }}</code> === {{ q.conditionalValue }}
+                        </div>
+                      </td>
+
+                      <td class="type-cell">
+                        <span class="qtype-badge" [class.choice]="q.type.includes('Choice')" [class.yesno]="q.type === 'YesNo'">
+                          {{ q.type }}
+                        </span>
+                      </td>
+
+                      <td class="options-cell">
+                        <div *ngIf="q.options && q.options.length > 0">
+                          <strong>{{ q.options.length }} options</strong>
+                          <span *ngIf="q.allowOther" class="other-pill">+ Other</span>
+                        </div>
+                        <span *ngIf="!q.options || q.options.length === 0" class="text-muted">—</span>
+                      </td>
+
+                      <td class="req-cell">
+                        <span class="status-indicator" [class.yes]="q.isRequired" [class.no]="!q.isRequired">
+                          {{ q.isRequired ? 'Yes' : 'Optional' }}
+                        </span>
+                      </td>
+
+                      <td class="active-cell">
+                        <span class="status-indicator" [class.yes]="q.isActive" [class.no]="!q.isActive">
+                          {{ q.isActive ? 'Active' : 'Disabled' }}
+                        </span>
+                      </td>
+
+                      <td class="actions-cell">
+                        <button type="button" class="btn-edit-inline" (click)="openEditQuestionModal(q)">EDIT</button>
+                        <button type="button" class="btn-delete-inline" (click)="deleteQuestion(q.id)">DEL</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </section>
 
@@ -720,7 +877,210 @@
       </div>
     </div>
 
-    <!-- Preview Modal -->
+    <!-- Question Builder Modal (Milestone 6) -->
+    <div *ngIf="isQuestionModalOpen$ | async" class="modal-overlay" (click)="closeQuestionModal()" role="dialog" aria-modal="true" aria-labelledby="q-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="q-modal-title">{{ editingQuestionId ? 'Edit Question' : 'Add Registration Question' }}</h2>
+          <button type="button" class="btn-close" (click)="closeQuestionModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="questionForm" (ngSubmit)="saveQuestion()" class="modal-form">
+          <div class="form-group">
+            <label for="q-title">Question Prompt / Title <span class="req">*</span></label>
+            <input id="q-title" type="text" formControlName="title" placeholder="e.g. What is your primary engineering interest area?" />
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="q-key">Unique Identifier Key <span class="req">*</span></label>
+              <input id="q-key" type="text" formControlName="key" placeholder="e.g. primary_interest" />
+              <span class="helper-text">Lowercase alphanumeric with underscores (e.g. <code>team_choice</code>).</span>
+            </div>
+
+            <div class="form-group">
+              <label for="q-type">Question Type <span class="req">*</span></label>
+              <select id="q-type" formControlName="type">
+                <option value="ShortText">Short Text (Input)</option>
+                <option value="LongText">Long Text (Textarea)</option>
+                <option value="SingleChoice">Single Choice (Radio Group)</option>
+                <option value="MultipleChoice">Multiple Choice (Checkboxes)</option>
+                <option value="YesNo">Yes / No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="q-desc">Helper Description / Note</label>
+            <input id="q-desc" type="text" formControlName="description" placeholder="Optional context or instructions..." />
+          </div>
+
+          <div *ngIf="questionForm.get('type')?.value === 'ShortText' || questionForm.get('type')?.value === 'LongText'" class="form-row two-cols">
+            <div class="form-group">
+              <label for="q-placeholder">Placeholder Text</label>
+              <input id="q-placeholder" type="text" formControlName="placeholder" placeholder="e.g. Type your answer here..." />
+            </div>
+
+            <div class="form-group">
+              <label for="q-max">Max Length (Characters)</label>
+              <input id="q-max" type="number" formControlName="maxLength" placeholder="e.g. 500" />
+            </div>
+          </div>
+
+          <!-- Options Manager for SingleChoice and MultipleChoice -->
+          <div *ngIf="questionForm.get('type')?.value === 'SingleChoice' || questionForm.get('type')?.value === 'MultipleChoice'" class="options-builder-box">
+            <div class="options-builder-header">
+              <h4>Choice Options ({{ questionOptionsArray.length }})</h4>
+              <button type="button" class="btn-add-opt" (click)="addQuestionOption()">+ Add Option</button>
+            </div>
+
+            <div *ngIf="questionOptionsArray.length === 0" class="empty-opt-note">
+              No options added yet. Click "+ Add Option" to define selectable choices.
+            </div>
+
+            <div class="options-list-editor" formArrayName="options">
+              <div *ngFor="let optCtrl of questionOptionsArray.controls; let optIdx = index" [formGroupName]="optIdx" class="option-row-card">
+                <input type="text" formControlName="label" placeholder="Option Label (e.g. Mechanical Design)" class="opt-label-input" />
+                <input type="text" formControlName="value" placeholder="Value Code (e.g. MechanicalDesign)" class="opt-val-input" />
+
+                <div class="opt-actions">
+                  <button type="button" class="btn-arrow-mini" [disabled]="optIdx === 0" (click)="moveQuestionOption(optIdx, 'up')">&uarr;</button>
+                  <button type="button" class="btn-arrow-mini" [disabled]="optIdx === questionOptionsArray.length - 1" (click)="moveQuestionOption(optIdx, 'down')">&darr;</button>
+                  <button type="button" class="btn-delete-opt" (click)="removeQuestionOption(optIdx)">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="allowOther" />
+                <span>Allow applicant to write in custom "Other" text value</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Conditional Display Rules -->
+          <div class="conditional-rules-box">
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="hasCondition" />
+                <span>Show this question conditionally based on previous question answer</span>
+              </label>
+            </div>
+
+            <div *ngIf="questionForm.get('hasCondition')?.value" class="condition-params-grid">
+              <div class="form-group">
+                <label for="cond-target">Depends on Question <span class="req">*</span></label>
+                <select id="cond-target" formControlName="conditionalOnKey">
+                  <option value="">Select target question...</option>
+                  <option *ngFor="let cand of getPreviousConditionCandidates(editingQuestionId)" [value]="cand.key">
+                    {{ cand.title }} ({{ cand.key }})
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="cond-val">Trigger Answer Value <span class="req">*</span></label>
+                <input id="cond-val" type="text" formControlName="conditionalValue" placeholder="e.g. true or specific option value" />
+                <span class="helper-text">For Yes/No questions, enter <code>true</code> or <code>false</code>.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isRequired" />
+                <span>Required for submission</span>
+              </label>
+            </div>
+
+            <div class="form-group checkbox-field">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isActive" />
+                <span>Active (Included in form)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeQuestionModal()">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="questionForm.invalid">
+              Save Question
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Live Applicant Question Preview Modal (Milestone 6) -->
+    <div *ngIf="isSchemaPreviewOpen$ | async" class="preview-modal-overlay" (click)="closeSchemaPreview()" role="dialog" aria-modal="true" aria-labelledby="schema-prev-title">
+      <div class="preview-modal-card" (click)="$event.stopPropagation()">
+        <header class="preview-modal-header">
+          <div>
+            <span class="preview-badge">APPLICANT EXPERIENCE PREVIEW &bull; STEP 3</span>
+            <h2 id="schema-prev-title">Dynamic Registration Questions</h2>
+          </div>
+          <button type="button" class="btn-close" (click)="closeSchemaPreview()" aria-label="Close preview">&times;</button>
+        </header>
+
+        <div *ngIf="schema$ | async as schema" class="preview-body">
+          <div class="preview-hero" style="padding: 20px 24px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #c9dcff; font-size: 14px;">
+              This simulates the exact questions and layout configured for <strong>{{ (vm$ | async)?.edition?.title || 'Main Segment' }}</strong> applicants.
+            </p>
+          </div>
+
+          <div class="applicant-preview-flow">
+            <div *ngFor="let q of schema.questions" class="preview-q-card">
+              <label class="q-label">
+                {{ q.title }}
+                <span *ngIf="q.isRequired" class="req">*</span>
+              </label>
+              <p *ngIf="q.description" class="q-desc">{{ q.description }}</p>
+
+              <!-- ShortText -->
+              <input *ngIf="q.type === 'ShortText'" type="text" [placeholder]="q.placeholder || 'Type here...'" class="prev-input" disabled />
+
+              <!-- LongText -->
+              <textarea *ngIf="q.type === 'LongText'" rows="3" [placeholder]="q.placeholder || 'Type here...'" class="prev-input" disabled></textarea>
+
+              <!-- SingleChoice -->
+              <div *ngIf="q.type === 'SingleChoice' && q.options" class="prev-options-group">
+                <label *ngFor="let opt of q.options" class="radio-label">
+                  <input type="radio" name="preview_{{ q.key }}" disabled />
+                  <span>{{ opt.label }}</span>
+                </label>
+                <label *ngIf="q.allowOther" class="radio-label">
+                  <input type="radio" name="preview_{{ q.key }}" disabled />
+                  <span>Other (Write-in text)</span>
+                </label>
+              </div>
+
+              <!-- MultipleChoice -->
+              <div *ngIf="q.type === 'MultipleChoice' && q.options" class="prev-options-group">
+                <label *ngFor="let opt of q.options" class="checkbox-label">
+                  <input type="checkbox" disabled />
+                  <span>{{ opt.label }}</span>
+                </label>
+              </div>
+
+              <!-- YesNo -->
+              <div *ngIf="q.type === 'YesNo'" class="prev-options-group" style="display: flex; gap: 16px;">
+                <label class="radio-label"><input type="radio" name="prev_{{ q.key }}" disabled /> <span>Yes</span></label>
+                <label class="radio-label"><input type="radio" name="prev_{{ q.key }}" disabled /> <span>No</span></label>
+              </div>
+
+              <div *ngIf="q.conditionalOnKey" class="condition-note">
+                ⓘ Displayed conditionally when <code>{{ q.conditionalOnKey }}</code> matches <code>{{ q.conditionalValue }}</code>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edition Live Preview Modal -->
     <div *ngIf="isPreviewModalOpen$ | async" class="preview-modal-overlay" (click)="closePreview()" role="dialog" aria-modal="true" aria-labelledby="preview-title">
       <div class="preview-modal-card" (click)="$event.stopPropagation()">
         <header class="preview-modal-header">

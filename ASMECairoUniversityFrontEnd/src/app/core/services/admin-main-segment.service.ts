@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   CreateMainSegmentEditionRequest,
@@ -15,6 +15,11 @@ import {
   MainSegmentSectionRequest,
   UpdateMainSegmentEditionRequest,
 } from '../models/main-segment.model';
+import {
+  AdminRegistrationSchemaResponse,
+  DEFAULT_ADMIN_SCHEMA,
+  UpdateRegistrationSchemaRequest,
+} from '../models/registration.model';
 
 @Injectable({
   providedIn: 'root',
@@ -293,6 +298,39 @@ export class AdminMainSegmentService {
         `${this.baseUrl}/${year}/organizations/${organizationId}/logo`
       )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  /* ── Registration Form & Question Builder Schema ── */
+  getRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
+    return this.http
+      .get<AdminRegistrationSchemaResponse>(`${this.baseUrl}/${year}/schema`)
+      .pipe(catchError(() => of(DEFAULT_ADMIN_SCHEMA)));
+  }
+
+  updateRegistrationSchema(
+    year: number,
+    request: UpdateRegistrationSchemaRequest
+  ): Observable<AdminRegistrationSchemaResponse> {
+    return this.http.put<AdminRegistrationSchemaResponse>(
+      `${this.baseUrl}/${year}/schema`,
+      request
+    );
+  }
+
+  publishRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
+    return this.http.post<AdminRegistrationSchemaResponse>(
+      `${this.baseUrl}/${year}/schema/publish`,
+      {}
+    );
+  }
+
+  seedDefaultRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
+    return this.http
+      .post<AdminRegistrationSchemaResponse>(
+        `${this.baseUrl}/${year}/schema/seed-defaults`,
+        {}
+      )
+      .pipe(catchError(() => of(DEFAULT_ADMIN_SCHEMA)));
   }
 
   /* ── Helper Normalization ── */
