@@ -1,11 +1,21 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { mainSegmentRedirectGuard } from './core/guards/main-segment-redirect.guard';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     loadComponent: () => import('./features/home/home-page/home-page').then(m => m.HomePage),
+  },
+  {
+    path: 'main-segment',
+    canActivate: [mainSegmentRedirectGuard],
+    loadComponent: () => import('./features/main-segment/main-segment-page/main-segment-page').then(m => m.MainSegmentPageComponent),
+  },
+  {
+    path: 'main-segment/:year',
+    loadComponent: () => import('./features/main-segment/main-segment-page/main-segment-page').then(m => m.MainSegmentPageComponent),
   },
   {
     path: 'projects',

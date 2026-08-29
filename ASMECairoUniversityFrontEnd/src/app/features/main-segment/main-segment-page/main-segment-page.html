@@ -1,0 +1,111 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <!-- Loading State -->
+  <main id="main-content" class="main-segment-page loading-view" *ngIf="vm.status === 'loading'" aria-busy="true" aria-label="Loading edition details">
+    <div class="loading-container">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loading-text">Loading Main Segment edition...</p>
+    </div>
+  </main>
+
+  <!-- Not Found State -->
+  <ng-container *ngIf="vm.status === 'notFound'">
+    <app-not-found></app-not-found>
+  </ng-container>
+
+  <!-- Error State -->
+  <main id="main-content" class="main-segment-page error-view" *ngIf="vm.status === 'error'">
+    <div class="error-card">
+      <p class="error-eyebrow">Connection Notice</p>
+      <h1>Unable to Load Edition</h1>
+      <p class="error-copy">{{ vm.message || 'An unexpected error occurred while loading this edition.' }}</p>
+      <div class="error-actions">
+        <button type="button" class="primary-btn" (click)="retry()">Try Again</button>
+        <a class="secondary-link" routerLink="/">Return Home</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Loaded Edition Content -->
+  <main id="main-content" class="main-segment-page" *ngIf="vm.status === 'loaded'">
+    <!-- Hero Banner -->
+    <header class="ms-hero" [class.has-image]="!!vm.edition.heroImageUrl">
+      <div class="ms-hero-backdrop" *ngIf="vm.edition.heroImageUrl" [style.backgroundImage]="'url(' + vm.edition.heroImageUrl + ')'"></div>
+      <div class="ms-hero-inner">
+        <div class="ms-eyebrow">
+          <span class="ms-badge">ASME Cairo University</span>
+          <span class="ms-year-badge">Edition {{ vm.edition.year }}</span>
+        </div>
+
+        <h1 class="ms-title">{{ vm.edition.title }}</h1>
+
+        <p class="ms-hero-copy" *ngIf="vm.edition.heroContent">
+          {{ vm.edition.heroContent }}
+        </p>
+
+        <div class="ms-meta-bar">
+          <div class="ms-meta-item" *ngIf="vm.edition.startsAt">
+            <span class="meta-label">Date & Time</span>
+            <span class="meta-value">{{ vm.edition.startsAt | date: 'EEEE, MMMM d, y' }}</span>
+          </div>
+
+          <div class="ms-meta-item" *ngIf="vm.edition.location">
+            <span class="meta-label">Location</span>
+            <span class="meta-value">{{ vm.edition.location }}</span>
+          </div>
+
+          <div class="ms-meta-item">
+            <span class="meta-label">Registration</span>
+            <span class="meta-badge" [class.open]="vm.edition.registration.isAvailable">
+              {{ vm.edition.registration.isAvailable ? 'Open Now' : 'Closed / Coming Soon' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="ms-hero-actions">
+          <a *ngIf="vm.edition.registration.isAvailable" href="#story" class="ms-primary-cta">
+            Explore Experience
+          </a>
+          <span *ngIf="!vm.edition.registration.isAvailable" class="ms-disabled-cta">
+            Registration Currently Closed
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Story & Overview -->
+    <section id="story" class="ms-story-section" *ngIf="vm.edition.storyContent">
+      <div class="ms-story-inner">
+        <div class="section-header">
+          <span class="section-eyebrow">Why Main Segment Matters</span>
+          <h2>The Journey From Insight To Opportunity</h2>
+        </div>
+        <p class="ms-story-text">{{ vm.edition.storyContent }}</p>
+      </div>
+    </section>
+
+    <!-- Sections Breakdown Preview -->
+    <section id="program" class="ms-sections-container" *ngIf="vm.edition.sections.length > 0">
+      <div class="ms-sections-inner">
+        <div class="section-header">
+          <span class="section-eyebrow">Event Structure</span>
+          <h2>Program & Opportunities</h2>
+        </div>
+
+        <div class="ms-sections-grid">
+          <article class="ms-section-card" *ngFor="let section of vm.edition.sections">
+            <h3 class="ms-section-key">{{ section.sectionKey }}</h3>
+            <p class="ms-section-intro" *ngIf="section.intro">{{ section.intro }}</p>
+            <div class="ms-section-counts">
+              <span *ngIf="section.programItems.length > 0">
+                {{ section.programItems.length }} session{{ section.programItems.length === 1 ? '' : 's' }}
+              </span>
+              <span *ngIf="section.organizations.length > 0">
+                {{ section.organizations.length }} organization{{ section.organizations.length === 1 ? '' : 's' }}
+              </span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+</ng-container>

@@ -1,7 +1,7 @@
 <footer class="site-footer" aria-label="Site footer">
   <div class="footer-inner">
     <div class="footer-top">
-      <a href="#home" class="footer-brand">
+      <a [routerLink]="['/']" fragment="home" class="footer-brand" aria-label="ASME Cairo University Home">
         <img src="logo/ASME LOGO WHITE.png" alt="ASME Cairo University" class="footer-logo" width="36" height="36">
         <div class="brand-text">
           <span class="brand-asme">ASME</span>
@@ -10,12 +10,14 @@
       </a>
 
       <nav class="footer-nav" aria-label="Footer navigation">
-        <a href="#home" class="footer-link">Home</a>
-        <a href="#about" class="footer-link">About</a>
-        <a href="#featured" class="footer-link">Featured</a>
-        <a href="#projects" class="footer-link">Projects</a>
-        <a href="#committees" class="footer-link">Committees</a>
-        <a href="#contact" class="footer-link">Contact</a>
+        <a [routerLink]="['/']" fragment="home" class="footer-link">Home</a>
+        <a [routerLink]="['/']" fragment="about" class="footer-link">About</a>
+        <a [routerLink]="['/']" fragment="featured" class="footer-link">Featured</a>
+        <a [routerLink]="['/']" fragment="achievements" class="footer-link">Achievements</a>
+        <a [routerLink]="['/']" fragment="projects" class="footer-link">Projects</a>
+        <a [routerLink]="['/']" fragment="committees" class="footer-link">Committees</a>
+        <a [routerLink]="['/']" fragment="contact" class="footer-link">Contact</a>
+        <a routerLink="/main-segment" class="footer-link">Main Segment</a>
       </nav>
 
       <div class="footer-socials" aria-label="Social media links">
