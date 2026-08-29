@@ -58,11 +58,7 @@ describe('AdminMainSegmentService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        AdminMainSegmentService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [AdminMainSegmentService, provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(AdminMainSegmentService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -158,7 +154,9 @@ describe('AdminMainSegmentService', () => {
     expect(assignReq.request.method).toBe('PUT');
     assignReq.flush(sampleAdminResponse);
 
-    const mockFile = new File(['fake-photo'], 'photo.png', { type: 'image/png' });
+    const mockFile = new File(['fake-photo'], 'photo.png', {
+      type: 'image/png',
+    });
     service.uploadPersonPhoto(2026, 'p-1', mockFile).subscribe();
     const photoReq = httpMock.expectOne(`${baseUrl}/2026/people/p-1/photo`);
     expect(photoReq.request.method).toBe('POST');
@@ -230,5 +228,183 @@ describe('AdminMainSegmentService', () => {
       settings: {},
       questions: [],
     });
+  });
+
+  it('should handle getRegistrations, getRegistrationDetail, updateStatus, getDocument, and exportCsv', () => {
+    service
+      .getRegistrations(2026, {
+        page: 2,
+        pageSize: 10,
+        status: 'Submitted',
+        search: ' Youssef ',
+        universityId: 'uni-1',
+        facultyId: 'faculty-1',
+        graduationYear: 2026,
+        submittedFrom: '2026-09-01T00:00:00.000Z',
+        submittedTo: '2026-09-30T23:59:59.999Z',
+      })
+      .subscribe((res) => {
+        expect(res.totalCount).toBe(1);
+        expect(res.items[0].referenceNumber).toBe('REG-2026-0001');
+        expect(res.statusCounts.submitted).toBe(1);
+      });
+    const listReq = httpMock.expectOne((req) => req.url === `${baseUrl}/2026/registrations`);
+    expect(listReq.request.method).toBe('GET');
+    expect(listReq.request.params.get('search')).toBe('Youssef');
+    expect(listReq.request.params.get('status')).toBe('Submitted');
+    expect(listReq.request.params.get('universityId')).toBe('uni-1');
+    expect(listReq.request.params.get('facultyId')).toBe('faculty-1');
+    expect(listReq.request.params.get('graduationYear')).toBe('2026');
+    expect(listReq.request.params.get('submittedFrom')).toBe('2026-09-01T00:00:00.000Z');
+    expect(listReq.request.params.get('submittedTo')).toBe('2026-09-30T23:59:59.999Z');
+    expect(listReq.request.params.get('page')).toBe('2');
+    listReq.flush({
+      items: [
+        {
+          id: 'reg-1',
+          registrationId: 'reg-1',
+          reference: 'REG-2026-0001',
+          status: 'Submitted',
+          submittedAt: '2026-09-02T14:32:00Z',
+          nameEnglish: 'Youssef Ahmed',
+          nameArabic: 'يوسف أحمد',
+          email: 'youssef@example.com',
+          phoneNumber: '01012345678',
+          universityId: 'uni-1',
+          university: 'Cairo University',
+          facultyId: 'faculty-1',
+          facultyOfferingId: 'offering-1',
+          faculty: 'Faculty of Engineering',
+          departmentId: 'department-1',
+          department: 'Mechanical Engineering',
+          graduationYear: 2026,
+          documentCount: 3,
+          answerCount: 1,
+        },
+      ],
+      totalCount: 1,
+      page: 2,
+      pageSize: 10,
+      totalPages: 1,
+    });
+    const summaryReq = httpMock.expectOne(
+      (req) => req.url === `${baseUrl}/2026/registrations/summary`,
+    );
+    expect(summaryReq.request.params.has('status')).toBe(false);
+    expect(summaryReq.request.params.get('search')).toBe('Youssef');
+    expect(summaryReq.request.params.get('universityId')).toBe('uni-1');
+    summaryReq.flush({
+      total: 1,
+      totalCount: 1,
+      counts: { Submitted: 1 },
+      statusCounts: [{ status: 'Submitted', count: 1 }],
+    });
+
+    service.getRegistrationDetail(2026, 'reg-1').subscribe((res) => {
+      expect(res.referenceNumber).toBe('REG-2026-0001');
+      expect(res.maskedNationalId).toBe('2990101******4');
+      expect(res.answers[0].selectedOptions).toEqual(['Social Media', 'Other: جامعة القاهرة']);
+      expect(res.hasCvFile).toBe(true);
+      expect(res.statusHistory[0].changedBy).toBe('Admin User');
+    });
+    const detailReq = httpMock.expectOne(`${baseUrl}/2026/registrations/reg-1`);
+    expect(detailReq.request.method).toBe('GET');
+    detailReq.flush({
+      id: 'reg-1',
+      registrationId: 'reg-1',
+      editionYear: 2026,
+      editionId: 'edition-1',
+      schemaId: 'schema-1',
+      schemaVersion: 1,
+      reference: 'REG-2026-0001',
+      status: 'Submitted',
+      submittedAt: '2026-09-02T14:32:00Z',
+      nameEnglish: 'Youssef Ahmed',
+      nameArabic: 'يوسف أحمد',
+      email: 'youssef@example.com',
+      phoneNumber: '01012345678',
+      gender: 'Male',
+      nationalIdMasked: '2990101******4',
+      university: 'Cairo University',
+      faculty: 'Faculty of Engineering',
+      department: 'Mechanical Engineering',
+      graduationYear: 2026,
+      privacyNoticeVersion: '2026.1',
+      privacyNoticeAccepted: true,
+      privacyNoticeAcknowledgedAt: '2026-09-02T14:32:00Z',
+      answers: [
+        {
+          questionId: 'q-1',
+          questionKey: 'referral_source',
+          prompt: 'How did you hear about us?',
+          type: 'MultipleChoice',
+          isRequired: true,
+          answerJson: '["social",{"value":"other","otherText":"جامعة القاهرة"}]',
+          optionsSnapshotJson:
+            '[{"value":"social","label":"Social Media"},{"value":"other","label":"Other"}]',
+        },
+      ],
+      documents: [
+        {
+          documentType: 'Cv',
+          displayName: 'youssef-cv.docx',
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          byteSize: 1024,
+          storedAt: '2026-09-02T14:32:00Z',
+        },
+      ],
+      statusHistory: [
+        {
+          fromStatus: null,
+          toStatus: 'Submitted',
+          actorAdminId: 'admin-1',
+          actorAdminName: 'Admin User',
+          createdAt: '2026-09-02T14:32:00Z',
+        },
+      ],
+    });
+
+    service
+      .updateRegistrationStatus(2026, 'reg-1', {
+        status: 'Accepted',
+        note: 'Approved',
+      })
+      .subscribe((res) => {
+        expect(res.status).toBe('Accepted');
+      });
+    const statusReq = httpMock.expectOne(`${baseUrl}/2026/registrations/reg-1/status`);
+    expect(statusReq.request.method).toBe('PATCH');
+    statusReq.flush({
+      id: 'reg-1',
+      reference: 'REG-2026-0001',
+      status: 'Accepted',
+      changedAt: '2026-09-03T10:00:00Z',
+    });
+
+    service.getPrivateDocument(2026, 'reg-1', 'national-id').subscribe((blob) => {
+      expect(blob).toBeTruthy();
+    });
+    const docReq = httpMock.expectOne(`${baseUrl}/2026/registrations/reg-1/documents/national-id`);
+    expect(docReq.request.method).toBe('GET');
+    docReq.flush(new Blob(['mock-binary'], { type: 'image/png' }));
+
+    service
+      .exportRegistrationsCsv(2026, {
+        status: 'Accepted',
+        search: 'يوسف',
+        universityId: 'uni-1',
+      })
+      .subscribe((blob) => {
+        expect(blob).toBeTruthy();
+      });
+    const exportReq = httpMock.expectOne(
+      (req) => req.url === `${baseUrl}/2026/registrations/export`,
+    );
+    expect(exportReq.request.method).toBe('GET');
+    expect(exportReq.request.params.get('status')).toBe('Accepted');
+    expect(exportReq.request.params.get('search')).toBe('يوسف');
+    expect(exportReq.request.params.get('universityId')).toBe('uni-1');
+    expect(exportReq.request.params.has('page')).toBe(false);
+    exportReq.flush(new Blob(['CSV DATA'], { type: 'text/csv' }));
   });
 });
