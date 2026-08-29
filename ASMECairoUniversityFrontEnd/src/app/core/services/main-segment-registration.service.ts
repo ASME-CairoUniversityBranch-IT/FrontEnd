@@ -1,17 +1,20 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   MainSegmentRegistrationSubmission,
   RegistrationSchema,
+  RegistrationSchemaApiResponse,
   RegistrationSubmissionResponse,
 } from '../models/registration.model';
 
 export const DEFAULT_REGISTRATION_SCHEMA: RegistrationSchema = {
+  id: '00000000-0000-0000-0000-000000000001',
+  schemaId: '00000000-0000-0000-0000-000000000001',
   version: 1,
-  consentNoticeVersion: '2026.1',
+  consentNoticeVersion: 'main-segment-2026-v1',
   questions: [
     {
       id: 'q-source',
@@ -86,12 +89,12 @@ export const DEFAULT_REGISTRATION_SCHEMA: RegistrationSchema = {
 })
 export class MainSegmentRegistrationService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/main-segments`;
+  private readonly baseUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/main-segments`;
 
   getRegistrationSchema(year: number): Observable<RegistrationSchema> {
     return this.http
-      .get<RegistrationSchema>(`${this.baseUrl}/${year}/registration-schema`)
-      .pipe(catchError(() => of(DEFAULT_REGISTRATION_SCHEMA)));
+      .get<RegistrationSchemaApiResponse>(`${this.baseUrl}/${year}/registration-schema`)
+      .pipe(map((response) => this.normalizeSchema(response)));
   }
 
   submitRegistration(
@@ -102,31 +105,40 @@ export class MainSegmentRegistrationService {
 
     // Append structured payload as JSON
     const payloadData = {
-      nameEnglish: submission.nameEnglish,
-      nameArabic: submission.nameArabic,
-      email: submission.email,
-      phoneNumber: submission.phoneNumber,
-      gender: submission.gender,
-      nationalId: submission.nationalId,
-      universityId: submission.universityId,
-      universityName: submission.universityName,
-      universityOtherName: submission.universityOtherName,
-      isUniversityOther: Boolean(submission.isUniversityOther),
-      facultyOfferingId: submission.facultyOfferingId,
-      facultyName: submission.facultyName,
-      facultyOtherName: submission.facultyOtherName,
-      isFacultyOther: Boolean(submission.isFacultyOther),
-      departmentId: submission.departmentId,
-      departmentName: submission.departmentName,
-      departmentOtherName: submission.departmentOtherName,
-      isDepartmentOther: Boolean(submission.isDepartmentOther),
-      graduationYear: submission.graduationYear,
+      schemaId: submission.schemaId,
       schemaVersion: submission.schemaVersion,
-      consentNoticeVersion: submission.consentNoticeVersion,
-      answers: submission.answers,
+      personal: {
+        nameEnglish: submission.nameEnglish,
+        nameArabic: submission.nameArabic,
+        email: submission.email,
+        phoneNumber: submission.phoneNumber,
+        gender: submission.gender,
+        nationalIdNumber: submission.nationalId,
+      },
+      academic: {
+        universityId: submission.isUniversityOther ? null : submission.universityId,
+        universityOtherValue: submission.isUniversityOther
+          ? submission.universityOtherName
+          : null,
+        facultyOfferingId: submission.isFacultyOther ? null : submission.facultyOfferingId,
+        facultyOtherValue: submission.isFacultyOther ? submission.facultyOtherName : null,
+        departmentId: submission.isDepartmentOther ? null : submission.departmentId,
+        departmentOtherValue: submission.isDepartmentOther
+          ? submission.departmentOtherName
+          : null,
+        graduationYear: submission.graduationYear,
+      },
+      answers: Object.fromEntries(
+        submission.answers.map((answer) => [
+          answer.questionKey,
+          answer.booleanAnswer ?? answer.selectedOptions ?? answer.answerText ?? null,
+        ])
+      ),
+      privacyNoticeVersion: submission.consentNoticeVersion,
+      privacyNoticeAccepted: true,
     };
 
-    formData.append('data', JSON.stringify(payloadData));
+    formData.append('payload', JSON.stringify(payloadData));
 
     // Append file binaries
     if (submission.nationalIdPhoto) {
@@ -141,7 +153,62 @@ export class MainSegmentRegistrationService {
 
     return this.http.post<RegistrationSubmissionResponse>(
       `${this.baseUrl}/${year}/registrations`,
-      formData
+      formData,
+      {
+        headers: new HttpHeaders({ 'Idempotency-Key': submission.idempotencyKey }),
+      }
     );
+  }
+
+  private normalizeSchema(response: RegistrationSchemaApiResponse): RegistrationSchema {
+    const orderedQuestions = [...(response.questions ?? [])].sort(
+      (a, b) => a.displayOrder - b.displayOrder
+    );
+    const questionKeyById = new Map(orderedQuestions.map((question) => [question.id, question.key]));
+    const questionTypeById = new Map(
+      orderedQuestions.map((question) => [question.id, question.type])
+    );
+
+    return {
+      id: response.id,
+      schemaId: response.schemaId,
+      version: response.version,
+      consentNoticeVersion: environment.mainSegmentPrivacyNoticeVersion,
+      questions: orderedQuestions.map((question) => {
+        const conditionQuestionId = question.condition?.dependsOnQuestionId;
+        const conditionQuestionType = conditionQuestionId
+          ? questionTypeById.get(conditionQuestionId)
+          : undefined;
+        let conditionalValue: string | boolean | null =
+          question.condition?.expectedValue ?? null;
+        if (conditionQuestionType === 'YesNo') {
+          conditionalValue = question.condition?.expectedValue.toLowerCase() === 'yes';
+        }
+        return {
+          id: question.id,
+          key: question.key,
+          title: question.prompt,
+          description: question.helperText,
+          type: question.type,
+          isRequired: question.isRequired,
+          minLength: question.minLength ?? null,
+          maxLength: question.maxLength ?? null,
+          minSelections: question.minSelections ?? null,
+          maxSelections: question.maxSelections ?? null,
+          options: [...(question.options ?? [])]
+            .filter((option) => option.isActive)
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((option) => ({
+              id: option.id,
+              label: option.label,
+              value: option.value,
+            })),
+          conditionalOnKey: conditionQuestionId
+            ? questionKeyById.get(conditionQuestionId) ?? null
+            : null,
+          conditionalValue,
+        };
+      }),
+    };
   }
 }

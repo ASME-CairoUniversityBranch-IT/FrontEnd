@@ -468,7 +468,10 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.publishSchema();
-    expect(mockAdminService.publishRegistrationSchema).toHaveBeenCalledWith(2026);
+    expect(mockAdminService.publishRegistrationSchema).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({ questions: DEFAULT_ADMIN_SCHEMA.questions }),
+    );
 
     component.seedDefaultQuestions();
     expect(mockAdminService.seedDefaultRegistrationSchema).toHaveBeenCalledWith(2026);

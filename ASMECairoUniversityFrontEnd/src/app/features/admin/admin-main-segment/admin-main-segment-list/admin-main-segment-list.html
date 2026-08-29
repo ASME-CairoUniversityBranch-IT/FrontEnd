@@ -79,7 +79,7 @@
     </ng-container>
 
     <!-- Create Edition Modal -->
-    <div *ngIf="isCreateModalOpen$ | async" class="modal-overlay" (click)="closeCreateModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div *ngIf="isCreateModalOpen$ | async" class="modal-overlay" (click)="closeCreateModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title" appFocusTrap (focusTrapEscape)="closeCreateModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2 id="modal-title">Create Main Segment Edition</h2>
@@ -94,7 +94,7 @@
           <div class="form-row two-cols">
             <div class="form-group">
               <label for="create-year">Edition Year <span class="req">*</span></label>
-              <input id="create-year" type="number" formControlName="year" placeholder="2026" />
+              <input id="create-year" type="number" formControlName="year" placeholder="2026" data-initial-focus />
               <div *ngIf="createForm.get('year')?.touched && createForm.get('year')?.errors" class="field-error">
                 Valid year is required.
               </div>

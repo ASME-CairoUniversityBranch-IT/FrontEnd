@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   CreateMainSegmentEditionRequest,
@@ -18,6 +18,9 @@ import {
 import {
   AdminRegistrationDetailResponse,
   AdminRegistrationListResponse,
+  AdminRegistrationQuestion,
+  AdminRegistrationQuestionApiRequest,
+  AdminRegistrationSchemaApiResponse,
   AdminRegistrationSchemaResponse,
   AdminRegistrationAnswerDetail,
   DEFAULT_ADMIN_SCHEMA,
@@ -38,7 +41,7 @@ import {
 })
 export class AdminMainSegmentService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/admin/main-segments`;
+  private readonly baseUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/admin/main-segments`;
 
   /* ── Edition-level Operations ── */
   getAdminEditions(): Observable<MainSegmentEditionSummary[]> {
@@ -300,31 +303,227 @@ export class AdminMainSegmentService {
   /* ── Registration Form & Question Builder Schema (Milestone 6) ── */
   getRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
     return this.http
-      .get<AdminRegistrationSchemaResponse>(`${this.baseUrl}/${year}/schema`)
-      .pipe(catchError(() => of(DEFAULT_ADMIN_SCHEMA)));
+      .get<AdminRegistrationSchemaApiResponse>(`${this.baseUrl}/${year}/registration-schema`)
+      .pipe(
+        map((response) => this.normalizeAdminSchema(response)),
+        catchError((error) => {
+          if (error?.status !== 404) return throwError(() => error);
+          return this.createRegistrationSchemaDraft(year);
+        }),
+      );
   }
 
   updateRegistrationSchema(
     year: number,
     request: UpdateRegistrationSchemaRequest,
   ): Observable<AdminRegistrationSchemaResponse> {
-    return this.http.put<AdminRegistrationSchemaResponse>(
-      `${this.baseUrl}/${year}/schema`,
-      request,
+    return this.getRegistrationSchema(year).pipe(
+      switchMap((current) => this.ensureRegistrationSchemaDraft(year, current)),
+      switchMap((draft) => this.persistRegistrationQuestions(year, draft, request.questions)),
     );
   }
 
-  publishRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
-    return this.http.post<AdminRegistrationSchemaResponse>(
-      `${this.baseUrl}/${year}/schema/publish`,
-      {},
+  publishRegistrationSchema(
+    year: number,
+    request: UpdateRegistrationSchemaRequest,
+  ): Observable<AdminRegistrationSchemaResponse> {
+    return this.updateRegistrationSchema(year, request).pipe(
+      switchMap((draft) =>
+        this.http
+          .post<AdminRegistrationSchemaApiResponse>(
+            `${this.baseUrl}/${year}/registration-schemas/${draft.schemaId}/publish`,
+            {},
+          )
+          .pipe(map((response) => this.normalizeAdminSchema(response))),
+      ),
     );
   }
 
   seedDefaultRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
+    return this.updateRegistrationSchema(year, {
+      settings: DEFAULT_ADMIN_SCHEMA.settings,
+      questions: DEFAULT_ADMIN_SCHEMA.questions.map((question) => ({ ...question })),
+    });
+  }
+
+  private createRegistrationSchemaDraft(year: number): Observable<AdminRegistrationSchemaResponse> {
     return this.http
-      .post<AdminRegistrationSchemaResponse>(`${this.baseUrl}/${year}/schema/seed-defaults`, {})
-      .pipe(catchError(() => of(DEFAULT_ADMIN_SCHEMA)));
+      .post<AdminRegistrationSchemaApiResponse>(
+        `${this.baseUrl}/${year}/registration-schemas`,
+        {},
+      )
+      .pipe(map((response) => this.normalizeAdminSchema(response)));
+  }
+
+  private ensureRegistrationSchemaDraft(
+    year: number,
+    current: AdminRegistrationSchemaResponse,
+  ): Observable<AdminRegistrationSchemaResponse> {
+    if (current.status === 'Draft') return of(current);
+
+    return this.http
+      .post<AdminRegistrationSchemaApiResponse>(
+        `${this.baseUrl}/${year}/registration-schemas`,
+        { sourceSchemaId: current.schemaId },
+      )
+      .pipe(map((response) => this.normalizeAdminSchema(response)));
+  }
+
+  private persistRegistrationQuestions(
+    year: number,
+    draft: AdminRegistrationSchemaResponse,
+    desiredQuestions: AdminRegistrationQuestion[],
+  ): Observable<AdminRegistrationSchemaResponse> {
+    const desired = [...desiredQuestions].sort((a, b) => a.displayOrder - b.displayOrder);
+
+    const saved = desired.reduce<Observable<AdminRegistrationSchemaResponse>>(
+      (chain, question) =>
+        chain.pipe(
+          switchMap((current) => {
+            const existing = current.questions.find(
+              (candidate) => candidate.id === question.id || candidate.key === question.key,
+            );
+            const apiRequest = this.toAdminQuestionRequest(question, current);
+            const request$ = existing
+              ? this.http.put<AdminRegistrationSchemaApiResponse>(
+                  `${this.baseUrl}/${year}/registration-schemas/${current.schemaId}/questions/${existing.id}`,
+                  apiRequest,
+                )
+              : this.http.post<AdminRegistrationSchemaApiResponse>(
+                  `${this.baseUrl}/${year}/registration-schemas/${current.schemaId}/questions`,
+                  apiRequest,
+                );
+            return request$.pipe(map((response) => this.normalizeAdminSchema(response)));
+          }),
+        ),
+      of(draft),
+    );
+
+    return saved.pipe(
+      switchMap((current) => {
+        const desiredKeys = new Set(desired.map((question) => question.key));
+        const removed = current.questions.filter(
+          (question) => question.isActive && !desiredKeys.has(question.key),
+        );
+        return removed.reduce<Observable<AdminRegistrationSchemaResponse>>(
+          (chain, question) =>
+            chain.pipe(
+              switchMap((latest) =>
+                this.http
+                  .patch<AdminRegistrationSchemaApiResponse>(
+                    `${this.baseUrl}/${year}/registration-schemas/${latest.schemaId}/questions/${question.id}/active`,
+                    { isActive: false },
+                  )
+                  .pipe(map((response) => this.normalizeAdminSchema(response))),
+              ),
+            ),
+          of(current),
+        );
+      }),
+    );
+  }
+
+  private toAdminQuestionRequest(
+    question: AdminRegistrationQuestion,
+    schema: AdminRegistrationSchemaResponse,
+  ): AdminRegistrationQuestionApiRequest {
+    const dependency = question.conditionalOnKey
+      ? schema.questions.find((candidate) => candidate.key === question.conditionalOnKey)
+      : null;
+    const expectedValue =
+      dependency?.type === 'YesNo' && typeof question.conditionalValue === 'boolean'
+        ? question.conditionalValue
+          ? 'yes'
+          : 'no'
+        : String(question.conditionalValue ?? '');
+
+    return {
+      key: question.key,
+      prompt: question.title,
+      helperText: question.description || question.placeholder || null,
+      type: question.type,
+      isRequired: question.isRequired,
+      isActive: question.isActive,
+      displayOrder: question.displayOrder,
+      maxLength: question.maxLength ?? null,
+      condition:
+        dependency && question.conditionalValue !== null && question.conditionalValue !== undefined
+          ? { dependsOnQuestionId: dependency.id, expectedValue }
+          : null,
+      options: question.options?.map((option, index) => ({
+        ...(this.isGuid(option.id) ? { id: option.id } : {}),
+        value: option.value,
+        label: option.label,
+        isOther:
+          option.isOther === true ||
+          (question.allowOther === true && option.value.toLowerCase() === 'other'),
+        isActive: option.isActive !== false,
+        displayOrder: option.displayOrder ?? index + 1,
+      })) ?? null,
+    };
+  }
+
+  private normalizeAdminSchema(
+    response: AdminRegistrationSchemaApiResponse,
+  ): AdminRegistrationSchemaResponse {
+    const questionKeyById = new Map(
+      response.questions.map((question) => [question.id, question.key]),
+    );
+    return {
+      id: response.id,
+      schemaId: response.schemaId,
+      editionYear: response.editionYear,
+      version: response.version,
+      status: response.status,
+      createdAt: response.createdAt,
+      isPublished: response.status === 'Published',
+      publishedVersion: response.status === 'Published' ? response.version : null,
+      publishedAt: response.publishedAt ?? null,
+      updatedAt: response.createdAt,
+      settings: { ...DEFAULT_ADMIN_SCHEMA.settings },
+      questions: [...response.questions]
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map((question) => ({
+          id: question.id,
+          key: question.key,
+          title: question.prompt,
+          description: question.helperText ?? null,
+          type: question.type,
+          isRequired: question.isRequired,
+          isActive: question.isActive,
+          displayOrder: question.displayOrder,
+          maxLength: question.maxLength ?? null,
+          options: [...question.options]
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((option) => ({
+              id: option.id,
+              value: option.value,
+              label: option.label,
+              isOther: option.isOther,
+              isActive: option.isActive,
+              displayOrder: option.displayOrder,
+            })),
+          allowOther: question.options.some((option) => option.isOther && option.isActive),
+          conditionalOnKey: question.condition
+            ? questionKeyById.get(question.condition.dependsOnQuestionId) ?? null
+            : null,
+          conditionalValue: question.condition
+            ? this.normalizeExpectedValue(question.condition.expectedValue)
+            : null,
+        })),
+    };
+  }
+
+  private normalizeExpectedValue(value: string): string | boolean {
+    if (['true', 'yes'].includes(value.toLowerCase())) return true;
+    if (['false', 'no'].includes(value.toLowerCase())) return false;
+    return value;
+  }
+
+  private isGuid(value: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    );
   }
 
   /* ── Registration Review, Detail, Documents & Export (Milestone 7) ── */

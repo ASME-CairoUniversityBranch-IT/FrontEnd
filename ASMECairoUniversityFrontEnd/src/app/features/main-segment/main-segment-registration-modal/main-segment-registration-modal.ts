@@ -7,9 +7,6 @@ import {
   OnInit,
   OnDestroy,
   inject,
-  ElementRef,
-  ViewChild,
-  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -36,6 +33,8 @@ import {
   AcademicUniversityItem,
 } from '../../../core/services/academic-directory.service';
 import { MainSegmentRegistrationService } from '../../../core/services/main-segment-registration.service';
+import { FocusTrapDirective } from '../../../shared/directives/focus-trap.directive';
+import { egyptianNationalIdValidator } from '../../../core/validators/egyptian-national-id.validator';
 import {
   MainSegmentRegistrationSubmission,
   RegistrationAnswerSubmission,
@@ -50,7 +49,7 @@ export type RegistrationStep = 1 | 2 | 3;
   selector: 'app-main-segment-registration-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FocusTrapDirective],
   templateUrl: './main-segment-registration-modal.html',
   styleUrl: './main-segment-registration-modal.css',
 })
@@ -59,9 +58,6 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
   @Input() editionTitle = 'Main Segment 2026';
   @Output() closed = new EventEmitter<void>();
 
-  @ViewChild('modalRoot') modalRoot?: ElementRef<HTMLElement>;
-  @ViewChild('firstStepHeading') firstStepHeading?: ElementRef<HTMLElement>;
-
   private readonly fb = inject(FormBuilder);
   private readonly academicService = inject(AcademicDirectoryService);
   private readonly regService = inject(MainSegmentRegistrationService);
@@ -69,12 +65,14 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
   currentStep: RegistrationStep = 1;
   readonly isSubmitting$ = new BehaviorSubject<boolean>(false);
+  private submissionKey: string | null = null;
   readonly submissionResponse$ = new BehaviorSubject<RegistrationSubmissionResponse | null>(null);
   readonly errorMessage$ = new BehaviorSubject<string | null>(null);
 
   // Schema state
   readonly schema$ = new BehaviorSubject<RegistrationSchema | null>(null);
   readonly isLoadingSchema$ = new BehaviorSubject<boolean>(true);
+  readonly schemaError$ = new BehaviorSubject<string | null>(null);
 
   // Step 1 Form: Details
   readonly detailsForm: FormGroup = this.fb.group({
@@ -83,7 +81,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     email: ['', [Validators.required, Validators.email]],
     phoneNumber: ['', [Validators.required, Validators.pattern(/^(01)[0125][0-9]{8}$/)]],
     gender: ['Male', [Validators.required]],
-    nationalId: ['', [Validators.required, Validators.pattern(/^[0-9]{14}$/)]],
+    nationalId: ['', [Validators.required, egyptianNationalIdValidator]],
   });
 
   // Step 2 Form: Education
@@ -144,7 +142,17 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     // Lock body scrolling
     document.body.style.overflow = 'hidden';
 
-    // Load dynamic registration schema
+    this.loadRegistrationSchema();
+
+    // Set up academic typeahead pipelines
+    this.setupUniversitySearch();
+    this.setupFacultySearch();
+    this.setupDepartmentSearch();
+  }
+
+  loadRegistrationSchema(): void {
+    this.isLoadingSchema$.next(true);
+    this.schemaError$.next(null);
     this.regService
       .getRegistrationSchema(this.year)
       .pipe(
@@ -154,17 +162,18 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
           this.isLoadingSchema$.next(false);
           this.initializeQuestionsForm(schema.questions);
         }),
-        catchError(() => {
+        catchError((error) => {
+          this.schema$.next(null);
           this.isLoadingSchema$.next(false);
+          this.schemaError$.next(
+            error?.status === 404 || error?.status === 409
+              ? 'Registration is not currently available for this edition.'
+              : 'The registration form could not be loaded. Please try again.'
+          );
           return of(null);
         })
       )
       .subscribe();
-
-    // Set up academic typeahead pipelines
-    this.setupUniversitySearch();
-    this.setupFacultySearch();
-    this.setupDepartmentSearch();
   }
 
   ngOnDestroy(): void {
@@ -172,12 +181,6 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     document.body.style.overflow = '';
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  @HostListener('window:keydown.escape', ['$event'])
-  onEscape(event: Event): void {
-    event.preventDefault();
-    this.requestClose();
   }
 
   requestClose(): void {
@@ -287,9 +290,14 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
 
-    const allowedExtensions = ['.pdf', '.docx', '.doc'];
     const lowerName = file.name.toLowerCase();
-    const isAllowed = allowedExtensions.some((ext) => lowerName.endsWith(ext));
+    const genericMime = !file.type || file.type === 'application/octet-stream';
+    const isAllowed =
+      (lowerName.endsWith('.pdf') && (genericMime || file.type === 'application/pdf')) ||
+      (lowerName.endsWith('.docx') &&
+        (genericMime ||
+          file.type ===
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'));
 
     if (!isAllowed) {
       this.cvFileError = 'CV must be a PDF or DOCX file.';
@@ -495,6 +503,9 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
   /* ── Dynamic Questions Initialization ── */
   private initializeQuestionsForm(questions: RegistrationQuestion[]): void {
+    for (const controlName of Object.keys(this.questionsForm.controls)) {
+      if (controlName !== 'consentAgreed') this.questionsForm.removeControl(controlName);
+    }
     for (const q of questions) {
       if (q.type === 'YesNo') {
         this.questionsForm.addControl(q.key, this.fb.control(null));
@@ -526,16 +537,39 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     if (!schema) return true;
     for (const q of schema.questions) {
       if (!this.isQuestionVisible(q)) continue;
-      if (!q.isRequired) continue;
-      const val = this.questionsForm.get(q.key)?.value;
-      if (val === null || val === undefined || val === '') {
-        return false;
-      }
-      if (Array.isArray(val) && val.length === 0) {
-        return false;
-      }
+      if (this.questionValidationMessage(q)) return false;
     }
     return true;
+  }
+
+  questionValidationMessage(q: RegistrationQuestion): string | null {
+    if (!this.isQuestionVisible(q)) return null;
+    const value = this.questionsForm.get(q.key)?.value;
+    const isEmpty =
+      value === null ||
+      value === undefined ||
+      value === '' ||
+      (Array.isArray(value) && value.length === 0);
+    if (q.isRequired && isEmpty) return 'This question is required.';
+    if (isEmpty) return null;
+
+    if (typeof value === 'string') {
+      if (q.minLength != null && value.trim().length < q.minLength) {
+        return `Enter at least ${q.minLength} characters.`;
+      }
+      if (q.maxLength != null && value.length > q.maxLength) {
+        return `Enter no more than ${q.maxLength} characters.`;
+      }
+    }
+    if (Array.isArray(value)) {
+      if (q.minSelections != null && value.length < q.minSelections) {
+        return `Select at least ${q.minSelections} options.`;
+      }
+      if (q.maxSelections != null && value.length > q.maxSelections) {
+        return `Select no more than ${q.maxSelections} options.`;
+      }
+    }
+    return null;
   }
 
   onCheckboxOptionToggled(questionKey: string, optionValue: string): void {
@@ -550,6 +584,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
   /* ── Final Submission ── */
   submitAll(): void {
+    if (this.isSubmitting$.value) return;
     if (!this.validateStep1() || !this.validateStep2()) return;
 
     if (!this.isQuestionsStepValid()) {
@@ -559,6 +594,10 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     }
 
     const schema = this.schema$.value;
+    if (!schema) {
+      this.errorMessage$.next('The registration form changed. Reload it before submitting.');
+      return;
+    }
     const answers: RegistrationAnswerSubmission[] = [];
 
     if (schema) {
@@ -591,6 +630,8 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     const education = this.educationForm.value;
 
     const submission: MainSegmentRegistrationSubmission = {
+      idempotencyKey: (this.submissionKey ??= this.createSubmissionKey()),
+      schemaId: schema.schemaId,
       nameEnglish: details.nameEnglish.trim(),
       nameArabic: details.nameArabic.trim(),
       email: details.email.trim().toLowerCase(),
@@ -615,8 +656,8 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
       graduationYear: Number(education.graduationYear),
 
-      schemaVersion: schema?.version || 1,
-      consentNoticeVersion: schema?.consentNoticeVersion || '2026.1',
+      schemaVersion: schema.version,
+      consentNoticeVersion: schema.consentNoticeVersion,
       answers,
 
       nationalIdPhoto: this.nationalIdFile!,
@@ -636,7 +677,8 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
         this.isSubmitting$.next(false);
         if (err.status === 409) {
           this.errorMessage$.next(
-            'A registration with this National ID or Email has already been submitted for this edition.'
+            err?.error?.message ||
+              'Registration could not be accepted because the form or event availability changed.'
           );
         } else if (err.status === 429) {
           this.errorMessage$.next(
@@ -651,5 +693,12 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
         }
       },
     });
+  }
+
+  private createSubmissionKey(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `main-segment-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 }

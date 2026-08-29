@@ -84,21 +84,21 @@
 }
 .btn-preview:hover, .btn-preview-schema:hover { background: rgba(255, 255, 255, 0.2); }
 
-.btn-action-status { background: #3b82f6; color: #fff; }
-.btn-action-status:hover { background: #2563eb; }
+.btn-action-status { background: #1d4ed8; color: #fff; }
+.btn-action-status:hover { background: #1e40af; }
 
-.btn-action-reg { background: #0ea5e9; color: #fff; }
-.btn-action-reg:hover { background: #0284c7; }
+.btn-action-reg { background: #0369a1; color: #fff; }
+.btn-action-reg:hover { background: #075985; }
 
-.btn-save, .btn-publish-schema { background: #10b981; color: #fff; }
-.btn-save:hover:not(:disabled), .btn-publish-schema:hover:not(:disabled) { background: #059669; }
+.btn-save, .btn-publish-schema { background: #047857; color: #fff; }
+.btn-save:hover:not(:disabled), .btn-publish-schema:hover:not(:disabled) { background: #065f46; }
 .btn-save:disabled, .btn-publish-schema:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn-seed-schema { background: #334155; color: #cbd5e1; }
 .btn-seed-schema:hover:not(:disabled) { background: #475569; }
 
-.btn-export-csv { background: #0284c7; color: #fff; }
-.btn-export-csv:hover:not(:disabled) { background: #0369a1; }
+.btn-export-csv { background: #075985; color: #fff; }
+.btn-export-csv:hover:not(:disabled) { background: #0c4a6e; }
 .btn-export-csv:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Toast Messages */
@@ -453,7 +453,7 @@
 .uni-name { font-weight: 600; color: #334155; }
 .fac-name { font-size: 11px; color: #64748b; }
 .grad-badge { font-weight: 700; color: #475569; }
-.time-sub { font-size: 10px; color: #94a3b8; }
+.time-sub { font-size: 10px; color: #475569; }
 
 .reg-pagination-footer {
   display: flex;
@@ -677,7 +677,7 @@
 .reg-select { padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 12px; background: #fff; }
 .reg-select:disabled { color: #94a3b8; background: #f8fafc; }
 .btn-clear-filters, .btn-retry { padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 5px; background: #fff; color: #334155; font-size: 11px; font-weight: 700; cursor: pointer; }
-.export-scope-note { margin: 10px 0 0; color: #64748b; font-size: 11px; line-height: 1.5; }
+.export-scope-note { margin: 10px 0 0; color: #475569; font-size: 11px; line-height: 1.5; }
 .registration-state-card { margin-top: 12px; padding: 14px; border: 1px solid; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; }
 .registration-state-card > div { display: flex; flex-direction: column; gap: 4px; }
 .registration-state-card strong, .registration-state-card span { display: block; }

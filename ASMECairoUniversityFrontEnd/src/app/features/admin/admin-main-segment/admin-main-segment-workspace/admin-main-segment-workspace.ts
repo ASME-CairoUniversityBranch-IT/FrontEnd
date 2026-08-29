@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } fr
 import { Observable, BehaviorSubject, Subject, of } from 'rxjs';
 import { catchError, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AdminNavComponent } from '../../../../shared/components/admin-nav/admin-nav';
+import { FocusTrapDirective } from '../../../../shared/directives/focus-trap.directive';
 import { AdminMainSegmentService } from '../../../../core/services/admin-main-segment.service';
 import {
   AcademicDirectoryService,
@@ -67,7 +68,14 @@ export interface WorkspaceVM {
   selector: 'app-admin-main-segment-workspace',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, DatePipe, AdminNavComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    DatePipe,
+    AdminNavComponent,
+    FocusTrapDirective,
+  ],
   templateUrl: './admin-main-segment-workspace.html',
   styleUrl: './admin-main-segment-workspace.css',
 })
@@ -130,6 +138,7 @@ export class AdminMainSegmentWorkspaceComponent
   /* ── Registration Form Builder State (Milestone 6) ── */
   readonly schema$ = new BehaviorSubject<AdminRegistrationSchemaResponse | null>(null);
   readonly isLoadingSchema$ = new BehaviorSubject<boolean>(false);
+  readonly schemaError$ = new BehaviorSubject<string | null>(null);
   readonly isSavingSchema$ = new BehaviorSubject<boolean>(false);
   readonly isSchemaPreviewOpen$ = new BehaviorSubject<boolean>(false);
 
@@ -933,6 +942,7 @@ export class AdminMainSegmentWorkspaceComponent
   /* ── Registration Form Builder (Milestone 6) ── */
   loadSchema(year: number): void {
     this.isLoadingSchema$.next(true);
+    this.schemaError$.next(null);
     this.adminService
       .getRegistrationSchema(year)
       .pipe(
@@ -941,8 +951,12 @@ export class AdminMainSegmentWorkspaceComponent
           this.populateSchemaSettings(schema.settings);
           this.isLoadingSchema$.next(false);
         }),
-        catchError(() => {
+        catchError((error) => {
           this.isLoadingSchema$.next(false);
+          this.schema$.next(null);
+          this.schemaError$.next(
+            error?.error?.message || 'The registration schema could not be loaded.',
+          );
           return of(null);
         }),
       )
@@ -971,19 +985,7 @@ export class AdminMainSegmentWorkspaceComponent
     const currentSchema = this.schema$.value;
     if (!currentSchema) return;
 
-    const settingsVal = this.schemaSettingsForm.value;
-    const request: UpdateRegistrationSchemaRequest = {
-      settings: {
-        ...currentSchema.settings,
-        minGraduationYear: Number(settingsVal.minGraduationYear),
-        maxGraduationYear: Number(settingsVal.maxGraduationYear),
-        eligibilityText: settingsVal.eligibilityText?.trim() || null,
-        privacyNoticeVersion: settingsVal.privacyNoticeVersion.trim(),
-        privacyNoticeUrl: settingsVal.privacyNoticeUrl?.trim() || null,
-        submissionWorkflow: settingsVal.submissionWorkflow,
-      },
-      questions: currentSchema.questions,
-    };
+    const request = this.buildSchemaUpdateRequest(currentSchema);
 
     this.isSavingSchema$.next(true);
     this.errorMessage$.next(null);
@@ -1009,21 +1011,44 @@ export class AdminMainSegmentWorkspaceComponent
     );
     if (!conf) return;
 
+    const currentSchema = this.schema$.value;
+    if (!currentSchema) return;
+
     this.isSavingSchema$.next(true);
     this.errorMessage$.next(null);
 
-    this.adminService.publishRegistrationSchema(this.year).subscribe({
-      next: (published) => {
-        this.isSavingSchema$.next(false);
-        this.schema$.next(published);
-        this.populateSchemaSettings(published.settings);
-        this.showSuccess(`Schema v${published.version} published live.`);
+    this.adminService
+      .publishRegistrationSchema(this.year, this.buildSchemaUpdateRequest(currentSchema))
+      .subscribe({
+        next: (published) => {
+          this.isSavingSchema$.next(false);
+          this.schema$.next(published);
+          this.populateSchemaSettings(published.settings);
+          this.showSuccess(`Schema v${published.version} published live.`);
+        },
+        error: (err) => {
+          this.isSavingSchema$.next(false);
+          this.errorMessage$.next(err?.error?.message || 'Failed to publish registration schema.');
+        },
+      });
+  }
+
+  private buildSchemaUpdateRequest(
+    currentSchema: AdminRegistrationSchemaResponse,
+  ): UpdateRegistrationSchemaRequest {
+    const settingsVal = this.schemaSettingsForm.value;
+    return {
+      settings: {
+        ...currentSchema.settings,
+        minGraduationYear: Number(settingsVal.minGraduationYear),
+        maxGraduationYear: Number(settingsVal.maxGraduationYear),
+        eligibilityText: settingsVal.eligibilityText?.trim() || null,
+        privacyNoticeVersion: settingsVal.privacyNoticeVersion.trim(),
+        privacyNoticeUrl: settingsVal.privacyNoticeUrl?.trim() || null,
+        submissionWorkflow: settingsVal.submissionWorkflow,
       },
-      error: (err) => {
-        this.isSavingSchema$.next(false);
-        this.errorMessage$.next(err?.error?.message || 'Failed to publish registration schema.');
-      },
-    });
+      questions: currentSchema.questions,
+    };
   }
 
   seedDefaultQuestions(): void {

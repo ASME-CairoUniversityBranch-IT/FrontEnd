@@ -46,7 +46,7 @@ export interface AcademicDepartmentItem {
 })
 export class AcademicDirectoryService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/academic-directory`;
+  private readonly baseUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/academic-directory`;
 
   getUniversities(
     search?: string,
