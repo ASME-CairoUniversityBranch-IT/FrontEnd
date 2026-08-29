@@ -255,24 +255,6 @@
 .ms-story-section.is-visible .ms-story-heading,
 .ms-story-section.is-visible .ms-story-stage { opacity: 1; transform: none; }
 
-.story-chapter-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 34px;
-}
-
-.story-chapter {
-  color: var(--blue);
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.story-chapter-line { width: 72px; height: 1px; background: rgb(26 36 114 / 32%); }
 .ms-story-heading .section-eyebrow { margin-bottom: 13px; }
 
 .ms-story-heading h2 {
@@ -547,7 +529,6 @@
   .ms-meta-bar, .ms-journey-grid, .people-grid, .reg-details-grid { grid-template-columns: 1fr; flex-direction: column; }
   .ms-story-section { padding-top: 104px; }
   .story-ghost-type { top: 90px; right: -22px; font-size: 210px; }
-  .story-chapter-row { margin-bottom: 24px; }
   .ms-story-heading h2 { font-size: clamp(40px, 13vw, 58px); }
   .ms-story-stage { min-height: 390px; padding: 32px 24px; clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)); }
   .story-edition-mark { top: 22px; right: 22px; }
