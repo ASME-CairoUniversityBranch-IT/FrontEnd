@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5171',
+  apiUrl: 'https://asmecairouniversity.runasp.net',
   mainSegmentPrivacyNoticeVersion: 'main-segment-2026-v1',
 };
