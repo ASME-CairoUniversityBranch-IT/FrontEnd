@@ -1754,6 +1754,38 @@ export class AdminMainSegmentWorkspaceComponent
     return getSectionEyebrow(key);
   }
 
+  programCategoryLabel(category: MainSegmentProgramCategory): string {
+    const labels: Record<MainSegmentProgramCategory, string> = {
+      [MainSegmentProgramCategory.PanelDiscussion]: 'Panel discussion',
+      [MainSegmentProgramCategory.Talk]: 'Talk',
+      [MainSegmentProgramCategory.Workshop]: 'Workshop',
+      [MainSegmentProgramCategory.MentorshipCircle]: 'Mentorship circle',
+    };
+    return labels[category] ?? category;
+  }
+
+  organizationCategoryLabel(category: MainSegmentOrganizationCategory): string {
+    const labels: Record<MainSegmentOrganizationCategory, string> = {
+      [MainSegmentOrganizationCategory.CareerFair]: 'Career fair',
+      [MainSegmentOrganizationCategory.CvReviewAndMockInterview]: 'CV review & interviews',
+      [MainSegmentOrganizationCategory.Sponsor]: 'Sponsor',
+      [MainSegmentOrganizationCategory.Partner]: 'Partner',
+    };
+    return labels[category] ?? category;
+  }
+
+  registrationQuestionTypeLabel(type: RegistrationQuestionType): string {
+    const labels: Record<RegistrationQuestionType, string> = {
+      ShortText: 'Short text',
+      LongText: 'Long text',
+      SingleChoice: 'Single choice',
+      MultipleChoice: 'Multiple choice',
+      YesNo: 'Yes / No',
+      ConditionalTeam: 'Team selection',
+    };
+    return labels[type] ?? type;
+  }
+
   getPersonInitials(name: string): string {
     return getPersonInitials(name);
   }

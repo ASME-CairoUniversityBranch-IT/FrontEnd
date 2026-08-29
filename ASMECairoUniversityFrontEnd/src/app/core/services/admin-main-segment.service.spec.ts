@@ -76,7 +76,7 @@ describe('AdminMainSegmentService', () => {
         year: 2026,
         slug: 'main-segment-2026',
         title: 'Main Segment 2026',
-        status: MainSegmentEditionStatus.Draft,
+        status: 1 as unknown as MainSegmentEditionStatus,
         startsAt: '2026-10-15T09:00:00Z',
         endsAt: '2026-10-15T18:00:00Z',
         isRegistrationAvailable: false,
@@ -86,6 +86,7 @@ describe('AdminMainSegmentService', () => {
     service.getAdminEditions().subscribe((res) => {
       expect(res.length).toBe(1);
       expect(res[0].year).toBe(2026);
+      expect(res[0].status).toBe(MainSegmentEditionStatus.Published);
     });
 
     const req = httpMock.expectOne(baseUrl);
@@ -93,15 +94,57 @@ describe('AdminMainSegmentService', () => {
     req.flush(mockSummaries);
   });
 
-  it('should get edition by year and normalize image URLs', () => {
+  it('should normalize numeric edition enums and image URLs', () => {
     service.getAdminByYear(2026).subscribe((res) => {
       expect(res.year).toBe(2026);
+      expect(res.status).toBe(MainSegmentEditionStatus.Published);
+      expect(res.sections[0].sectionKey).toBe(MainSegmentSectionKey.PanelDiscussion);
+      expect(res.programItems[0].category).toBe(MainSegmentProgramCategory.Workshop);
+      expect(res.organizations[0].category).toBe(MainSegmentOrganizationCategory.Sponsor);
+      expect(res.organizations[0].sponsorTier).toBe('Platinum');
       expect(res.heroImageUrl).toContain('/uploads/hero.jpg');
     });
 
     const req = httpMock.expectOne(`${baseUrl}/2026`);
     expect(req.request.method).toBe('GET');
-    req.flush(sampleAdminResponse);
+    req.flush({
+      ...sampleAdminResponse,
+      status: 1,
+      sections: [{ ...sampleAdminResponse.sections[0], sectionKey: 0 }],
+      programItems: [
+        {
+          id: 'item-1',
+          category: 2,
+          title: 'Workshop',
+          description: 'Description',
+          isVisible: true,
+          displayOrder: 1,
+          personIds: [],
+        },
+      ],
+      organizations: [
+        {
+          id: 'org-1',
+          name: 'Partner',
+          category: 2,
+          sponsorTier: 4,
+          isVisible: true,
+          displayOrder: 1,
+        },
+      ],
+    });
+  });
+
+  it('should serialize edition status and section enums as backend numbers', () => {
+    service.setStatus(2026, MainSegmentEditionStatus.Published).subscribe();
+    const statusReq = httpMock.expectOne(`${baseUrl}/2026/status`);
+    expect(statusReq.request.body).toEqual({ status: 1 });
+    statusReq.flush(sampleAdminResponse);
+
+    service.updateSections(2026, sampleAdminResponse.sections).subscribe();
+    const sectionsReq = httpMock.expectOne(`${baseUrl}/2026/sections`);
+    expect(sectionsReq.request.body[0].sectionKey).toBe(0);
+    sectionsReq.flush(sampleAdminResponse);
   });
 
   it('should handle program item CRUD and reordering', () => {
@@ -115,6 +158,7 @@ describe('AdminMainSegmentService', () => {
     service.createProgramItem(2026, itemReq).subscribe();
     const createReq = httpMock.expectOne(`${baseUrl}/2026/program-items`);
     expect(createReq.request.method).toBe('POST');
+    expect(createReq.request.body.category).toBe(1);
     createReq.flush(sampleAdminResponse);
 
     service.updateProgramItem(2026, 'item-1', itemReq).subscribe();
@@ -180,6 +224,8 @@ describe('AdminMainSegmentService', () => {
     service.createOrganization(2026, orgReq).subscribe();
     const createReq = httpMock.expectOne(`${baseUrl}/2026/organizations`);
     expect(createReq.request.method).toBe('POST');
+    expect(createReq.request.body.category).toBe(2);
+    expect(createReq.request.body.sponsorTier).toBe(4);
     createReq.flush(sampleAdminResponse);
 
     service.updateOrganization(2026, 'org-1', orgReq).subscribe();
@@ -205,7 +251,7 @@ describe('AdminMainSegmentService', () => {
       schemaId: '11111111-1111-4111-8111-111111111111',
       editionYear: 2026,
       version: 2,
-      status: 'Draft',
+      status: 0,
       createdAt: '2026-08-29T10:00:00Z',
       publishedAt: null,
       questions: [],
@@ -262,7 +308,7 @@ describe('AdminMainSegmentService', () => {
           key: 'join_team',
           prompt: 'Join the team?',
           helperText: null,
-          type: 'YesNo',
+          type: 4,
           isRequired: true,
           isActive: true,
           displayOrder: 1,
@@ -274,7 +320,7 @@ describe('AdminMainSegmentService', () => {
           key: 'team_choice',
           prompt: 'Which team?',
           helperText: null,
-          type: 'SingleChoice',
+          type: 2,
           isRequired: true,
           isActive: true,
           displayOrder: 2,
@@ -317,12 +363,14 @@ describe('AdminMainSegmentService', () => {
       `${baseUrl}/2026/registration-schemas/${schemaId}/questions/${joinId}`,
     );
     expect(joinRequest.request.method).toBe('PUT');
+    expect(joinRequest.request.body.type).toBe(4);
     joinRequest.flush(apiSchema);
 
     const teamRequest = httpMock.expectOne(
       `${baseUrl}/2026/registration-schemas/${schemaId}/questions/${teamId}`,
     );
     expect(teamRequest.request.method).toBe('PUT');
+    expect(teamRequest.request.body.type).toBe(2);
     expect(teamRequest.request.body.condition).toEqual({
       dependsOnQuestionId: joinId,
       expectedValue: 'yes',
