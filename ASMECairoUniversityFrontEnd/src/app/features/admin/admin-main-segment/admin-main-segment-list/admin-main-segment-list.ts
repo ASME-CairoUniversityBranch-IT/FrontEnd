@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { AdminNavComponent } from '../../../../shared/components/admin-nav/admin-nav';
+import { FocusTrapDirective } from '../../../../shared/directives/focus-trap.directive';
 import { AdminMainSegmentService } from '../../../../core/services/admin-main-segment.service';
 import {
   CreateMainSegmentEditionRequest,
@@ -22,7 +23,14 @@ export type AdminEditionListVM =
   selector: 'app-admin-main-segment-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, DatePipe, AdminNavComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    DatePipe,
+    AdminNavComponent,
+    FocusTrapDirective,
+  ],
   templateUrl: './admin-main-segment-list.html',
   styleUrl: './admin-main-segment-list.css',
 })

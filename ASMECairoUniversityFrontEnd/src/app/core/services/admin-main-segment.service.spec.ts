@@ -16,11 +16,12 @@ import {
   MainSegmentSectionKey,
   UpdateMainSegmentEditionRequest,
 } from '../models/main-segment.model';
+import { DEFAULT_ADMIN_SCHEMA } from '../models/registration.model';
 
 describe('AdminMainSegmentService', () => {
   let service: AdminMainSegmentService;
   let httpMock: HttpTestingController;
-  const baseUrl = `${environment.apiUrl}/admin/main-segments`;
+  const baseUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/admin/main-segments`;
 
   const sampleAdminResponse: MainSegmentAdminResponse = {
     id: 'd9b1a774-8b65-4f3b-8b5e-4c8d19762101',
@@ -198,36 +199,135 @@ describe('AdminMainSegmentService', () => {
     deleteReq.flush(sampleAdminResponse);
   });
 
-  it('should handle registration schema GET, PUT, publish, and seed-defaults', () => {
-    service.getRegistrationSchema(2026).subscribe((res) => {
-      expect(res.version).toBe(1);
-    });
-    const getReq = httpMock.expectOne(`${baseUrl}/2026/schema`);
-    expect(getReq.request.method).toBe('GET');
-    getReq.flush({
-      version: 1,
-      isPublished: true,
-      settings: {
-        minGraduationYear: 2020,
-        maxGraduationYear: 2035,
-        privacyNoticeVersion: '2026.1',
-        submissionWorkflow: 'ReviewFirst',
-      },
+  it('should normalize the real registration-schema contract and publish a saved draft', () => {
+    const draftApiResponse = {
+      id: '11111111-1111-4111-8111-111111111111',
+      schemaId: '11111111-1111-4111-8111-111111111111',
+      editionYear: 2026,
+      version: 2,
+      status: 'Draft',
+      createdAt: '2026-08-29T10:00:00Z',
+      publishedAt: null,
       questions: [],
-    });
+    };
 
-    service.publishRegistrationSchema(2026).subscribe((res) => {
+    service.getRegistrationSchema(2026).subscribe((res) => {
+      expect(res.version).toBe(2);
+      expect(res.schemaId).toBe(draftApiResponse.schemaId);
+      expect(res.isPublished).toBe(false);
+    });
+    const getReq = httpMock.expectOne(`${baseUrl}/2026/registration-schema`);
+    expect(getReq.request.method).toBe('GET');
+    getReq.flush(draftApiResponse);
+
+    service
+      .publishRegistrationSchema(2026, {
+        settings: DEFAULT_ADMIN_SCHEMA.settings,
+        questions: [],
+      })
+      .subscribe((res) => {
       expect(res.isPublished).toBe(true);
     });
-    const pubReq = httpMock.expectOne(`${baseUrl}/2026/schema/publish`);
+
+    const publishGetReq = httpMock.expectOne(`${baseUrl}/2026/registration-schema`);
+    publishGetReq.flush(draftApiResponse);
+
+    const pubReq = httpMock.expectOne(
+      `${baseUrl}/2026/registration-schemas/${draftApiResponse.schemaId}/publish`,
+    );
     expect(pubReq.request.method).toBe('POST');
     pubReq.flush({
+      ...draftApiResponse,
       version: 2,
-      isPublished: true,
-      publishedVersion: 2,
-      settings: {},
-      questions: [],
+      status: 'Published',
+      publishedAt: '2026-08-29T11:00:00Z',
     });
+  });
+
+  it('should persist conditional questions through the backend revision endpoints', () => {
+    const schemaId = '11111111-1111-4111-8111-111111111111';
+    const joinId = '22222222-2222-4222-8222-222222222222';
+    const teamId = '33333333-3333-4333-8333-333333333333';
+    const apiSchema = {
+      id: schemaId,
+      schemaId,
+      editionYear: 2026,
+      version: 2,
+      status: 'Draft',
+      createdAt: '2026-08-29T10:00:00Z',
+      publishedAt: null,
+      questions: [
+        {
+          id: joinId,
+          key: 'join_team',
+          prompt: 'Join the team?',
+          helperText: null,
+          type: 'YesNo',
+          isRequired: true,
+          isActive: true,
+          displayOrder: 1,
+          condition: null,
+          options: [],
+        },
+        {
+          id: teamId,
+          key: 'team_choice',
+          prompt: 'Which team?',
+          helperText: null,
+          type: 'SingleChoice',
+          isRequired: true,
+          isActive: true,
+          displayOrder: 2,
+          condition: { dependsOnQuestionId: joinId, expectedValue: 'yes' },
+          options: [],
+        },
+      ],
+    };
+
+    service
+      .updateRegistrationSchema(2026, {
+        settings: DEFAULT_ADMIN_SCHEMA.settings,
+        questions: [
+          {
+            id: joinId,
+            key: 'join_team',
+            title: 'Join the team?',
+            type: 'YesNo',
+            isRequired: true,
+            isActive: true,
+            displayOrder: 1,
+          },
+          {
+            id: teamId,
+            key: 'team_choice',
+            title: 'Which team?',
+            type: 'SingleChoice',
+            isRequired: true,
+            isActive: true,
+            displayOrder: 2,
+            conditionalOnKey: 'join_team',
+            conditionalValue: true,
+          },
+        ],
+      })
+      .subscribe((result) => expect(result.questions).toHaveLength(2));
+
+    httpMock.expectOne(`${baseUrl}/2026/registration-schema`).flush(apiSchema);
+    const joinRequest = httpMock.expectOne(
+      `${baseUrl}/2026/registration-schemas/${schemaId}/questions/${joinId}`,
+    );
+    expect(joinRequest.request.method).toBe('PUT');
+    joinRequest.flush(apiSchema);
+
+    const teamRequest = httpMock.expectOne(
+      `${baseUrl}/2026/registration-schemas/${schemaId}/questions/${teamId}`,
+    );
+    expect(teamRequest.request.method).toBe('PUT');
+    expect(teamRequest.request.body.condition).toEqual({
+      dependsOnQuestionId: joinId,
+      expectedValue: 'yes',
+    });
+    teamRequest.flush(apiSchema);
   });
 
   it('should handle getRegistrations, getRegistrationDetail, updateStatus, getDocument, and exportCsv', () => {

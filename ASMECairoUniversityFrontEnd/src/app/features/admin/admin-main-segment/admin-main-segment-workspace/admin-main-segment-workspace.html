@@ -510,6 +510,14 @@
 
         <!-- Tab 4: Registration Form Builder & Settings (Milestone 6) -->
         <section *ngIf="activeTab === 'form-builder'" class="tab-content">
+          <div *ngIf="isLoadingSchema$ | async" class="loading-inline" role="status" aria-live="polite">
+            <div class="spinner-small"></div>
+            <span>Loading registration schema...</span>
+          </div>
+          <div *ngIf="(schemaError$ | async) as schemaError" class="registration-state-card error" role="alert">
+            <div><strong>Registration form could not be loaded.</strong><span>{{ schemaError }}</span></div>
+            <button type="button" class="btn-retry" (click)="loadSchema(year)">Retry</button>
+          </div>
           <div *ngIf="schema$ | async as schema" class="form-builder-container">
 
             <!-- Schema Version & Status Banner -->
@@ -539,57 +547,16 @@
               </div>
             </div>
 
-            <!-- Global Registration Parameters & Eligibility -->
-            <form [formGroup]="schemaSettingsForm" class="schema-settings-card">
-              <h2 class="card-title">1. Registration Bounds & Application Parameters</h2>
-              <p class="card-desc">Set allowable graduation years, eligibility guidelines, privacy notice version, and confirmation workflow.</p>
-
-              <div class="form-grid two-cols">
-                <div class="form-group">
-                  <label for="min-grad">Minimum Graduation Year <span class="req">*</span></label>
-                  <input id="min-grad" type="number" formControlName="minGraduationYear" />
-                  <span class="helper-text">Earliest allowable graduation year (e.g. 2020).</span>
-                </div>
-
-                <div class="form-group">
-                  <label for="max-grad">Maximum Graduation Year <span class="req">*</span></label>
-                  <input id="max-grad" type="number" formControlName="maxGraduationYear" />
-                  <span class="helper-text">Latest allowable graduation year (e.g. 2035).</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="eligibility">Eligibility Notice / Text</label>
-                <textarea id="eligibility" rows="2" formControlName="eligibilityText" placeholder="e.g. Undergraduate and recent graduate engineering students across all Egyptian universities..."></textarea>
-              </div>
-
-              <div class="form-grid two-cols">
-                <div class="form-group">
-                  <label for="priv-ver">Privacy Notice Version <span class="req">*</span></label>
-                  <input id="priv-ver" type="text" formControlName="privacyNoticeVersion" placeholder="2026.1" />
-                </div>
-
-                <div class="form-group">
-                  <label for="workflow">Submission Workflow <span class="req">*</span></label>
-                  <select id="workflow" formControlName="submissionWorkflow">
-                    <option value="ReviewFirst">Review-First (Team manually accepts/rejects applications)</option>
-                    <option value="InstantConfirmation">Instant Confirmation (Auto-confirmed upon submit)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="settings-save-row">
-                <button type="button" class="btn-save-inline" (click)="saveDraftSchema()" [disabled]="(isSavingSchema$ | async) || !schemaSettingsForm.dirty">
-                  {{ (isSavingSchema$ | async) ? 'Saving Settings...' : 'Save Settings' }}
-                </button>
-              </div>
-            </form>
+            <div class="schema-settings-card" role="note">
+              <h2 class="card-title">Registration controls</h2>
+              <p class="card-desc">Open and close dates, capacity, and manual availability are managed in the Overview tab. Eligibility and privacy policy values are enforced by the backend release configuration.</p>
+            </div>
 
             <!-- Dynamic Question Builder -->
             <div class="question-builder-card">
               <div class="qb-header">
                 <div>
-                  <h2 class="card-title">2. Dynamic Registration Questions (Step 3)</h2>
+                  <h2 class="card-title">Dynamic Registration Questions (Step 3)</h2>
                   <p class="card-desc">Configure the questions presented dynamically to applicants on the final step.</p>
                 </div>
                 <button type="button" class="btn-add-primary" (click)="openAddQuestionModal()">
@@ -847,7 +814,7 @@
     </ng-container>
 
     <!-- Registration Detail Modal / Drawer (Milestone 7) -->
-    <div *ngIf="isDetailModalOpen$ | async" class="detail-modal-overlay" (click)="closeRegistrationDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+    <div *ngIf="isDetailModalOpen$ | async" class="detail-modal-overlay" (click)="closeRegistrationDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title" appFocusTrap (focusTrapEscape)="closeRegistrationDetail()">
       <div class="detail-drawer-card" (click)="$event.stopPropagation()">
 
         <div *ngIf="isLoadingDetail$ | async" class="loading-state">
@@ -1003,11 +970,11 @@
     </div>
 
     <!-- Controlled Document Lightbox Modal (Milestone 7) -->
-    <div *ngIf="(documentViewer$ | async)?.isOpen" class="doc-lightbox-overlay" (click)="closeDocumentViewer()" role="dialog" aria-modal="true">
+    <div *ngIf="(documentViewer$ | async)?.isOpen" class="doc-lightbox-overlay" (click)="closeDocumentViewer()" role="dialog" aria-modal="true" aria-labelledby="document-viewer-title" appFocusTrap (focusTrapEscape)="closeDocumentViewer()">
       <div class="doc-lightbox-card" (click)="$event.stopPropagation()">
         <header class="doc-lightbox-header">
-          <h3>{{ (documentViewer$ | async)?.title }}</h3>
-          <button type="button" class="btn-close-lightbox" (click)="closeDocumentViewer()">&times;</button>
+          <h3 id="document-viewer-title">{{ (documentViewer$ | async)?.title }}</h3>
+          <button type="button" class="btn-close-lightbox" (click)="closeDocumentViewer()" aria-label="Close document viewer">&times;</button>
         </header>
 
         <div class="doc-lightbox-body">
@@ -1028,7 +995,7 @@
     </div>
 
     <!-- Program Item Modal -->
-    <div *ngIf="isProgramItemModalOpen$ | async" class="modal-overlay" (click)="closeProgramItemModal()" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
+    <div *ngIf="isProgramItemModalOpen$ | async" class="modal-overlay" (click)="closeProgramItemModal()" role="dialog" aria-modal="true" aria-labelledby="item-modal-title" appFocusTrap (focusTrapEscape)="closeProgramItemModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2 id="item-modal-title">{{ editingProgramItemId ? 'Edit Program Item' : 'Add Program Item' }}</h2>
@@ -1108,7 +1075,7 @@
     </div>
 
     <!-- Person Modal -->
-    <div *ngIf="isPersonModalOpen$ | async" class="modal-overlay" (click)="closePersonModal()" role="dialog" aria-modal="true" aria-labelledby="person-modal-title">
+    <div *ngIf="isPersonModalOpen$ | async" class="modal-overlay" (click)="closePersonModal()" role="dialog" aria-modal="true" aria-labelledby="person-modal-title" appFocusTrap (focusTrapEscape)="closePersonModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2 id="person-modal-title">{{ editingPersonId ? 'Edit Speaker Profile' : 'Add Speaker / Mentor' }}</h2>
@@ -1163,7 +1130,7 @@
     </div>
 
     <!-- Organization Modal -->
-    <div *ngIf="isOrgModalOpen$ | async" class="modal-overlay" (click)="closeOrgModal()" role="dialog" aria-modal="true" aria-labelledby="org-modal-title">
+    <div *ngIf="isOrgModalOpen$ | async" class="modal-overlay" (click)="closeOrgModal()" role="dialog" aria-modal="true" aria-labelledby="org-modal-title" appFocusTrap (focusTrapEscape)="closeOrgModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2 id="org-modal-title">{{ editingOrgId ? 'Edit Organization' : 'Add Organization' }}</h2>
@@ -1225,7 +1192,7 @@
     </div>
 
     <!-- Question Builder Modal (Milestone 6) -->
-    <div *ngIf="isQuestionModalOpen$ | async" class="modal-overlay" (click)="closeQuestionModal()" role="dialog" aria-modal="true" aria-labelledby="q-modal-title">
+    <div *ngIf="isQuestionModalOpen$ | async" class="modal-overlay" (click)="closeQuestionModal()" role="dialog" aria-modal="true" aria-labelledby="q-modal-title" appFocusTrap (focusTrapEscape)="closeQuestionModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2 id="q-modal-title">{{ editingQuestionId ? 'Edit Question' : 'Add Registration Question' }}</h2>
@@ -1361,7 +1328,7 @@
     </div>
 
     <!-- Live Applicant Question Preview Modal (Milestone 6) -->
-    <div *ngIf="isSchemaPreviewOpen$ | async" class="preview-modal-overlay" (click)="closeSchemaPreview()" role="dialog" aria-modal="true" aria-labelledby="schema-prev-title">
+    <div *ngIf="isSchemaPreviewOpen$ | async" class="preview-modal-overlay" (click)="closeSchemaPreview()" role="dialog" aria-modal="true" aria-labelledby="schema-prev-title" appFocusTrap (focusTrapEscape)="closeSchemaPreview()">
       <div class="preview-modal-card" (click)="$event.stopPropagation()">
         <header class="preview-modal-header">
           <div>
@@ -1428,7 +1395,7 @@
     </div>
 
     <!-- Edition Live Preview Modal -->
-    <div *ngIf="isPreviewModalOpen$ | async" class="preview-modal-overlay" (click)="closePreview()" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+    <div *ngIf="isPreviewModalOpen$ | async" class="preview-modal-overlay" (click)="closePreview()" role="dialog" aria-modal="true" aria-labelledby="preview-title" appFocusTrap (focusTrapEscape)="closePreview()">
       <div class="preview-modal-card" (click)="$event.stopPropagation()">
         <header class="preview-modal-header">
           <div>

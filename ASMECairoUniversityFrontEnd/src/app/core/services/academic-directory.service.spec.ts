@@ -13,7 +13,7 @@ import { environment } from '../../../environments/environment';
 describe('AcademicDirectoryService', () => {
   let service: AcademicDirectoryService;
   let httpMock: HttpTestingController;
-  const baseUrl = `${environment.apiUrl}/academic-directory`;
+  const baseUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/academic-directory`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({

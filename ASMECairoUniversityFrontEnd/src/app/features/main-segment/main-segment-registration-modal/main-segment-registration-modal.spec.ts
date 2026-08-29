@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { MainSegmentRegistrationModalComponent } from './main-segment-registration-modal';
 import { AcademicDirectoryService } from '../../../core/services/academic-directory.service';
 import {
@@ -23,7 +23,7 @@ describe('MainSegmentRegistrationModalComponent', () => {
 
   const sampleSubmissionResponse: RegistrationSubmissionResponse = {
     referenceNumber: 'REG-2026-XYZ987',
-    status: 'Received',
+    status: 'Submitted',
     submittedAt: '2026-08-29T16:00:00Z',
     editionYear: 2026,
     message: 'Application registered.',
@@ -259,7 +259,68 @@ describe('MainSegmentRegistrationModalComponent', () => {
 
     component.submitAll();
     expect(mockRegService.submitRegistration).toHaveBeenCalledWith(2026, expect.anything());
+    expect(mockRegService.submitRegistration).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({
+        schemaId: DEFAULT_REGISTRATION_SCHEMA.schemaId,
+        idempotencyKey: expect.any(String),
+        consentNoticeVersion: 'main-segment-2026-v1',
+      })
+    );
     expect(component.submissionResponse$.value?.referenceNumber).toBe('REG-2026-XYZ987');
+
+    const persistedBrowserData = [...Object.keys(localStorage), ...Object.keys(sessionStorage)]
+      .map((key) => localStorage.getItem(key) ?? sessionStorage.getItem(key) ?? '')
+      .join(' ');
+    expect(persistedBrowserData).not.toContain('30101011234567');
+    expect(persistedBrowserData).not.toContain('Learn about new technologies');
+  });
+
+  it('should prevent duplicate submission while the first request is pending', () => {
+    const pendingSubmission = new Subject<RegistrationSubmissionResponse>();
+    mockRegService.submitRegistration.mockReturnValue(pendingSubmission);
+    component.detailsForm.patchValue({
+      nameEnglish: 'Omar Tarek',
+      nameArabic: 'عمر طارق',
+      email: 'omar@example.com',
+      phoneNumber: '01099887766',
+      gender: 'Male',
+      nationalId: '30101011234567',
+    });
+    component.nationalIdFile = new File(['id'], 'nid.jpg', { type: 'image/jpeg' });
+    component.cvFile = new File(['cv'], 'cv.pdf', { type: 'application/pdf' });
+    component.educationForm.patchValue({
+      universityId: 'u-1',
+      facultyOfferingId: 'off-1',
+      departmentId: 'dep-1',
+      graduationYear: 2026,
+    });
+    component.universityIdFile = new File(['unid'], 'uni_id.png', { type: 'image/png' });
+    component.questionsForm.patchValue({
+      referral_source: 'SocialMedia',
+      primary_interest: 'MechanicalDesign',
+      join_asme_cu: false,
+      consentAgreed: true,
+    });
+
+    component.submitAll();
+    component.submitAll();
+
+    expect(mockRegService.submitRegistration).toHaveBeenCalledTimes(1);
+  });
+
+  it('should block the form and expose retry when the published schema cannot load', () => {
+    mockRegService.getRegistrationSchema.mockReturnValue(
+      throwError(() => ({ status: 404, error: { message: 'No published schema.' } }))
+    );
+
+    component.loadRegistrationSchema();
+    fixture.detectChanges();
+
+    expect(component.schema$.value).toBeNull();
+    expect(component.schemaError$.value).toContain('not currently available');
+    expect(fixture.nativeElement.querySelector('.reg-schema-state.error')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.step-form')).toBeNull();
   });
 
   it('should handle conflict (409) and rate limit (429) errors gracefully', () => {
@@ -292,7 +353,7 @@ describe('MainSegmentRegistrationModalComponent', () => {
     );
 
     component.submitAll();
-    expect(component.errorMessage$.value).toContain('already been submitted');
+    expect(component.errorMessage$.value).toContain('Duplicate applicant');
 
     mockRegService.submitRegistration.mockReturnValue(
       throwError(() => ({ status: 429, error: { message: 'Too many requests.' } }))
@@ -300,6 +361,9 @@ describe('MainSegmentRegistrationModalComponent', () => {
 
     component.submitAll();
     expect(component.errorMessage$.value).toContain('Too many registration requests');
+    const firstKey = mockRegService.submitRegistration.mock.calls[0][1].idempotencyKey;
+    const retryKey = mockRegService.submitRegistration.mock.calls[1][1].idempotencyKey;
+    expect(retryKey).toBe(firstKey);
   });
 
   it('should emit closed when requestClose is called on clean or confirmed form', () => {

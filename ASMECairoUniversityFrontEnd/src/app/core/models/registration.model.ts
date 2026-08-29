@@ -5,6 +5,9 @@ export interface RegistrationQuestionOption {
   id: string;
   label: string;
   value: string;
+  isOther?: boolean;
+  isActive?: boolean;
+  displayOrder?: number;
 }
 
 export interface RegistrationQuestion {
@@ -16,11 +19,17 @@ export interface RegistrationQuestion {
   isRequired: boolean;
   options?: RegistrationQuestionOption[] | null;
   placeholder?: string | null;
+  minLength?: number | null;
+  maxLength?: number | null;
+  minSelections?: number | null;
+  maxSelections?: number | null;
   conditionalOnKey?: string | null;
   conditionalValue?: string | boolean | null;
 }
 
 export interface RegistrationSchema {
+  id: string;
+  schemaId: string;
   version: number;
   consentNoticeVersion: string;
   questions: RegistrationQuestion[];
@@ -35,6 +44,8 @@ export interface RegistrationAnswerSubmission {
 }
 
 export interface MainSegmentRegistrationSubmission {
+  idempotencyKey: string;
+  schemaId: string;
   // Step 1: Details
   nameEnglish: string;
   nameArabic: string;
@@ -74,10 +85,49 @@ export interface MainSegmentRegistrationSubmission {
 
 export interface RegistrationSubmissionResponse {
   referenceNumber: string;
-  status: 'Received' | 'UnderReview' | 'Confirmed' | 'Accepted' | string;
+  status: RegistrationStatus;
   submittedAt: string;
   editionYear: number;
   message?: string;
+}
+
+export interface RegistrationSchemaApiCondition {
+  dependsOnQuestionId: string;
+  expectedValue: string;
+}
+
+export interface RegistrationSchemaApiOption {
+  id: string;
+  value: string;
+  label: string;
+  isOther: boolean;
+  isActive: boolean;
+  displayOrder: number;
+}
+
+export interface RegistrationSchemaApiQuestion {
+  id: string;
+  key: string;
+  prompt: string;
+  helperText?: string | null;
+  type: RegistrationQuestionType;
+  isRequired: boolean;
+  displayOrder: number;
+  minLength?: number | null;
+  maxLength?: number | null;
+  minSelections?: number | null;
+  maxSelections?: number | null;
+  condition?: RegistrationSchemaApiCondition | null;
+  options: RegistrationSchemaApiOption[];
+}
+
+export interface RegistrationSchemaApiResponse {
+  id: string;
+  schemaId: string;
+  editionYear: number;
+  version: number;
+  publishedAt: string;
+  questions: RegistrationSchemaApiQuestion[];
 }
 
 export type SubmissionWorkflowType = 'InstantConfirmation' | 'ReviewFirst';
@@ -113,7 +163,12 @@ export interface AdminRegistrationQuestion {
 }
 
 export interface AdminRegistrationSchemaResponse {
+  id: string;
+  schemaId: string;
+  editionYear: number;
   version: number;
+  status: 'Draft' | 'Published' | 'Archived';
+  createdAt: string;
   isPublished: boolean;
   publishedVersion?: number | null;
   publishedAt?: string | null;
@@ -122,13 +177,56 @@ export interface AdminRegistrationSchemaResponse {
   questions: AdminRegistrationQuestion[];
 }
 
+export interface AdminRegistrationSchemaApiQuestion extends RegistrationSchemaApiQuestion {
+  isActive: boolean;
+}
+
+export interface AdminRegistrationSchemaApiResponse {
+  id: string;
+  schemaId: string;
+  editionYear: number;
+  version: number;
+  status: 'Draft' | 'Published' | 'Archived';
+  createdAt: string;
+  publishedAt?: string | null;
+  questions: AdminRegistrationSchemaApiQuestion[];
+}
+
+export interface AdminRegistrationQuestionApiRequest {
+  key: string;
+  prompt: string;
+  helperText?: string | null;
+  type: RegistrationQuestionType;
+  isRequired: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  minLength?: number | null;
+  maxLength?: number | null;
+  minSelections?: number | null;
+  maxSelections?: number | null;
+  condition?: RegistrationSchemaApiCondition | null;
+  options?: Array<{
+    id?: string;
+    value: string;
+    label: string;
+    isOther: boolean;
+    isActive: boolean;
+    displayOrder: number;
+  }> | null;
+}
+
 export interface UpdateRegistrationSchemaRequest {
   settings: RegistrationSettings;
   questions: AdminRegistrationQuestion[];
 }
 
 export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
+  id: '00000000-0000-0000-0000-000000000001',
+  schemaId: '00000000-0000-0000-0000-000000000001',
+  editionYear: 2026,
   version: 1,
+  status: 'Published',
+  createdAt: new Date().toISOString(),
   isPublished: true,
   publishedVersion: 1,
   publishedAt: new Date().toISOString(),
