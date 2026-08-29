@@ -1,0 +1,387 @@
+<app-admin-nav active="main-segment">
+  <main class="workspace-page">
+
+    <!-- Loading State -->
+    <ng-container *ngIf="(vm$ | async) as vm">
+      <div *ngIf="vm.status === 'loading'" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading Main Segment {{ year }} workspace...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="vm.status === 'error'" class="error-banner" role="alert">
+        <div class="error-content">
+          <strong>Workspace Error:</strong> {{ vm.errorMessage }}
+        </div>
+        <a routerLink="/admin/main-segment" class="btn-secondary">&larr; Back to Editions</a>
+      </div>
+
+      <!-- Loaded Workspace -->
+      <div *ngIf="vm.status === 'loaded' && vm.edition as edition" class="workspace-container">
+
+        <!-- Top Header & Actions Bar -->
+        <header class="workspace-header">
+          <div class="header-top-row">
+            <a routerLink="/admin/main-segment" class="back-link">&larr; ALL EDITIONS</a>
+            <div class="status-pills">
+              <span class="status-pill" [class.published]="edition.status === 'Published'" [class.draft]="edition.status === 'Draft'" [class.archived]="edition.status === 'Archived'">
+                {{ edition.status }}
+              </span>
+              <span class="reg-pill" [class.open]="edition.isRegistrationAvailable" [class.closed]="!edition.isRegistrationAvailable">
+                {{ edition.isRegistrationAvailable ? 'Reg Open' : 'Reg Closed' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="header-main-row">
+            <div>
+              <h1 class="workspace-title">{{ edition.title }} ({{ edition.year }})</h1>
+              <div class="workspace-slug">Slug: <code>/main-segment/{{ edition.year }}</code></div>
+            </div>
+
+            <div class="workspace-actions">
+              <button type="button" class="btn-preview" (click)="openPreview()">
+                👁 LIVE PREVIEW
+              </button>
+
+              <button type="button" class="btn-action-status" (click)="togglePublishStatus(edition.status)" [disabled]="isSaving$ | async">
+                {{ edition.status === 'Published' ? 'UNPUBLISH (DRAFT)' : 'PUBLISH LIVE' }}
+              </button>
+
+              <button type="button" class="btn-action-reg" (click)="toggleRegistration(edition.isRegistrationAvailable)" [disabled]="isSaving$ | async">
+                {{ edition.isRegistrationAvailable ? 'CLOSE REGISTRATION' : 'OPEN REGISTRATION' }}
+              </button>
+
+              <button type="button" class="btn-save" (click)="saveDraft()" [disabled]="(isSaving$ | async) || !form.dirty">
+                {{ (isSaving$ | async) ? 'SAVING...' : 'SAVE DRAFT' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Toast Messages -->
+          <div *ngIf="successMessage$ | async as msg" class="toast-success" role="status">
+            ✓ {{ msg }}
+          </div>
+          <div *ngIf="errorMessage$ | async as err" class="toast-error" role="alert">
+            ⚠ {{ err }}
+          </div>
+
+          <!-- Navigation Subtabs -->
+          <nav class="workspace-tabs" aria-label="Edition workspace sub-navigation">
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+              OVERVIEW & STORY
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'program'" (click)="setTab('program')">
+              PROGRAM <span class="tab-badge">{{ edition.programItems.length }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'companies'" (click)="setTab('companies')">
+              COMPANIES & ECOSYSTEM <span class="tab-badge">{{ edition.organizations.length }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'form-builder'" (click)="setTab('form-builder')">
+              REGISTRATION FORM
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab === 'registrations'" (click)="setTab('registrations')">
+              REGISTRATIONS
+            </button>
+          </nav>
+        </header>
+
+        <!-- Tab 1: Overview & Story -->
+        <section *ngIf="activeTab === 'overview'" class="tab-content">
+          <form [formGroup]="form" class="edition-form">
+
+            <!-- Section A: Identity & Hero -->
+            <div class="form-card">
+              <h2 class="card-title">1. Edition Identity & Hero Banner</h2>
+              <p class="card-desc">Configure the public title, slug, main banner copy, date, location, and key visual frame.</p>
+
+              <div class="form-grid two-cols">
+                <div class="form-group">
+                  <label for="edition-title">Edition Title <span class="req">*</span></label>
+                  <input id="edition-title" type="text" formControlName="title" />
+                  <div *ngIf="form.get('title')?.touched && form.get('title')?.errors" class="field-error">
+                    Title is required.
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="edition-slug">URL Slug <span class="req">*</span></label>
+                  <input id="edition-slug" type="text" formControlName="slug" />
+                  <div *ngIf="form.get('slug')?.touched && form.get('slug')?.errors" class="field-error">
+                    Lowercase slug is required.
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="hero-content">Hero Supporting Headline & Copy <span class="req">*</span></label>
+                <textarea id="hero-content" rows="2" formControlName="heroContent"></textarea>
+                <div *ngIf="form.get('heroContent')?.touched && form.get('heroContent')?.errors" class="field-error">
+                  Hero copy is required.
+                </div>
+              </div>
+
+              <div class="form-grid three-cols">
+                <div class="form-group">
+                  <label for="starts-at">Starts At <span class="req">*</span></label>
+                  <input id="starts-at" type="datetime-local" formControlName="startsAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="ends-at">Ends At <span class="req">*</span></label>
+                  <input id="ends-at" type="datetime-local" formControlName="endsAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="location">Location / Venue <span class="req">*</span></label>
+                  <input id="location" type="text" formControlName="location" />
+                </div>
+              </div>
+
+              <!-- Hero Image Management -->
+              <div class="image-management-box">
+                <div class="image-preview-area">
+                  <div *ngIf="edition.heroImageUrl" class="current-image-preview">
+                    <img [src]="edition.heroImageUrl" alt="Hero visual" />
+                  </div>
+                  <div *ngIf="!edition.heroImageUrl" class="no-image-placeholder">
+                    <span>No Hero Image Uploaded</span>
+                  </div>
+                </div>
+
+                <div class="image-controls">
+                  <h4>Hero Visual Frame</h4>
+                  <p class="helper-text">Upload a landscape visual representing the edition. Max 10MB (JPEG, PNG, WebP).</p>
+
+                  <div class="image-actions">
+                    <label class="btn-upload" [class.disabled]="isUploadingImage$ | async">
+                      {{ (isUploadingImage$ | async) ? 'UPLOADING...' : 'UPLOAD NEW IMAGE' }}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onHeroImageSelected($event)" [disabled]="isUploadingImage$ | async" />
+                    </label>
+
+                    <button *ngIf="edition.heroImageUrl" type="button" class="btn-remove-img" (click)="removeHeroImage()" [disabled]="isUploadingImage$ | async">
+                      REMOVE IMAGE
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section B: Why Main Segment Matters (Story Content) -->
+            <div class="form-card">
+              <h2 class="card-title">2. Editorial Story Narrative ("Why Main Segment Matters")</h2>
+              <p class="card-desc">The high-impact editorial narrative framed with engineering design language explaining the purpose of this edition.</p>
+
+              <div class="form-group">
+                <label for="story-content">Story Narrative Body <span class="req">*</span></label>
+                <textarea id="story-content" rows="6" formControlName="storyContent"></textarea>
+                <div *ngIf="form.get('storyContent')?.touched && form.get('storyContent')?.errors" class="field-error">
+                  Story narrative is required.
+                </div>
+              </div>
+            </div>
+
+            <!-- Section C: Career Fair & Review Introductions -->
+            <div class="form-card">
+              <h2 class="card-title">3. Segment Introductions</h2>
+              <p class="card-desc">Optional editorial introductions rendered above the Career Fair and Mock Interviews sections.</p>
+
+              <div class="form-group">
+                <label for="career-fair-intro">Career Fair Introduction</label>
+                <textarea id="career-fair-intro" rows="3" formControlName="careerFairIntro" placeholder="Connect directly with engineering leaders, recruiters, and top companies..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="cv-review-intro">CV Review & Mock Interviews Introduction</label>
+                <textarea id="cv-review-intro" rows="3" formControlName="cvReviewAndMockInterviewsIntro" placeholder="One-on-one resume feedback and technical interview simulations with industrial hiring managers..."></textarea>
+              </div>
+            </div>
+
+            <!-- Section D: Registration Availability & Settings -->
+            <div class="form-card">
+              <h2 class="card-title">4. Registration Parameters & Windows</h2>
+              <p class="card-desc">Configure scheduled registration opening/closing dates, capacity limits, and manual overrides.</p>
+
+              <div class="form-grid three-cols">
+                <div class="form-group">
+                  <label for="reg-opens">Registration Opens At</label>
+                  <input id="reg-opens" type="datetime-local" formControlName="registrationOpensAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="reg-closes">Registration Closes At</label>
+                  <input id="reg-closes" type="datetime-local" formControlName="registrationClosesAt" />
+                </div>
+
+                <div class="form-group">
+                  <label for="capacity">Capacity Limit</label>
+                  <input id="capacity" type="number" formControlName="capacity" placeholder="e.g. 500" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="reg-override">Availability Override</label>
+                <select id="reg-override" formControlName="registrationAvailabilityOverride">
+                  <option [ngValue]="null">Automatic (Follow Open/Close Schedule)</option>
+                  <option [ngValue]="true">Force Open (Manual Override)</option>
+                  <option [ngValue]="false">Force Closed (Manual Override)</option>
+                </select>
+                <span class="helper-text">
+                  Setting this overrides the scheduled dates. Select "Automatic" to use the configured opening/closing dates.
+                </span>
+              </div>
+            </div>
+
+            <!-- Section E: Section Order & Visibility -->
+            <div class="form-card">
+              <h2 class="card-title">5. Section Visibility & Display Order</h2>
+              <p class="card-desc">Toggle visibility and customize display priority for the 8 standard Main Segment sections.</p>
+
+              <div class="sections-table-wrapper" formArrayName="sections">
+                <table class="sections-table">
+                  <thead>
+                    <tr>
+                      <th>Section Name</th>
+                      <th>Journey Milestone</th>
+                      <th>Visible</th>
+                      <th>Order</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let secCtrl of sectionsArray.controls; let i = index" [formGroupName]="i">
+                      <td class="section-name-cell">
+                        <strong>{{ getSectionTitle(secCtrl.get('sectionKey')?.value) }}</strong>
+                      </td>
+                      <td class="section-eyebrow-cell">
+                        <span class="journey-tag">{{ getSectionEyebrow(secCtrl.get('sectionKey')?.value) }}</span>
+                      </td>
+                      <td class="section-visible-cell">
+                        <input type="checkbox" formControlName="isVisible" />
+                      </td>
+                      <td class="section-order-cell">
+                        <input type="number" formControlName="displayOrder" class="order-input" />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Bottom Action Bar -->
+            <div class="form-bottom-bar">
+              <div class="bottom-left">
+                <button type="button" class="btn-archive" (click)="toggleArchiveStatus(edition.status)">
+                  {{ edition.status === 'Archived' ? 'UNARCHIVE' : 'ARCHIVE EDITION' }}
+                </button>
+              </div>
+
+              <div class="bottom-right">
+                <button type="button" class="btn-preview-secondary" (click)="openPreview()">
+                  LIVE PREVIEW
+                </button>
+                <button type="button" class="btn-save-primary" (click)="saveDraft()" [disabled]="(isSaving$ | async) || !form.dirty">
+                  {{ (isSaving$ | async) ? 'SAVING CHANGES...' : 'SAVE CHANGES' }}
+                </button>
+              </div>
+            </div>
+
+          </form>
+        </section>
+
+        <!-- Tab 2: Program (Teaser / Milestone 4) -->
+        <section *ngIf="activeTab === 'program'" class="tab-content placeholder-tab">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">🎤</div>
+            <h2>Program & Schedule Management</h2>
+            <p>
+              Manage panel discussions, talks, workshops, and mentorship circles with speakers and mentors.
+            </p>
+            <div class="items-summary-box">
+              <strong>Currently configured:</strong> {{ edition.programItems.length }} program items &bull; {{ edition.people.length }} speakers/mentors.
+            </div>
+            <p class="sub-note">Full drag-and-drop schedule, speaker roster, and assignment editor is available in Milestone #4.</p>
+          </div>
+        </section>
+
+        <!-- Tab 3: Companies & Ecosystem (Teaser / Milestone 4) -->
+        <section *ngIf="activeTab === 'companies'" class="tab-content placeholder-tab">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">🏢</div>
+            <h2>Companies, Sponsors & Partners</h2>
+            <p>
+              Manage career fair companies, reviewer firms, sponsors with tier hierarchy, and collaboration partners.
+            </p>
+            <div class="items-summary-box">
+              <strong>Currently configured:</strong> {{ edition.organizations.length }} partner and sponsor organizations.
+            </div>
+            <p class="sub-note">Full sponsor tier ranking and logo stage editor is available in Milestone #4.</p>
+          </div>
+        </section>
+
+        <!-- Tab 4: Registration Form Builder (Teaser / Milestone 6) -->
+        <section *ngIf="activeTab === 'form-builder'" class="tab-content placeholder-tab">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">📝</div>
+            <h2>Custom Registration Question Builder</h2>
+            <p>Build customized registration steps, form fields, and required document uploads for this edition.</p>
+            <p class="sub-note">Available in Milestone #6.</p>
+          </div>
+        </section>
+
+        <!-- Tab 5: Registrations Review & Export (Teaser / Milestone 7) -->
+        <section *ngIf="activeTab === 'registrations'" class="tab-content placeholder-tab">
+          <div class="placeholder-card">
+            <div class="placeholder-icon">👥</div>
+            <h2>Attendee Registrations & Review</h2>
+            <p>Review registrations, accept/reject applicants, verify uploads, and export data.</p>
+            <p class="sub-note">Available in Milestone #7.</p>
+          </div>
+        </section>
+
+      </div>
+    </ng-container>
+
+    <!-- Preview Modal -->
+    <div *ngIf="isPreviewModalOpen$ | async" class="preview-modal-overlay" (click)="closePreview()" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+      <div class="preview-modal-card" (click)="$event.stopPropagation()">
+        <header class="preview-modal-header">
+          <div>
+            <span class="preview-badge">LIVE AUTHENTICATED PREVIEW</span>
+            <h2 id="preview-title">{{ (previewData$ | async)?.title }} ({{ (previewData$ | async)?.year }})</h2>
+          </div>
+          <button type="button" class="btn-close" (click)="closePreview()" aria-label="Close preview">&times;</button>
+        </header>
+
+        <div *ngIf="previewData$ | async as prev" class="preview-body">
+          <div class="preview-hero">
+            <div class="prev-eyebrow">ASME CAIRO UNIVERSITY &bull; {{ prev.year }}</div>
+            <h1 class="prev-title">{{ prev.title }}</h1>
+            <p class="prev-hero-copy">{{ prev.heroContent }}</p>
+            <div class="prev-meta-bar">
+              <div><strong>Dates:</strong> {{ prev.startsAt | date:'mediumDate' }}</div>
+              <div><strong>Location:</strong> {{ prev.location }}</div>
+              <div><strong>Status:</strong> <span class="badge">{{ prev.status }}</span></div>
+              <div><strong>Registration:</strong> <span class="badge">{{ prev.isRegistrationAvailable ? 'OPEN' : 'CLOSED' }}</span></div>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <h3>Why Main Segment Matters</h3>
+            <p class="prev-story">{{ prev.storyContent }}</p>
+          </div>
+
+          <div *ngIf="prev.careerFairIntro" class="preview-section">
+            <h3>Career Fair</h3>
+            <p>{{ prev.careerFairIntro }}</p>
+          </div>
+
+          <div *ngIf="prev.cvReviewAndMockInterviewsIntro" class="preview-section">
+            <h3>CV Review & Mock Interviews</h3>
+            <p>{{ prev.cvReviewAndMockInterviewsIntro }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</app-admin-nav>

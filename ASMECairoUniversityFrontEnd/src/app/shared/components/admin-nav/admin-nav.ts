@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
-export type AdminNavSection = 'dashboard' | 'projects' | 'create' | 'edit';
+export type AdminNavSection = 'dashboard' | 'projects' | 'create' | 'edit' | 'main-segment';
 
 const BREADCRUMB: Record<AdminNavSection, string> = {
   dashboard: 'DASHBOARD',
   projects: 'PROJECTS',
   create: 'CREATE PROJECT',
   edit: 'EDIT PROJECT',
+  'main-segment': 'MAIN SEGMENT',
 };
 
 /**

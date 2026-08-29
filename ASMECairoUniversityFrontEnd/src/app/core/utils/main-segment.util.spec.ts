@@ -10,6 +10,8 @@ import {
   getSectionEyebrow,
   groupSponsorsByTier,
   hasSectionContent,
+  toInputDateTime,
+  toIsoDateTime,
 } from './main-segment.util';
 
 describe('main-segment.util', () => {
@@ -108,3 +110,15 @@ describe('main-segment.util', () => {
     );
   });
 });
+
+  it('should convert ISO strings to input datetime and back to ISO', () => {
+    const iso = '2026-10-15T09:00:00.000Z';
+    const local = toInputDateTime(iso);
+    expect(local).toBeTruthy();
+    expect(local.includes('T')).toBe(true);
+
+    const backToIso = toIsoDateTime(local);
+    expect(backToIso).toBeTruthy();
+    expect(toInputDateTime(null)).toBe('');
+    expect(toIsoDateTime('')).toBeNull();
+  });
