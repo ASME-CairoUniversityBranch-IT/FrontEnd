@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
@@ -19,9 +19,16 @@ import {
   AdminRegistrationDetailResponse,
   AdminRegistrationListResponse,
   AdminRegistrationSchemaResponse,
+  AdminRegistrationAnswerDetail,
   DEFAULT_ADMIN_SCHEMA,
   PrivateDocumentType,
+  RegistrationAnswerApiResponse,
+  RegistrationDetailApiResponse,
+  RegistrationListApiResponse,
   RegistrationListFilterParams,
+  RegistrationStatus,
+  RegistrationStatusUpdateApiResponse,
+  RegistrationSummaryApiResponse,
   UpdateRegistrationSchemaRequest,
   UpdateRegistrationStatusRequest,
 } from '../models/registration.model';
@@ -58,7 +65,7 @@ export class AdminMainSegmentService {
 
   updateEdition(
     year: number,
-    request: UpdateMainSegmentEditionRequest
+    request: UpdateMainSegmentEditionRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}`, request)
@@ -67,25 +74,24 @@ export class AdminMainSegmentService {
 
   updateSections(
     year: number,
-    sections: MainSegmentSectionRequest[]
+    sections: MainSegmentSectionRequest[],
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/sections`, sections)
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
-  setStatus(
-    year: number,
-    status: MainSegmentEditionStatus
-  ): Observable<MainSegmentAdminResponse> {
+  setStatus(year: number, status: MainSegmentEditionStatus): Observable<MainSegmentAdminResponse> {
     return this.http
-      .patch<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/status`, { status })
+      .patch<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/status`, {
+        status,
+      })
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
   setRegistrationAvailability(
     year: number,
-    availabilityOverride: boolean | null
+    availabilityOverride: boolean | null,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .patch<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/registration`, {
@@ -123,7 +129,7 @@ export class AdminMainSegmentService {
   /* ── Program Items ── */
   createProgramItem(
     year: number,
-    request: MainSegmentProgramItemRequest
+    request: MainSegmentProgramItemRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/program-items`, request)
@@ -133,24 +139,19 @@ export class AdminMainSegmentService {
   updateProgramItem(
     year: number,
     programItemId: string,
-    request: MainSegmentProgramItemRequest
+    request: MainSegmentProgramItemRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .put<MainSegmentAdminResponse>(
         `${this.baseUrl}/${year}/program-items/${programItemId}`,
-        request
+        request,
       )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
-  deleteProgramItem(
-    year: number,
-    programItemId: string
-  ): Observable<MainSegmentAdminResponse> {
+  deleteProgramItem(year: number, programItemId: string): Observable<MainSegmentAdminResponse> {
     return this.http
-      .delete<MainSegmentAdminResponse>(
-        `${this.baseUrl}/${year}/program-items/${programItemId}`
-      )
+      .delete<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/program-items/${programItemId}`)
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
@@ -162,21 +163,19 @@ export class AdminMainSegmentService {
 
   /* ── People / Speakers ── */
   getPeople(year: number): Observable<MainSegmentAdminPersonResponse[]> {
-    return this.http
-      .get<MainSegmentAdminPersonResponse[]>(`${this.baseUrl}/${year}/people`)
-      .pipe(
-        map((people) =>
-          people.map((p) => ({
-            ...p,
-            photoUrl: this.resolveImageUrl(p.photoUrl),
-          }))
-        )
-      );
+    return this.http.get<MainSegmentAdminPersonResponse[]>(`${this.baseUrl}/${year}/people`).pipe(
+      map((people) =>
+        people.map((p) => ({
+          ...p,
+          photoUrl: this.resolveImageUrl(p.photoUrl),
+        })),
+      ),
+    );
   }
 
   createPerson(
     year: number,
-    request: MainSegmentPersonRequest
+    request: MainSegmentPersonRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people`, request)
@@ -186,7 +185,7 @@ export class AdminMainSegmentService {
   updatePerson(
     year: number,
     personId: string,
-    request: MainSegmentPersonRequest
+    request: MainSegmentPersonRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/${personId}`, request)
@@ -201,35 +200,33 @@ export class AdminMainSegmentService {
 
   reorderPeople(year: number, ids: string[]): Observable<MainSegmentAdminResponse> {
     return this.http
-      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/order`, { ids })
+      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/order`, {
+        ids,
+      })
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
   assignPerson(
     year: number,
     personId: string,
-    programItemIds: string[]
+    programItemIds: string[],
   ): Observable<MainSegmentAdminResponse> {
     return this.http
-      .put<MainSegmentAdminResponse>(
-        `${this.baseUrl}/${year}/people/${personId}/assignments`,
-        { programItemIds }
-      )
+      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/${personId}/assignments`, {
+        programItemIds,
+      })
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
   uploadPersonPhoto(
     year: number,
     personId: string,
-    file: File
+    file: File,
   ): Observable<MainSegmentAdminResponse> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http
-      .post<MainSegmentAdminResponse>(
-        `${this.baseUrl}/${year}/people/${personId}/photo`,
-        formData
-      )
+      .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/${personId}/photo`, formData)
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
@@ -242,7 +239,7 @@ export class AdminMainSegmentService {
   /* ── Organizations ── */
   createOrganization(
     year: number,
-    request: MainSegmentOrganizationRequest
+    request: MainSegmentOrganizationRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/organizations`, request)
@@ -252,24 +249,19 @@ export class AdminMainSegmentService {
   updateOrganization(
     year: number,
     organizationId: string,
-    request: MainSegmentOrganizationRequest
+    request: MainSegmentOrganizationRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .put<MainSegmentAdminResponse>(
         `${this.baseUrl}/${year}/organizations/${organizationId}`,
-        request
+        request,
       )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
-  deleteOrganization(
-    year: number,
-    organizationId: string
-  ): Observable<MainSegmentAdminResponse> {
+  deleteOrganization(year: number, organizationId: string): Observable<MainSegmentAdminResponse> {
     return this.http
-      .delete<MainSegmentAdminResponse>(
-        `${this.baseUrl}/${year}/organizations/${organizationId}`
-      )
+      .delete<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/organizations/${organizationId}`)
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
@@ -282,25 +274,25 @@ export class AdminMainSegmentService {
   uploadOrganizationLogo(
     year: number,
     organizationId: string,
-    file: File
+    file: File,
   ): Observable<MainSegmentAdminResponse> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http
       .post<MainSegmentAdminResponse>(
         `${this.baseUrl}/${year}/organizations/${organizationId}/logo`,
-        formData
+        formData,
       )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
   deleteOrganizationLogo(
     year: number,
-    organizationId: string
+    organizationId: string,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
       .delete<MainSegmentAdminResponse>(
-        `${this.baseUrl}/${year}/organizations/${organizationId}/logo`
+        `${this.baseUrl}/${year}/organizations/${organizationId}/logo`,
       )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
@@ -314,101 +306,267 @@ export class AdminMainSegmentService {
 
   updateRegistrationSchema(
     year: number,
-    request: UpdateRegistrationSchemaRequest
+    request: UpdateRegistrationSchemaRequest,
   ): Observable<AdminRegistrationSchemaResponse> {
     return this.http.put<AdminRegistrationSchemaResponse>(
       `${this.baseUrl}/${year}/schema`,
-      request
+      request,
     );
   }
 
   publishRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
     return this.http.post<AdminRegistrationSchemaResponse>(
       `${this.baseUrl}/${year}/schema/publish`,
-      {}
+      {},
     );
   }
 
   seedDefaultRegistrationSchema(year: number): Observable<AdminRegistrationSchemaResponse> {
     return this.http
-      .post<AdminRegistrationSchemaResponse>(
-        `${this.baseUrl}/${year}/schema/seed-defaults`,
-        {}
-      )
+      .post<AdminRegistrationSchemaResponse>(`${this.baseUrl}/${year}/schema/seed-defaults`, {})
       .pipe(catchError(() => of(DEFAULT_ADMIN_SCHEMA)));
   }
 
   /* ── Registration Review, Detail, Documents & Export (Milestone 7) ── */
   getRegistrations(
     year: number,
-    params: RegistrationListFilterParams
+    params: RegistrationListFilterParams,
   ): Observable<AdminRegistrationListResponse> {
-    let httpParams = new HttpParams()
-      .set('page', params.page.toString())
-      .set('pageSize', params.pageSize.toString());
-
-    if (params.search) httpParams = httpParams.set('search', params.search.trim());
-    if (params.status && params.status !== 'All') httpParams = httpParams.set('status', params.status);
-    if (params.universityId) httpParams = httpParams.set('universityId', params.universityId);
-    if (params.facultyId) httpParams = httpParams.set('facultyId', params.facultyId);
-    if (params.graduationYear) httpParams = httpParams.set('graduationYear', params.graduationYear.toString());
-    if (params.submittedFrom) httpParams = httpParams.set('submittedFrom', params.submittedFrom);
-    if (params.submittedTo) httpParams = httpParams.set('submittedTo', params.submittedTo);
-
-    return this.http.get<AdminRegistrationListResponse>(
-      `${this.baseUrl}/${year}/registrations`,
-      { params: httpParams }
-    );
+    const listParams = this.buildRegistrationParams(params, true);
+    const summaryParams = this.buildRegistrationParams({ ...params, status: 'All' }, false);
+    return forkJoin({
+      list: this.http.get<RegistrationListApiResponse>(`${this.baseUrl}/${year}/registrations`, {
+        params: listParams,
+      }),
+      summary: this.http.get<RegistrationSummaryApiResponse>(
+        `${this.baseUrl}/${year}/registrations/summary`,
+        { params: summaryParams },
+      ),
+    }).pipe(map(({ list, summary }) => this.normalizeRegistrationList(list, summary)));
   }
 
   getRegistrationDetail(
     year: number,
-    registrationId: string
+    registrationId: string,
   ): Observable<AdminRegistrationDetailResponse> {
-    return this.http.get<AdminRegistrationDetailResponse>(
-      `${this.baseUrl}/${year}/registrations/${registrationId}`
-    );
+    return this.http
+      .get<RegistrationDetailApiResponse>(`${this.baseUrl}/${year}/registrations/${registrationId}`)
+      .pipe(map((response) => this.normalizeRegistrationDetail(response)));
   }
 
   updateRegistrationStatus(
     year: number,
     registrationId: string,
-    request: UpdateRegistrationStatusRequest
-  ): Observable<AdminRegistrationDetailResponse> {
-    return this.http.patch<AdminRegistrationDetailResponse>(
+    request: UpdateRegistrationStatusRequest,
+  ): Observable<RegistrationStatusUpdateApiResponse> {
+    return this.http.patch<RegistrationStatusUpdateApiResponse>(
       `${this.baseUrl}/${year}/registrations/${registrationId}/status`,
-      request
+      request,
     );
   }
 
   getPrivateDocument(
     year: number,
     registrationId: string,
-    docType: PrivateDocumentType
+    docType: PrivateDocumentType,
   ): Observable<Blob> {
     return this.http.get(
       `${this.baseUrl}/${year}/registrations/${registrationId}/documents/${docType}`,
-      { responseType: 'blob' }
+      { responseType: 'blob' },
     );
   }
 
   exportRegistrationsCsv(
     year: number,
-    params: Partial<RegistrationListFilterParams>
+    params: Partial<RegistrationListFilterParams>,
   ): Observable<Blob> {
-    let httpParams = new HttpParams();
-    if (params.search) httpParams = httpParams.set('search', params.search.trim());
-    if (params.status && params.status !== 'All') httpParams = httpParams.set('status', params.status);
-    if (params.universityId) httpParams = httpParams.set('universityId', params.universityId);
-    if (params.facultyId) httpParams = httpParams.set('facultyId', params.facultyId);
-    if (params.graduationYear) httpParams = httpParams.set('graduationYear', params.graduationYear.toString());
-    if (params.submittedFrom) httpParams = httpParams.set('submittedFrom', params.submittedFrom);
-    if (params.submittedTo) httpParams = httpParams.set('submittedTo', params.submittedTo);
-
     return this.http.get(`${this.baseUrl}/${year}/registrations/export`, {
-      params: httpParams,
+      params: this.buildRegistrationParams(params, false),
       responseType: 'blob',
     });
+  }
+
+  private buildRegistrationParams(
+    params: Partial<RegistrationListFilterParams>,
+    includePagination: boolean,
+  ): HttpParams {
+    let httpParams = new HttpParams();
+    if (includePagination) {
+      httpParams = httpParams
+        .set('page', String(params.page ?? 1))
+        .set('pageSize', String(params.pageSize ?? 25));
+    }
+    if (params.search?.trim()) httpParams = httpParams.set('search', params.search.trim());
+    if (params.status && params.status !== 'All')
+      httpParams = httpParams.set('status', params.status);
+    if (params.universityId) httpParams = httpParams.set('universityId', params.universityId);
+    if (params.facultyId) httpParams = httpParams.set('facultyId', params.facultyId);
+    if (params.graduationYear != null) {
+      httpParams = httpParams.set('graduationYear', String(params.graduationYear));
+    }
+    if (params.submittedFrom) httpParams = httpParams.set('submittedFrom', params.submittedFrom);
+    if (params.submittedTo) httpParams = httpParams.set('submittedTo', params.submittedTo);
+    return httpParams;
+  }
+
+  private normalizeRegistrationList(
+    list: RegistrationListApiResponse,
+    summary: RegistrationSummaryApiResponse,
+  ): AdminRegistrationListResponse {
+    const count = (status: RegistrationStatus): number =>
+      summary.counts?.[status] ??
+      summary.statusCounts?.find((item) => item.status === status)?.count ??
+      0;
+    return {
+      items: (list.items ?? []).map((item) => ({
+        id: item.id,
+        referenceNumber: item.reference,
+        nameEnglish: item.nameEnglish,
+        nameArabic: item.nameArabic,
+        email: item.email,
+        phoneNumber: item.phoneNumber,
+        universityName: item.university,
+        facultyName: item.faculty,
+        graduationYear: item.graduationYear,
+        status: item.status,
+        submittedAt: item.submittedAt,
+      })),
+      totalCount: list.totalCount,
+      page: list.page,
+      pageSize: list.pageSize,
+      totalPages: list.totalPages,
+      statusCounts: {
+        all: summary.total ?? summary.totalCount ?? 0,
+        submitted: count('Submitted'),
+        underReview: count('UnderReview'),
+        accepted: count('Accepted'),
+        rejected: count('Rejected'),
+        waitlisted: count('Waitlisted'),
+        cancelled: count('Cancelled'),
+      },
+    };
+  }
+
+  private normalizeRegistrationDetail(
+    response: RegistrationDetailApiResponse,
+  ): AdminRegistrationDetailResponse {
+    const documents = response.documents ?? [];
+    const history = (response.statusHistory ?? []).map((entry, index) => ({
+      id: `${entry.createdAt}-${index}`,
+      fromStatus: entry.fromStatus,
+      toStatus: entry.toStatus,
+      changedBy: entry.actorAdminName?.trim() || (entry.actorAdminId ? 'Admin' : 'System'),
+      changedAt: entry.createdAt,
+      note: entry.note,
+    }));
+    return {
+      id: response.id,
+      editionYear: response.editionYear,
+      referenceNumber: response.reference,
+      status: response.status,
+      submittedAt: response.submittedAt,
+      updatedAt: history.at(-1)?.changedAt ?? response.submittedAt,
+      nameEnglish: response.nameEnglish,
+      nameArabic: response.nameArabic,
+      email: response.email,
+      phoneNumber: response.phoneNumber,
+      gender: response.gender,
+      maskedNationalId: response.nationalIdMasked,
+      academicSnapshot: {
+        universityName: response.universityOtherValue?.trim() || response.university,
+        facultyName: response.facultyOtherValue?.trim() || response.faculty,
+        departmentName: response.departmentOtherValue?.trim() || response.department || null,
+        isUniversityOther: Boolean(response.universityOtherValue),
+        isFacultyOther: Boolean(response.facultyOtherValue),
+        isDepartmentOther: Boolean(response.departmentOtherValue),
+        graduationYear: response.graduationYear,
+      },
+      answers: (response.answers ?? []).map((answer) => this.normalizeRegistrationAnswer(answer)),
+      hasNationalIdPhoto: documents.some((item) => item.documentType === 'NationalIdPhoto'),
+      hasUniversityIdPhoto: documents.some((item) => item.documentType === 'UniversityIdPhoto'),
+      hasCvFile: documents.some((item) => item.documentType === 'Cv'),
+      documents,
+      statusHistory: history,
+    };
+  }
+
+  private normalizeRegistrationAnswer(
+    answer: RegistrationAnswerApiResponse,
+  ): AdminRegistrationAnswerDetail {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(answer.answerJson);
+    } catch {
+      parsed = answer.answerJson;
+    }
+
+    const normalized: AdminRegistrationAnswerDetail = {
+      questionId: answer.questionId,
+      questionKey: answer.questionKey,
+      questionTitle: answer.prompt,
+      questionType: answer.type,
+    };
+    const optionLabels = this.registrationAnswerOptionLabels(answer.optionsSnapshotJson);
+    if (
+      typeof parsed === 'boolean' ||
+      (answer.type === 'YesNo' && typeof parsed === 'string' && ['yes', 'no'].includes(parsed))
+    ) {
+      normalized.booleanAnswer = typeof parsed === 'boolean' ? parsed : parsed === 'yes';
+    } else if (Array.isArray(parsed)) {
+      normalized.selectedOptions = parsed.map((value) =>
+        this.registrationChoiceAnswerToText(value, optionLabels),
+      );
+    } else if (answer.type === 'SingleChoice') {
+      normalized.answerText = this.registrationChoiceAnswerToText(parsed, optionLabels);
+    } else {
+      normalized.answerText = this.answerValueToText(parsed);
+    }
+    return normalized;
+  }
+
+  private registrationAnswerOptionLabels(snapshotJson: string): Map<string, string> {
+    try {
+      const options = JSON.parse(snapshotJson);
+      if (!Array.isArray(options)) return new Map();
+      return new Map(
+        options
+          .filter(
+            (option) => typeof option?.value === 'string' && typeof option?.label === 'string',
+          )
+          .map((option) => [option.value, option.label] as const),
+      );
+    } catch {
+      return new Map();
+    }
+  }
+
+  private registrationChoiceAnswerToText(
+    value: unknown,
+    optionLabels: ReadonlyMap<string, string>,
+  ): string {
+    if (typeof value === 'string') return optionLabels.get(value) ?? value;
+    if (value && typeof value === 'object' && 'value' in value) {
+      const choice = String((value as { value: unknown }).value ?? '');
+      const label = optionLabels.get(choice) ?? choice;
+      const otherText =
+        'otherText' in value
+          ? String((value as { otherText?: unknown }).otherText ?? '').trim()
+          : '';
+      return otherText ? `${label}: ${otherText}` : label;
+    }
+    return this.answerValueToText(value);
+  }
+
+  private answerValueToText(value: unknown): string {
+    if (value == null) return 'No answer';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return String(value);
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return 'Unable to display this answer';
+    }
   }
 
   /* ── Helper Normalization ── */

@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { AdminMainSegmentWorkspaceComponent } from './admin-main-segment-workspace';
 import { AdminMainSegmentService } from '../../../../core/services/admin-main-segment.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AcademicDirectoryService } from '../../../../core/services/academic-directory.service';
 import {
   MainSegmentAdminOrganizationResponse,
   MainSegmentAdminPersonResponse,
@@ -62,6 +63,10 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     currentUser: ReturnType<typeof vi.fn>;
     hasValidToken: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
+  };
+  let mockAcademicDirectoryService: {
+    getUniversities: ReturnType<typeof vi.fn>;
+    getFaculties: ReturnType<typeof vi.fn>;
   };
 
   const sampleSpeaker: MainSegmentAdminPersonResponse = {
@@ -138,9 +143,18 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       getAdminByYear: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       getPreview: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       updateEdition: vi.fn().mockReturnValue(of(sampleAdminResponse)),
-      setStatus: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, status: MainSegmentEditionStatus.Published })),
-      openRegistration: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, isRegistrationAvailable: true })),
-      closeRegistration: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, isRegistrationAvailable: false })),
+      setStatus: vi.fn().mockReturnValue(
+        of({
+          ...sampleAdminResponse,
+          status: MainSegmentEditionStatus.Published,
+        }),
+      ),
+      openRegistration: vi
+        .fn()
+        .mockReturnValue(of({ ...sampleAdminResponse, isRegistrationAvailable: true })),
+      closeRegistration: vi
+        .fn()
+        .mockReturnValue(of({ ...sampleAdminResponse, isRegistrationAvailable: false })),
       uploadHeroImage: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       deleteHeroImage: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, heroImageUrl: null })),
       createProgramItem: vi.fn().mockReturnValue(of(sampleAdminResponse)),
@@ -152,25 +166,49 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       deletePerson: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, people: [] })),
       reorderPeople: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       uploadPersonPhoto: vi.fn().mockReturnValue(of(sampleAdminResponse)),
-      deletePersonPhoto: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, people: [{ ...sampleSpeaker, photoUrl: null }] })),
+      deletePersonPhoto: vi.fn().mockReturnValue(
+        of({
+          ...sampleAdminResponse,
+          people: [{ ...sampleSpeaker, photoUrl: null }],
+        }),
+      ),
       createOrganization: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       updateOrganization: vi.fn().mockReturnValue(of(sampleAdminResponse)),
-      deleteOrganization: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, organizations: [] })),
+      deleteOrganization: vi
+        .fn()
+        .mockReturnValue(of({ ...sampleAdminResponse, organizations: [] })),
       reorderOrganizations: vi.fn().mockReturnValue(of(sampleAdminResponse)),
       uploadOrganizationLogo: vi.fn().mockReturnValue(of(sampleAdminResponse)),
-      deleteOrganizationLogo: vi.fn().mockReturnValue(of({ ...sampleAdminResponse, organizations: [{ ...sampleOrg, logoUrl: null }] })),
+      deleteOrganizationLogo: vi.fn().mockReturnValue(
+        of({
+          ...sampleAdminResponse,
+          organizations: [{ ...sampleOrg, logoUrl: null }],
+        }),
+      ),
       getRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
       updateRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
-      publishRegistrationSchema: vi.fn().mockReturnValue(of({ ...DEFAULT_ADMIN_SCHEMA, isPublished: true, version: 2 })),
+      publishRegistrationSchema: vi
+        .fn()
+        .mockReturnValue(of({ ...DEFAULT_ADMIN_SCHEMA, isPublished: true, version: 2 })),
       seedDefaultRegistrationSchema: vi.fn().mockReturnValue(of(DEFAULT_ADMIN_SCHEMA)),
-      getRegistrations: vi.fn().mockReturnValue(of({
-        items: [],
-        totalCount: 0,
-        page: 1,
-        pageSize: 10,
-        totalPages: 1,
-        statusCounts: { all: 0, received: 0, underReview: 0, accepted: 0, confirmed: 0, waitlisted: 0, rejected: 0 },
-      })),
+      getRegistrations: vi.fn().mockReturnValue(
+        of({
+          items: [],
+          totalCount: 0,
+          page: 1,
+          pageSize: 10,
+          totalPages: 1,
+          statusCounts: {
+            all: 0,
+            submitted: 0,
+            underReview: 0,
+            accepted: 0,
+            waitlisted: 0,
+            rejected: 0,
+            cancelled: 0,
+          },
+        }),
+      ),
       getRegistrationDetail: vi.fn().mockReturnValue(of(null)),
       updateRegistrationStatus: vi.fn().mockReturnValue(of(null)),
       getPrivateDocument: vi.fn().mockReturnValue(of(new Blob())),
@@ -181,6 +219,27 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       currentUser: vi.fn().mockReturnValue({ name: 'Admin' }),
       hasValidToken: vi.fn().mockReturnValue(true),
       logout: vi.fn(),
+    };
+
+    mockAcademicDirectoryService = {
+      getUniversities: vi.fn().mockReturnValue(
+        of({
+          items: [],
+          page: 1,
+          pageSize: 100,
+          totalCount: 0,
+          hasNextPage: false,
+        }),
+      ),
+      getFaculties: vi.fn().mockReturnValue(
+        of({
+          items: [],
+          page: 1,
+          pageSize: 100,
+          totalCount: 0,
+          hasNextPage: false,
+        }),
+      ),
     };
 
     await TestBed.configureTestingModule({
@@ -195,6 +254,10 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
         },
         { provide: AdminMainSegmentService, useValue: mockAdminService },
         { provide: AuthService, useValue: mockAuthService },
+        {
+          provide: AcademicDirectoryService,
+          useValue: mockAcademicDirectoryService,
+        },
       ],
     }).compileComponents();
 
@@ -235,7 +298,11 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     component.openEditProgramItemModal(sampleItem);
     expect(component.editingProgramItemId).toBe('item-1');
     component.saveProgramItem();
-    expect(mockAdminService.updateProgramItem).toHaveBeenCalledWith(2026, 'item-1', expect.anything());
+    expect(mockAdminService.updateProgramItem).toHaveBeenCalledWith(
+      2026,
+      'item-1',
+      expect.anything(),
+    );
   });
 
   it('should delete a program item with confirmation', () => {
@@ -287,7 +354,11 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     component.openEditOrgModal(sampleOrg);
     expect(component.editingOrgId).toBe('org-1');
     component.saveOrg();
-    expect(mockAdminService.updateOrganization).toHaveBeenCalledWith(2026, 'org-1', expect.anything());
+    expect(mockAdminService.updateOrganization).toHaveBeenCalledWith(
+      2026,
+      'org-1',
+      expect.anything(),
+    );
   });
 
   it('should delete an organization with confirmation', () => {
@@ -297,14 +368,26 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
   });
 
   it('should reorder program items and organizations', () => {
-    const item1: MainSegmentAdminProgramItemResponse = { ...sampleItem, id: '1' };
-    const item2: MainSegmentAdminProgramItemResponse = { ...sampleItem, id: '2' };
+    const item1: MainSegmentAdminProgramItemResponse = {
+      ...sampleItem,
+      id: '1',
+    };
+    const item2: MainSegmentAdminProgramItemResponse = {
+      ...sampleItem,
+      id: '2',
+    };
 
     component.moveProgramItem(0, 'down', [item1, item2]);
     expect(mockAdminService.reorderProgramItems).toHaveBeenCalledWith(2026, ['2', '1']);
 
-    const org1: MainSegmentAdminOrganizationResponse = { ...sampleOrg, id: 'o1' };
-    const org2: MainSegmentAdminOrganizationResponse = { ...sampleOrg, id: 'o2' };
+    const org1: MainSegmentAdminOrganizationResponse = {
+      ...sampleOrg,
+      id: 'o1',
+    };
+    const org2: MainSegmentAdminOrganizationResponse = {
+      ...sampleOrg,
+      id: 'o2',
+    };
 
     component.moveOrg(0, 'down', [org1, org2]);
     expect(mockAdminService.reorderOrganizations).toHaveBeenCalledWith(2026, ['o2', 'o1']);
@@ -320,13 +403,16 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     });
 
     component.saveDraftSchema();
-    expect(mockAdminService.updateRegistrationSchema).toHaveBeenCalledWith(2026, expect.objectContaining({
-      settings: expect.objectContaining({
-        minGraduationYear: 2022,
-        maxGraduationYear: 2030,
-        submissionWorkflow: 'InstantConfirmation',
+    expect(mockAdminService.updateRegistrationSchema).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({
+        settings: expect.objectContaining({
+          minGraduationYear: 2022,
+          maxGraduationYear: 2030,
+          submissionWorkflow: 'InstantConfirmation',
+        }),
       }),
-    }));
+    );
   });
 
   it('should create, edit, reorder, and delete questions in question builder', () => {
@@ -355,7 +441,7 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     component.questionForm.patchValue({ title: 'Preferred T-Shirt Size' });
     component.saveQuestion();
     expect(component.schema$.value?.questions.find((q) => q.key === 'tshirt_size')?.title).toBe(
-      'Preferred T-Shirt Size'
+      'Preferred T-Shirt Size',
     );
 
     // Delete question
@@ -401,7 +487,7 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
           universityName: 'Cairo University',
           facultyName: 'Faculty of Engineering',
           graduationYear: 2026,
-          status: 'Received' as const,
+          status: 'Submitted' as const,
           submittedAt: '2026-09-02T14:32:00Z',
         },
       ],
@@ -411,12 +497,12 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       totalPages: 3,
       statusCounts: {
         all: 25,
-        received: 10,
+        submitted: 10,
         underReview: 5,
         accepted: 6,
-        confirmed: 2,
         waitlisted: 1,
         rejected: 1,
+        cancelled: 2,
       },
     };
 
@@ -424,22 +510,56 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
 
     component.setTab('registrations');
     expect(component.activeTab).toBe('registrations');
-    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ page: 1 }));
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({ page: 1 }),
+    );
 
     // Change status filter
     component.setRegistrationStatusFilter('Accepted');
     expect(component.regStatusFilter).toBe('Accepted');
-    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ status: 'Accepted' }));
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({ status: 'Accepted' }),
+    );
 
     // Search query
     component.onRegistrationSearch('Youssef');
     expect(component.regSearch).toBe('Youssef');
-    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ search: 'Youssef' }));
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({ search: 'Youssef' }),
+    );
+
+    component.setRegistrationUniversityFilter('uni-1');
+    expect(mockAcademicDirectoryService.getFaculties).toHaveBeenCalledWith(
+      'uni-1',
+      undefined,
+      1,
+      100,
+    );
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({ universityId: 'uni-1' }),
+    );
+
+    component.setRegistrationFacultyFilter('faculty-1');
+    component.setRegistrationDateFilter('from', '2026-09-01');
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({
+        facultyId: 'faculty-1',
+        submittedFrom: '2026-09-01T00:00:00.000Z',
+      }),
+    );
 
     // Paginate
     component.goToRegistrationPage(2);
     expect(component.regPage).toBe(2);
-    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(2026, expect.objectContaining({ page: 2 }));
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledWith(
+      2026,
+      expect.objectContaining({ page: 2 }),
+    );
   });
 
   it('should open applicant detail drawer, update status, and close', () => {
@@ -447,7 +567,7 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       id: 'reg-1',
       editionYear: 2026,
       referenceNumber: 'REG-2026-0001',
-      status: 'Received' as const,
+      status: 'Submitted' as const,
       submittedAt: '2026-09-02T14:32:00Z',
       updatedAt: '2026-09-02T14:32:00Z',
       nameEnglish: 'Youssef Ahmed',
@@ -476,21 +596,69 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       hasNationalIdPhoto: true,
       hasUniversityIdPhoto: true,
       hasCvFile: true,
+      documents: [
+        {
+          documentType: 'NationalIdPhoto' as const,
+          displayName: 'national-id.png',
+          contentType: 'image/png',
+          byteSize: 100,
+          storedAt: '2026-09-02T14:32:00Z',
+        },
+        {
+          documentType: 'UniversityIdPhoto' as const,
+          displayName: 'university-id.png',
+          contentType: 'image/png',
+          byteSize: 100,
+          storedAt: '2026-09-02T14:32:00Z',
+        },
+        {
+          documentType: 'Cv' as const,
+          displayName: 'youssef-cv.docx',
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          byteSize: 100,
+          storedAt: '2026-09-02T14:32:00Z',
+        },
+      ],
       statusHistory: [
         {
           id: 'h-1',
-          fromStatus: 'Received' as const,
-          toStatus: 'Received' as const,
+          fromStatus: null,
+          toStatus: 'Submitted' as const,
           changedBy: 'System',
           changedAt: '2026-09-02T14:32:00Z',
         },
       ],
     };
 
-    mockAdminService.getRegistrationDetail = vi.fn().mockReturnValue(of(mockDetail));
+    const refreshedDetail = {
+      ...mockDetail,
+      status: 'Accepted' as const,
+      statusHistory: [
+        ...mockDetail.statusHistory,
+        {
+          id: 'h-2',
+          fromStatus: 'Submitted' as const,
+          toStatus: 'Accepted' as const,
+          changedBy: 'Admin',
+          changedAt: '2026-09-03T10:00:00Z',
+          note: 'Verified student ID card',
+        },
+      ],
+    };
+    mockAdminService.getRegistrationDetail = vi
+      .fn()
+      .mockReturnValueOnce(of(mockDetail))
+      .mockReturnValue(of(refreshedDetail));
     mockAdminService.updateRegistrationStatus = vi.fn().mockReturnValue(
-      of({ ...mockDetail, status: 'Accepted' as const })
+      of({
+        id: 'reg-1',
+        reference: 'REG-2026-0001',
+        status: 'Accepted' as const,
+        changedAt: '2026-09-03T10:00:00Z',
+        note: 'Verified student ID card',
+      }),
     );
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.openRegistrationDetail('reg-1');
     expect(component.isDetailModalOpen$.value).toBe(true);
@@ -507,20 +675,25 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       note: 'Verified student ID card',
     });
     expect(component.selectedRegistration$.value?.status).toBe('Accepted');
+    expect(component.selectedRegistration$.value?.statusHistory).toHaveLength(2);
+    expect(mockAdminService.getRegistrationDetail).toHaveBeenCalledTimes(2);
+    expect(mockAdminService.getRegistrations).toHaveBeenCalledTimes(1);
 
     component.closeRegistrationDetail();
     expect(component.isDetailModalOpen$.value).toBe(false);
   });
 
   it('should view private document in lightbox and export CSV file', () => {
-    mockAdminService.getPrivateDocument = vi.fn().mockReturnValue(
-      of(new Blob(['image-binary'], { type: 'image/png' }))
-    );
-    mockAdminService.exportRegistrationsCsv = vi.fn().mockReturnValue(
-      of(new Blob(['CSV,DATA\n1,2'], { type: 'text/csv' }))
-    );
+    mockAdminService.getPrivateDocument = vi
+      .fn()
+      .mockReturnValue(of(new Blob(['image-binary'], { type: 'image/png' })));
+    mockAdminService.exportRegistrationsCsv = vi
+      .fn()
+      .mockReturnValue(of(new Blob(['CSV,DATA\n1,2'], { type: 'text/csv' })));
 
-    const createUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/doc');
+    const createUrlSpy = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockReturnValue('blob:http://localhost/doc');
     const revokeUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
     component.openPrivateDocument('reg-1', 'national-id', 'National ID Photo');
@@ -532,6 +705,22 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     expect(revokeUrlSpy).toHaveBeenCalled();
 
     // Export CSV
+    component.registrations$.next({
+      items: [],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+      statusCounts: {
+        all: 1,
+        submitted: 1,
+        underReview: 0,
+        accepted: 0,
+        waitlisted: 0,
+        rejected: 0,
+        cancelled: 0,
+      },
+    });
     component.exportRegistrationsCsv();
     expect(mockAdminService.exportRegistrationsCsv).toHaveBeenCalledWith(2026, expect.anything());
   });

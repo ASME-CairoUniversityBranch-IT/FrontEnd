@@ -1,23 +1,16 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  OnInit,
-  OnDestroy,
-  inject,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import {
-  FormBuilder,
-  FormGroup,
-  FormArray,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, BehaviorSubject, Subject, of } from 'rxjs';
 import { catchError, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AdminNavComponent } from '../../../../shared/components/admin-nav/admin-nav';
 import { AdminMainSegmentService } from '../../../../core/services/admin-main-segment.service';
+import {
+  AcademicDirectoryService,
+  AcademicFacultyItem,
+  AcademicUniversityItem,
+} from '../../../../core/services/academic-directory.service';
 import { ComponentCanDeactivate } from '../../../../core/guards/pending-changes.guard';
 import {
   MainSegmentAdminOrganizationResponse,
@@ -38,7 +31,7 @@ import {
 } from '../../../../core/models/main-segment.model';
 import {
   AdminRegistrationDetailResponse,
-  AdminRegistrationListItem,
+  AdminRegistrationDocumentDetail,
   AdminRegistrationListResponse,
   AdminRegistrationQuestion,
   AdminRegistrationSchemaResponse,
@@ -84,6 +77,7 @@ export class AdminMainSegmentWorkspaceComponent
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly adminService = inject(AdminMainSegmentService);
+  private readonly academicDirectoryService = inject(AcademicDirectoryService);
   private readonly fb = inject(FormBuilder);
   private readonly destroy$ = new Subject<void>();
 
@@ -173,21 +167,39 @@ export class AdminMainSegmentWorkspaceComponent
   /* ── Registrations Review & Export State (Milestone 7) ── */
   readonly registrations$ = new BehaviorSubject<AdminRegistrationListResponse | null>(null);
   readonly isLoadingRegistrations$ = new BehaviorSubject<boolean>(false);
+  readonly registrationLoadState$ = new BehaviorSubject<
+    'idle' | 'loading' | 'loaded' | 'empty' | 'forbidden' | 'error'
+  >('idle');
+  readonly registrationErrorMessage$ = new BehaviorSubject<string | null>(null);
   readonly isExporting$ = new BehaviorSubject<boolean>(false);
+  readonly downloadingDocument$ = new BehaviorSubject<PrivateDocumentType | null>(null);
+  readonly registrationUniversities$ = new BehaviorSubject<AcademicUniversityItem[]>([]);
+  readonly registrationFaculties$ = new BehaviorSubject<AcademicFacultyItem[]>([]);
 
   regSearch = '';
   regStatusFilter: RegistrationStatus | 'All' = 'All';
+  regUniversityIdFilter = '';
+  regFacultyIdFilter = '';
   regGradYearFilter: number | null = null;
+  regSubmittedFrom = '';
+  regSubmittedTo = '';
   regPage = 1;
   regPageSize = 10;
+  private registrationLoadSequence = 0;
+  private documentRequestSequence = 0;
+  private registrationDetailSequence = 0;
 
   readonly isDetailModalOpen$ = new BehaviorSubject<boolean>(false);
-  readonly selectedRegistration$ = new BehaviorSubject<AdminRegistrationDetailResponse | null>(null);
+  readonly selectedRegistration$ = new BehaviorSubject<AdminRegistrationDetailResponse | null>(
+    null,
+  );
+  readonly registrationDetailError$ = new BehaviorSubject<string | null>(null);
   readonly isLoadingDetail$ = new BehaviorSubject<boolean>(false);
   readonly isUpdatingStatus$ = new BehaviorSubject<boolean>(false);
+  selectedRegistrationId: string | null = null;
 
   readonly statusUpdateForm: FormGroup = this.fb.group({
-    status: ['Received', [Validators.required]],
+    status: ['Submitted', [Validators.required]],
     note: [''],
   });
 
@@ -246,7 +258,7 @@ export class AdminMainSegmentWorkspaceComponent
           }
           this.year = year;
           return this.loadEdition(year);
-        })
+        }),
       )
       .subscribe();
 
@@ -263,6 +275,9 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   ngOnDestroy(): void {
+    this.registrationLoadSequence++;
+    this.documentRequestSequence++;
+    this.registrationDetailSequence++;
     this.revokeDocumentUrl();
     this.destroy$.next();
     this.destroy$.complete();
@@ -271,7 +286,7 @@ export class AdminMainSegmentWorkspaceComponent
   canDeactivate(): boolean {
     if (this.form.dirty || this.schemaSettingsForm.dirty) {
       return confirm(
-        'You have unsaved changes in this edition workspace. Are you sure you want to navigate away?'
+        'You have unsaved changes in this edition workspace. Are you sure you want to navigate away?',
       );
     }
     return true;
@@ -281,8 +296,13 @@ export class AdminMainSegmentWorkspaceComponent
     this.activeTab = tab;
     if (tab === 'form-builder' && !this.schema$.value) {
       this.loadSchema(this.year);
-    } else if (tab === 'registrations' && !this.registrations$.value) {
-      this.loadRegistrations();
+    } else if (tab === 'registrations') {
+      if (this.registrationUniversities$.value.length === 0) {
+        this.loadRegistrationUniversityFilters();
+      }
+      if (!this.registrations$.value) {
+        this.loadRegistrations();
+      }
     }
   }
 
@@ -307,7 +327,7 @@ export class AdminMainSegmentWorkspaceComponent
         const msg = err?.error?.message || `Failed to load Main Segment ${year}.`;
         this.vm$.next({ status: 'error', errorMessage: msg });
         return of(null);
-      })
+      }),
     );
   }
 
@@ -337,7 +357,7 @@ export class AdminMainSegmentWorkspaceComponent
           sectionKey: [sec.sectionKey],
           isVisible: [sec.isVisible],
           displayOrder: [sec.displayOrder],
-        })
+        }),
       );
     }
 
@@ -372,8 +392,8 @@ export class AdminMainSegmentWorkspaceComponent
         val.registrationAvailabilityOverride === 'true'
           ? true
           : val.registrationAvailabilityOverride === 'false'
-          ? false
-          : null,
+            ? false
+            : null,
       sections: val.sections.map((s: MainSegmentSectionRequest) => ({
         sectionKey: s.sectionKey,
         isVisible: Boolean(s.isVisible),
@@ -395,7 +415,7 @@ export class AdminMainSegmentWorkspaceComponent
       error: (err) => {
         this.isSaving$.next(false);
         this.errorMessage$.next(
-          err?.error?.message || 'Failed to save edition changes. Please verify fields.'
+          err?.error?.message || 'Failed to save edition changes. Please verify fields.',
         );
       },
     });
@@ -504,13 +524,13 @@ export class AdminMainSegmentWorkspaceComponent
         this.isSaving$.next(false);
         this.vm$.next({ status: 'loaded', edition: updated });
         this.showSuccess(
-          `Registration is now ${updated.isRegistrationAvailable ? 'OPEN' : 'CLOSED'}.`
+          `Registration is now ${updated.isRegistrationAvailable ? 'OPEN' : 'CLOSED'}.`,
         );
       },
       error: (err) => {
         this.isSaving$.next(false);
         this.errorMessage$.next(
-          err?.error?.message || 'Failed to update registration availability.'
+          err?.error?.message || 'Failed to update registration availability.',
         );
       },
     });
@@ -606,7 +626,11 @@ export class AdminMainSegmentWorkspaceComponent
     });
   }
 
-  moveProgramItem(currentIndex: number, direction: 'up' | 'down', items: MainSegmentAdminProgramItemResponse[]): void {
+  moveProgramItem(
+    currentIndex: number,
+    direction: 'up' | 'down',
+    items: MainSegmentAdminProgramItemResponse[],
+  ): void {
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= items.length) return;
 
@@ -742,7 +766,11 @@ export class AdminMainSegmentWorkspaceComponent
     });
   }
 
-  movePerson(currentIndex: number, direction: 'up' | 'down', people: MainSegmentAdminPersonResponse[]): void {
+  movePerson(
+    currentIndex: number,
+    direction: 'up' | 'down',
+    people: MainSegmentAdminPersonResponse[],
+  ): void {
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= people.length) return;
 
@@ -802,7 +830,8 @@ export class AdminMainSegmentWorkspaceComponent
       name: val.name.trim(),
       category: val.category,
       websiteUrl: val.websiteUrl ? val.websiteUrl.trim() : null,
-      sponsorTier: val.category === MainSegmentOrganizationCategory.Sponsor ? val.sponsorTier : null,
+      sponsorTier:
+        val.category === MainSegmentOrganizationCategory.Sponsor ? val.sponsorTier : null,
       isVisible: Boolean(val.isVisible),
     };
 
@@ -878,7 +907,11 @@ export class AdminMainSegmentWorkspaceComponent
     });
   }
 
-  moveOrg(currentIndex: number, direction: 'up' | 'down', orgs: MainSegmentAdminOrganizationResponse[]): void {
+  moveOrg(
+    currentIndex: number,
+    direction: 'up' | 'down',
+    orgs: MainSegmentAdminOrganizationResponse[],
+  ): void {
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= orgs.length) return;
 
@@ -911,7 +944,7 @@ export class AdminMainSegmentWorkspaceComponent
         catchError(() => {
           this.isLoadingSchema$.next(false);
           return of(null);
-        })
+        }),
       )
       .subscribe();
   }
@@ -972,7 +1005,7 @@ export class AdminMainSegmentWorkspaceComponent
   publishSchema(): void {
     const conf = confirm(
       'Publishing this registration form schema will make it live for all future applicants. ' +
-        'Existing registrations will remain linked to their previous submission versions. Continue?'
+        'Existing registrations will remain linked to their previous submission versions. Continue?',
     );
     if (!conf) return;
 
@@ -1042,7 +1075,7 @@ export class AdminMainSegmentWorkspaceComponent
         this.fb.group({
           label: [opt.label, [Validators.required]],
           value: [opt.value, [Validators.required]],
-        })
+        }),
       );
     }
 
@@ -1058,7 +1091,10 @@ export class AdminMainSegmentWorkspaceComponent
       allowOther: Boolean(q.allowOther),
       hasCondition: Boolean(q.conditionalOnKey),
       conditionalOnKey: q.conditionalOnKey || '',
-      conditionalValue: q.conditionalValue !== undefined && q.conditionalValue !== null ? String(q.conditionalValue) : '',
+      conditionalValue:
+        q.conditionalValue !== undefined && q.conditionalValue !== null
+          ? String(q.conditionalValue)
+          : '',
     });
 
     this.isQuestionModalOpen$.next(true);
@@ -1074,7 +1110,7 @@ export class AdminMainSegmentWorkspaceComponent
       this.fb.group({
         label: ['', [Validators.required]],
         value: ['', [Validators.required]],
-      })
+      }),
     );
   }
 
@@ -1159,7 +1195,8 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   deleteQuestion(id: string): void {
-    if (!confirm('Are you sure you want to remove this question from the registration form?')) return;
+    if (!confirm('Are you sure you want to remove this question from the registration form?'))
+      return;
 
     const currentSchema = this.schema$.value;
     if (!currentSchema) return;
@@ -1168,10 +1205,12 @@ export class AdminMainSegmentWorkspaceComponent
     if (!questionToDelete) return;
 
     // Check if any other question conditionally depends on this question
-    const dependents = currentSchema.questions.filter((q) => q.conditionalOnKey === questionToDelete.key);
+    const dependents = currentSchema.questions.filter(
+      (q) => q.conditionalOnKey === questionToDelete.key,
+    );
     if (dependents.length > 0) {
       alert(
-        `Cannot delete "${questionToDelete.title}" because the question "${dependents[0].title}" depends on its answer.`
+        `Cannot delete "${questionToDelete.title}" because the question "${dependents[0].title}" depends on its answer.`,
       );
       return;
     }
@@ -1210,7 +1249,7 @@ export class AdminMainSegmentWorkspaceComponent
     if (!currentSchema) return [];
 
     return currentSchema.questions.filter(
-      (q) => (q.type === 'YesNo' || q.type === 'SingleChoice') && q.id !== currentQuestionId
+      (q) => (q.type === 'YesNo' || q.type === 'SingleChoice') && q.id !== currentQuestionId,
     );
   }
 
@@ -1233,29 +1272,49 @@ export class AdminMainSegmentWorkspaceComponent
 
   /* ── Registrations Review, Detail & Export (Milestone 7) ── */
   loadRegistrations(): void {
+    const requestSequence = ++this.registrationLoadSequence;
     this.isLoadingRegistrations$.next(true);
+    this.registrationLoadState$.next('loading');
+    this.registrationErrorMessage$.next(null);
     const params: RegistrationListFilterParams = {
       search: this.regSearch,
       status: this.regStatusFilter,
+      universityId: this.regUniversityIdFilter || undefined,
+      facultyId: this.regFacultyIdFilter || undefined,
       graduationYear: this.regGradYearFilter,
+      submittedFrom: this.toRegistrationDateBoundary(this.regSubmittedFrom, false),
+      submittedTo: this.toRegistrationDateBoundary(this.regSubmittedTo, true),
       page: this.regPage,
       pageSize: this.regPageSize,
     };
 
-    this.adminService
-      .getRegistrations(this.year, params)
-      .pipe(
-        tap((res) => {
-          this.registrations$.next(res);
-          this.isLoadingRegistrations$.next(false);
-        }),
-        catchError((err) => {
-          this.isLoadingRegistrations$.next(false);
-          this.errorMessage$.next(err?.error?.message || 'Failed to load attendee registrations.');
-          return of(null);
-        })
-      )
-      .subscribe();
+    this.adminService.getRegistrations(this.year, params).subscribe({
+      next: (response) => {
+        if (requestSequence !== this.registrationLoadSequence) return;
+        this.registrations$.next(response);
+        this.isLoadingRegistrations$.next(false);
+        this.registrationLoadState$.next(response.items.length === 0 ? 'empty' : 'loaded');
+      },
+      error: (error) => {
+        if (requestSequence !== this.registrationLoadSequence) return;
+        this.isLoadingRegistrations$.next(false);
+        this.registrations$.next(null);
+        const forbidden = error?.status === 401 || error?.status === 403;
+        this.registrationLoadState$.next(forbidden ? 'forbidden' : 'error');
+        this.registrationErrorMessage$.next(
+          forbidden
+            ? 'Your session is not authorized to review registrations.'
+            : this.registrationActionError(error, 'Failed to load attendee registrations.'),
+        );
+      },
+    });
+  }
+
+  loadRegistrationUniversityFilters(): void {
+    this.academicDirectoryService.getUniversities(undefined, 1, 100).subscribe({
+      next: (response) => this.registrationUniversities$.next(response.items ?? []),
+      error: () => this.registrationUniversities$.next([]),
+    });
   }
 
   setRegistrationStatusFilter(status: RegistrationStatus | 'All'): void {
@@ -1265,13 +1324,56 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   onRegistrationSearch(query: string): void {
-    this.regSearch = query;
+    this.regSearch = query.trim();
+    this.regPage = 1;
+    this.loadRegistrations();
+  }
+
+  setRegistrationUniversityFilter(universityId: string): void {
+    this.regUniversityIdFilter = universityId;
+    this.regFacultyIdFilter = '';
+    this.registrationFaculties$.next([]);
+    if (universityId) {
+      this.academicDirectoryService.getFaculties(universityId, undefined, 1, 100).subscribe({
+        next: (response) => this.registrationFaculties$.next(response.items ?? []),
+        error: () => this.registrationFaculties$.next([]),
+      });
+    }
+    this.regPage = 1;
+    this.loadRegistrations();
+  }
+
+  setRegistrationFacultyFilter(facultyId: string): void {
+    this.regFacultyIdFilter = facultyId;
     this.regPage = 1;
     this.loadRegistrations();
   }
 
   setRegistrationGradYearFilter(year: number | null): void {
     this.regGradYearFilter = year;
+    this.regPage = 1;
+    this.loadRegistrations();
+  }
+
+  setRegistrationDateFilter(boundary: 'from' | 'to', value: string): void {
+    if (boundary === 'from') {
+      this.regSubmittedFrom = value;
+    } else {
+      this.regSubmittedTo = value;
+    }
+    this.regPage = 1;
+    this.loadRegistrations();
+  }
+
+  clearRegistrationFilters(): void {
+    this.regSearch = '';
+    this.regStatusFilter = 'All';
+    this.regUniversityIdFilter = '';
+    this.regFacultyIdFilter = '';
+    this.regGradYearFilter = null;
+    this.regSubmittedFrom = '';
+    this.regSubmittedTo = '';
+    this.registrationFaculties$.next([]);
     this.regPage = 1;
     this.loadRegistrations();
   }
@@ -1284,56 +1386,89 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   openRegistrationDetail(regId: string): void {
+    const requestSequence = ++this.registrationDetailSequence;
+    this.selectedRegistrationId = regId;
+    this.selectedRegistration$.next(null);
+    this.registrationDetailError$.next(null);
     this.isLoadingDetail$.next(true);
     this.isDetailModalOpen$.next(true);
-    this.statusUpdateForm.reset({ status: 'Received', note: '' });
+    this.statusUpdateForm.reset({ status: 'Submitted', note: '' });
 
     this.adminService.getRegistrationDetail(this.year, regId).subscribe({
       next: (detail) => {
+        if (requestSequence !== this.registrationDetailSequence) return;
         this.selectedRegistration$.next(detail);
         this.statusUpdateForm.patchValue({ status: detail.status });
         this.isLoadingDetail$.next(false);
       },
       error: (err) => {
+        if (requestSequence !== this.registrationDetailSequence) return;
         this.isLoadingDetail$.next(false);
-        this.errorMessage$.next(err?.error?.message || 'Failed to load registration details.');
+        this.registrationDetailError$.next(
+          this.registrationActionError(err, 'Failed to load registration details.'),
+        );
       },
     });
   }
 
   closeRegistrationDetail(): void {
+    this.registrationDetailSequence++;
     this.isDetailModalOpen$.next(false);
     this.selectedRegistration$.next(null);
+    this.selectedRegistrationId = null;
+    this.registrationDetailError$.next(null);
     this.closeDocumentViewer();
   }
 
   submitStatusUpdate(): void {
     const detail = this.selectedRegistration$.value;
-    if (!detail || this.statusUpdateForm.invalid) return;
+    if (!detail || this.statusUpdateForm.invalid || this.isUpdatingStatus$.value) return;
 
     const val = this.statusUpdateForm.value;
+    const nextStatus = val.status as RegistrationStatus;
+    if (nextStatus === detail.status) {
+      this.registrationErrorMessage$.next('Choose a different status before saving.');
+      return;
+    }
+    if (
+      ['Accepted', 'Rejected', 'Cancelled'].includes(nextStatus) &&
+      !confirm(`Change ${detail.referenceNumber} from ${detail.status} to ${nextStatus}?`)
+    ) {
+      return;
+    }
     const req: UpdateRegistrationStatusRequest = {
-      status: val.status,
+      status: nextStatus,
       note: val.note ? val.note.trim() : null,
     };
 
     this.isUpdatingStatus$.next(true);
-    this.adminService.updateRegistrationStatus(this.year, detail.id, req).subscribe({
-      next: (updated) => {
-        this.isUpdatingStatus$.next(false);
-        this.selectedRegistration$.next(updated);
-        this.showSuccess(`Applicant status updated to ${updated.status}.`);
-        this.loadRegistrations(); // refresh counters and table
-      },
-      error: (err) => {
-        this.isUpdatingStatus$.next(false);
-        this.errorMessage$.next(err?.error?.message || 'Failed to update registration status.');
-      },
-    });
+    this.registrationErrorMessage$.next(null);
+    this.adminService
+      .updateRegistrationStatus(this.year, detail.id, req)
+      .pipe(switchMap(() => this.adminService.getRegistrationDetail(this.year, detail.id)))
+      .subscribe({
+        next: (refreshedDetail) => {
+          this.isUpdatingStatus$.next(false);
+          this.selectedRegistration$.next(refreshedDetail);
+          this.statusUpdateForm.reset({
+            status: refreshedDetail.status,
+            note: '',
+          });
+          this.showSuccess(`Applicant status updated to ${refreshedDetail.status}.`);
+          this.loadRegistrations();
+        },
+        error: (err) => {
+          this.isUpdatingStatus$.next(false);
+          this.registrationErrorMessage$.next(
+            this.registrationActionError(err, 'Failed to update registration status.'),
+          );
+        },
+      });
   }
 
   /* ── Private Document Handling ── */
   openPrivateDocument(regId: string, docType: PrivateDocumentType, title: string): void {
+    const requestSequence = ++this.documentRequestSequence;
     this.revokeDocumentUrl();
     this.documentViewer$.next({
       isOpen: true,
@@ -1345,6 +1480,17 @@ export class AdminMainSegmentWorkspaceComponent
 
     this.adminService.getPrivateDocument(this.year, regId, docType).subscribe({
       next: (blob) => {
+        if (requestSequence !== this.documentRequestSequence) return;
+        if (!blob.type.toLowerCase().startsWith('image/')) {
+          this.documentViewer$.next({
+            isOpen: true,
+            title,
+            objectUrl: null,
+            isLoading: false,
+            error: 'This private document cannot be previewed safely. Download it instead.',
+          });
+          return;
+        }
         const objectUrl = URL.createObjectURL(blob);
         this.documentViewer$.next({
           isOpen: true,
@@ -1355,36 +1501,47 @@ export class AdminMainSegmentWorkspaceComponent
         });
       },
       error: (err) => {
+        if (requestSequence !== this.documentRequestSequence) return;
         this.documentViewer$.next({
           isOpen: true,
           title,
           objectUrl: null,
           isLoading: false,
-          error: err?.status === 403 ? 'Unauthorized: You do not have permission to view private documents.' : 'Failed to retrieve requested document.',
+          error: this.privateDocumentError(err),
         });
       },
     });
   }
 
-  downloadPrivateDocument(regId: string, docType: PrivateDocumentType, defaultFileName: string): void {
+  downloadPrivateDocument(
+    regId: string,
+    docType: PrivateDocumentType,
+    defaultFileName: string,
+  ): void {
+    if (this.downloadingDocument$.value) return;
+    this.downloadingDocument$.next(docType);
+    this.registrationErrorMessage$.next(null);
     this.adminService.getPrivateDocument(this.year, regId, docType).subscribe({
       next: (blob) => {
+        this.downloadingDocument$.next(null);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = defaultFileName;
+        a.download = this.safeDownloadFileName(defaultFileName);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       },
       error: (err) => {
-        alert(err?.status === 403 ? 'Unauthorized to download document.' : 'Failed to download document.');
+        this.downloadingDocument$.next(null);
+        this.registrationErrorMessage$.next(this.privateDocumentError(err));
       },
     });
   }
 
   closeDocumentViewer(): void {
+    this.documentRequestSequence++;
     this.revokeDocumentUrl();
     this.documentViewer$.next({
       isOpen: false,
@@ -1404,11 +1561,23 @@ export class AdminMainSegmentWorkspaceComponent
 
   /* ── CSV Export ── */
   exportRegistrationsCsv(): void {
+    if (this.isExporting$.value) return;
+    if ((this.registrations$.value?.totalCount ?? 0) === 0) {
+      this.registrationErrorMessage$.next(
+        'There are no registrations to export for the active filters.',
+      );
+      return;
+    }
     this.isExporting$.next(true);
+    this.registrationErrorMessage$.next(null);
     const params: Partial<RegistrationListFilterParams> = {
       search: this.regSearch,
       status: this.regStatusFilter,
+      universityId: this.regUniversityIdFilter || undefined,
+      facultyId: this.regFacultyIdFilter || undefined,
       graduationYear: this.regGradYearFilter,
+      submittedFrom: this.toRegistrationDateBoundary(this.regSubmittedFrom, false),
+      submittedTo: this.toRegistrationDateBoundary(this.regSubmittedTo, true),
     };
 
     this.adminService.exportRegistrationsCsv(this.year, params).subscribe({
@@ -1426,19 +1595,79 @@ export class AdminMainSegmentWorkspaceComponent
       },
       error: (err) => {
         this.isExporting$.next(false);
-        this.errorMessage$.next(err?.error?.message || 'Failed to export registrations CSV.');
+        this.registrationErrorMessage$.next(
+          this.registrationActionError(err, 'Failed to export registrations CSV.'),
+        );
       },
     });
   }
 
+  getAllowedRegistrationStatuses(current: RegistrationStatus): RegistrationStatus[] {
+    const transitions: Record<RegistrationStatus, RegistrationStatus[]> = {
+      Submitted: ['UnderReview', 'Accepted', 'Waitlisted', 'Rejected', 'Cancelled'],
+      UnderReview: ['Submitted', 'Accepted', 'Waitlisted', 'Rejected', 'Cancelled'],
+      Accepted: ['Cancelled'],
+      Waitlisted: ['UnderReview', 'Accepted', 'Rejected', 'Cancelled'],
+      Rejected: ['UnderReview', 'Cancelled'],
+      Cancelled: ['UnderReview'],
+    };
+    return [current, ...transitions[current]];
+  }
+
+  registrationStatusLabel(status: RegistrationStatus | null): string {
+    if (!status) return 'Created';
+    return status.replace(/([a-z])([A-Z])/g, '$1 $2');
+  }
+
+  registrationDocumentFileName(
+    detail: AdminRegistrationDetailResponse,
+    documentType: AdminRegistrationDocumentDetail['documentType'],
+    fallback: string,
+  ): string {
+    return (
+      detail.documents.find((item) => item.documentType === documentType)?.displayName || fallback
+    );
+  }
+
+  private toRegistrationDateBoundary(value: string, endOfDay: boolean): string | null {
+    if (!value) return null;
+    const suffix = endOfDay ? 'T23:59:59.999Z' : 'T00:00:00.000Z';
+    const parsed = new Date(`${value}${suffix}`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+
+  private privateDocumentError(error: any): string {
+    if (error?.status === 401)
+      return 'Your session expired. Sign in again before requesting this document.';
+    if (error?.status === 403) return 'You are not authorized to access this private document.';
+    if (error?.status === 404) return 'This document is no longer available.';
+    return 'Failed to retrieve the requested private document.';
+  }
+
+  private registrationActionError(error: any, fallback: string): string {
+    if (error?.status === 401) return 'Your session expired. Sign in again to continue.';
+    if (error?.status === 403) return 'You are not authorized to perform this registration action.';
+    if (error?.status === 404) return 'The requested registration was not found.';
+    return error?.error?.message || fallback;
+  }
+
+  private safeDownloadFileName(value: string): string {
+    const sanitized = value.trim().replace(/[\\/:*?"<>|]/g, '_');
+    return sanitized || 'main-segment-document';
+  }
+
   /* ── Filter Helpers ── */
-  getFilteredProgramItems(items: MainSegmentAdminProgramItemResponse[]): MainSegmentAdminProgramItemResponse[] {
+  getFilteredProgramItems(
+    items: MainSegmentAdminProgramItemResponse[],
+  ): MainSegmentAdminProgramItemResponse[] {
     if (!items) return [];
     if (this.programFilter === 'All' || this.programFilter === 'Speakers') return items;
     return items.filter((i) => i.category === this.programFilter);
   }
 
-  getFilteredOrganizations(orgs: MainSegmentAdminOrganizationResponse[]): MainSegmentAdminOrganizationResponse[] {
+  getFilteredOrganizations(
+    orgs: MainSegmentAdminOrganizationResponse[],
+  ): MainSegmentAdminOrganizationResponse[] {
     if (!orgs) return [];
     if (this.orgFilter === 'All') return orgs;
     return orgs.filter((o) => o.category === this.orgFilter);
@@ -1446,17 +1675,16 @@ export class AdminMainSegmentWorkspaceComponent
 
   getAssignedPeopleNames(personIds: string[], allPeople: MainSegmentAdminPersonResponse[]): string {
     if (!personIds || !allPeople) return 'None';
-    const names = allPeople
-      .filter((p) => personIds.includes(p.id))
-      .map((p) => p.name);
+    const names = allPeople.filter((p) => personIds.includes(p.id)).map((p) => p.name);
     return names.length > 0 ? names.join(', ') : 'None';
   }
 
-  getPersonAssignedItemTitles(itemIds: string[], allItems: MainSegmentAdminProgramItemResponse[]): string {
+  getPersonAssignedItemTitles(
+    itemIds: string[],
+    allItems: MainSegmentAdminProgramItemResponse[],
+  ): string {
     if (!itemIds || !allItems) return 'None';
-    const titles = allItems
-      .filter((i) => itemIds.includes(i.id))
-      .map((i) => i.title);
+    const titles = allItems.filter((i) => itemIds.includes(i.id)).map((i) => i.title);
     return titles.length > 0 ? titles.join(', ') : 'None';
   }
 

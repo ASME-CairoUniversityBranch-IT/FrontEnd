@@ -60,7 +60,7 @@
                 {{ (isSavingSchema$ | async) ? 'SAVING SCHEMA...' : 'SAVE SCHEMA DRAFT' }}
               </button>
 
-              <button *ngIf="activeTab === 'registrations'" type="button" class="btn-export-csv" (click)="exportRegistrationsCsv()" [disabled]="isExporting$ | async">
+              <button *ngIf="activeTab === 'registrations'" type="button" class="btn-export-csv" (click)="exportRegistrationsCsv()" [disabled]="(isExporting$ | async) || (registrationLoadState$ | async) === 'loading' || (registrationLoadState$ | async) === 'forbidden' || (registrationLoadState$ | async) === 'error'">
                 {{ (isExporting$ | async) ? 'EXPORTING CSV...' : '⬇ EXPORT CSV' }}
               </button>
             </div>
@@ -677,11 +677,14 @@
 
             <!-- Filter Controls Bar -->
             <div class="reg-filters-bar">
-              <div class="search-box">
+              <div class="reg-filter-field search-box">
+                <label for="registration-search">Search applications</label>
                 <input
+                  id="registration-search"
                   type="text"
                   placeholder="Search by name, email, phone, reference..."
                   [value]="regSearch"
+                  (input)="regSearch = $any($event.target).value"
                   (keyup.enter)="onRegistrationSearch($any($event.target).value)"
                   class="reg-search-input"
                 />
@@ -689,24 +692,48 @@
               </div>
 
               <div class="filter-selectors">
-                <select [value]="regGradYearFilter || ''" (change)="setRegistrationGradYearFilter($any($event.target).value ? +$any($event.target).value : null)" class="reg-select">
-                  <option value="">All Graduation Years</option>
-                  <option value="2024">Grad 2024</option>
-                  <option value="2025">Grad 2025</option>
-                  <option value="2026">Grad 2026</option>
-                  <option value="2027">Grad 2027</option>
-                  <option value="2028">Grad 2028</option>
-                </select>
+                <div class="reg-filter-field">
+                  <label for="registration-university">University</label>
+                  <select id="registration-university" [value]="regUniversityIdFilter" (change)="setRegistrationUniversityFilter($any($event.target).value)" class="reg-select">
+                    <option value="">All universities</option>
+                    <option *ngFor="let university of (registrationUniversities$ | async)" [value]="university.id">{{ university.englishName }}</option>
+                  </select>
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-faculty">Faculty</label>
+                  <select id="registration-faculty" [value]="regFacultyIdFilter" (change)="setRegistrationFacultyFilter($any($event.target).value)" class="reg-select" [disabled]="!regUniversityIdFilter">
+                    <option value="">All faculties</option>
+                    <option *ngFor="let faculty of (registrationFaculties$ | async)" [value]="faculty.facultyId">{{ faculty.englishName }}</option>
+                  </select>
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-grad-year">Graduation year</label>
+                  <select id="registration-grad-year" [value]="regGradYearFilter || ''" (change)="setRegistrationGradYearFilter($any($event.target).value ? +$any($event.target).value : null)" class="reg-select">
+                    <option value="">All years</option>
+                    <option *ngFor="let yearOption of [2024, 2025, 2026, 2027, 2028, 2029, 2030]" [value]="yearOption">{{ yearOption }}</option>
+                  </select>
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-from">Submitted from</label>
+                  <input id="registration-from" type="date" class="reg-select" [value]="regSubmittedFrom" [max]="regSubmittedTo || null" (change)="setRegistrationDateFilter('from', $any($event.target).value)" />
+                </div>
+                <div class="reg-filter-field">
+                  <label for="registration-to">Submitted to</label>
+                  <input id="registration-to" type="date" class="reg-select" [value]="regSubmittedTo" [min]="regSubmittedFrom || null" (change)="setRegistrationDateFilter('to', $any($event.target).value)" />
+                </div>
+                <button type="button" class="btn-clear-filters" (click)="clearRegistrationFilters()">Clear filters</button>
               </div>
             </div>
+
+            <p class="export-scope-note">CSV export uses the current search and filters across all matching pages. Private document links, National ID values, and free-text answers are excluded.</p>
 
             <!-- Status Aggregation Pills -->
             <div *ngIf="(registrations$ | async) as regData" class="status-counts-row">
               <button type="button" class="status-count-btn" [class.active]="regStatusFilter === 'All'" (click)="setRegistrationStatusFilter('All')">
                 All ({{ regData.statusCounts.all || regData.totalCount }})
               </button>
-              <button type="button" class="status-count-btn received" [class.active]="regStatusFilter === 'Received'" (click)="setRegistrationStatusFilter('Received')">
-                Received ({{ regData.statusCounts.received || 0 }})
+              <button type="button" class="status-count-btn submitted" [class.active]="regStatusFilter === 'Submitted'" (click)="setRegistrationStatusFilter('Submitted')">
+                Submitted ({{ regData.statusCounts.submitted || 0 }})
               </button>
               <button type="button" class="status-count-btn under-review" [class.active]="regStatusFilter === 'UnderReview'" (click)="setRegistrationStatusFilter('UnderReview')">
                 Under Review ({{ regData.statusCounts.underReview || 0 }})
@@ -714,14 +741,14 @@
               <button type="button" class="status-count-btn accepted" [class.active]="regStatusFilter === 'Accepted'" (click)="setRegistrationStatusFilter('Accepted')">
                 Accepted ({{ regData.statusCounts.accepted || 0 }})
               </button>
-              <button type="button" class="status-count-btn confirmed" [class.active]="regStatusFilter === 'Confirmed'" (click)="setRegistrationStatusFilter('Confirmed')">
-                Confirmed ({{ regData.statusCounts.confirmed || 0 }})
-              </button>
               <button type="button" class="status-count-btn waitlisted" [class.active]="regStatusFilter === 'Waitlisted'" (click)="setRegistrationStatusFilter('Waitlisted')">
                 Waitlisted ({{ regData.statusCounts.waitlisted || 0 }})
               </button>
               <button type="button" class="status-count-btn rejected" [class.active]="regStatusFilter === 'Rejected'" (click)="setRegistrationStatusFilter('Rejected')">
                 Rejected ({{ regData.statusCounts.rejected || 0 }})
+              </button>
+              <button type="button" class="status-count-btn cancelled" [class.active]="regStatusFilter === 'Cancelled'" (click)="setRegistrationStatusFilter('Cancelled')">
+                Cancelled ({{ regData.statusCounts.cancelled || 0 }})
               </button>
             </div>
 
@@ -731,8 +758,18 @@
               <span>Fetching applications...</span>
             </div>
 
+            <div *ngIf="(registrationLoadState$ | async) === 'forbidden'" class="registration-state-card forbidden" role="alert">
+              <strong>Registration access is restricted.</strong>
+              <span>{{ registrationErrorMessage$ | async }}</span>
+            </div>
+
+            <div *ngIf="(registrationLoadState$ | async) === 'error'" class="registration-state-card error" role="alert">
+              <div><strong>Applications could not be loaded.</strong><span>{{ registrationErrorMessage$ | async }}</span></div>
+              <button type="button" class="btn-retry" (click)="loadRegistrations()">Retry</button>
+            </div>
+
             <!-- Registrations Table -->
-            <div *ngIf="!(isLoadingRegistrations$ | async) && (registrations$ | async) as regData" class="reg-table-card">
+            <div *ngIf="((registrationLoadState$ | async) === 'loaded' || (registrationLoadState$ | async) === 'empty') && (registrations$ | async) as regData" class="reg-table-card">
               <div *ngIf="regData.items.length === 0" class="empty-tab-box">
                 <p>No registrations found matching the active filters.</p>
               </div>
@@ -776,8 +813,8 @@
                       </td>
 
                       <td class="status-cell">
-                        <span class="reg-status-pill" [class.received]="item.status === 'Received'" [class.under-review]="item.status === 'UnderReview'" [class.accepted]="item.status === 'Accepted'" [class.confirmed]="item.status === 'Confirmed'" [class.rejected]="item.status === 'Rejected'" [class.waitlisted]="item.status === 'Waitlisted'">
-                          {{ item.status }}
+                        <span class="reg-status-pill" [class.submitted]="item.status === 'Submitted'" [class.under-review]="item.status === 'UnderReview'" [class.accepted]="item.status === 'Accepted'" [class.cancelled]="item.status === 'Cancelled'" [class.rejected]="item.status === 'Rejected'" [class.waitlisted]="item.status === 'Waitlisted'">
+                          {{ registrationStatusLabel(item.status) }}
                         </span>
                       </td>
 
@@ -812,10 +849,19 @@
     <!-- Registration Detail Modal / Drawer (Milestone 7) -->
     <div *ngIf="isDetailModalOpen$ | async" class="detail-modal-overlay" (click)="closeRegistrationDetail()" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
       <div class="detail-drawer-card" (click)="$event.stopPropagation()">
-        
+
         <div *ngIf="isLoadingDetail$ | async" class="loading-state">
           <div class="spinner"></div>
           <p>Loading applicant details...</p>
+        </div>
+
+        <div *ngIf="!(isLoadingDetail$ | async) && (registrationDetailError$ | async) as detailError" class="detail-error-state" role="alert">
+          <strong>Applicant details could not be opened.</strong>
+          <p>{{ detailError }}</p>
+          <div class="detail-error-actions">
+            <button *ngIf="selectedRegistrationId" type="button" class="btn-retry" (click)="openRegistrationDetail(selectedRegistrationId)">Retry</button>
+            <button type="button" class="btn-secondary" (click)="closeRegistrationDetail()">Close</button>
+          </div>
         </div>
 
         <div *ngIf="!(isLoadingDetail$ | async) && (selectedRegistration$ | async) as detail" class="detail-content">
@@ -905,8 +951,8 @@
                 🎓 View Student ID Card
               </button>
 
-              <button *ngIf="detail.hasCvFile" type="button" class="btn-doc-action cv" (click)="downloadPrivateDocument(detail.id, 'cv', detail.nameEnglish.replace(' ', '_') + '_CV.pdf')">
-                📄 Download Applicant CV
+              <button *ngIf="detail.hasCvFile" type="button" class="btn-doc-action cv" [disabled]="downloadingDocument$ | async" (click)="downloadPrivateDocument(detail.id, 'cv', registrationDocumentFileName(detail, 'Cv', detail.nameEnglish.replace(' ', '_') + '_CV'))">
+                📄 {{ (downloadingDocument$ | async) === 'cv' ? 'Downloading CV...' : 'Download Applicant CV' }}
               </button>
             </div>
           </div>
@@ -919,12 +965,7 @@
                 <div class="form-group status-select-group">
                   <label for="update-status">Application Status <span class="req">*</span></label>
                   <select id="update-status" formControlName="status">
-                    <option value="Received">Received</option>
-                    <option value="UnderReview">Under Review</option>
-                    <option value="Accepted">Accepted</option>
-                    <option value="Confirmed">Confirmed</option>
-                    <option value="Waitlisted">Waitlisted</option>
-                    <option value="Rejected">Rejected</option>
+                    <option *ngFor="let status of getAllowedRegistrationStatuses(detail.status)" [value]="status">{{ registrationStatusLabel(status) }}</option>
                   </select>
                 </div>
 
@@ -948,7 +989,7 @@
                 <div class="timeline-badge"></div>
                 <div class="timeline-content">
                   <div class="timeline-meta">
-                    <strong>{{ h.fromStatus }} &rarr; {{ h.toStatus }}</strong>
+                    <strong>{{ registrationStatusLabel(h.fromStatus) }} &rarr; {{ registrationStatusLabel(h.toStatus) }}</strong>
                     <span class="timeline-by">by {{ h.changedBy }} &bull; {{ h.changedAt | date:'short' }}</span>
                   </div>
                   <div *ngIf="h.note" class="timeline-note">{{ h.note }}</div>

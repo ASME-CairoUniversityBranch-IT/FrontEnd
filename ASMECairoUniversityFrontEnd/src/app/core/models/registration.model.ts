@@ -1,10 +1,5 @@
 export type RegistrationQuestionType =
-  | 'ShortText'
-  | 'LongText'
-  | 'SingleChoice'
-  | 'MultipleChoice'
-  | 'YesNo'
-  | 'ConditionalTeam';
+  'ShortText' | 'LongText' | 'SingleChoice' | 'MultipleChoice' | 'YesNo' | 'ConditionalTeam';
 
 export interface RegistrationQuestionOption {
   id: string;
@@ -144,7 +139,8 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
     capacity: 500,
     minGraduationYear: 2020,
     maxGraduationYear: 2035,
-    eligibilityText: 'Undergraduate and recent graduate engineering students across Egyptian universities.',
+    eligibilityText:
+      'Undergraduate and recent graduate engineering students across Egyptian universities.',
     privacyNoticeVersion: '2026.1',
     privacyNoticeUrl: 'https://asme-cu.org/privacy',
     submissionWorkflow: 'ReviewFirst',
@@ -161,10 +157,26 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
       displayOrder: 1,
       allowOther: true,
       options: [
-        { id: 'opt-fb', label: 'Facebook / Social Media', value: 'SocialMedia' },
-        { id: 'opt-friends', label: 'University Friends / Colleagues', value: 'Friends' },
-        { id: 'opt-prof', label: 'Faculty Professors / Teaching Assistants', value: 'Professors' },
-        { id: 'opt-booth', label: 'On-Campus ASME Booth', value: 'OnCampusBooth' },
+        {
+          id: 'opt-fb',
+          label: 'Facebook / Social Media',
+          value: 'SocialMedia',
+        },
+        {
+          id: 'opt-friends',
+          label: 'University Friends / Colleagues',
+          value: 'Friends',
+        },
+        {
+          id: 'opt-prof',
+          label: 'Faculty Professors / Teaching Assistants',
+          value: 'Professors',
+        },
+        {
+          id: 'opt-booth',
+          label: 'On-Campus ASME Booth',
+          value: 'OnCampusBooth',
+        },
         { id: 'opt-other', label: 'Other', value: 'Other' },
       ],
     },
@@ -178,12 +190,36 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
       isActive: true,
       displayOrder: 2,
       options: [
-        { id: 'track-design', label: 'Mechanical & CAD Design', value: 'MechanicalDesign' },
-        { id: 'track-thermal', label: 'Thermal & Fluid Systems', value: 'ThermalFluids' },
-        { id: 'track-mechatronics', label: 'Robotics & Mechatronics', value: 'Mechatronics' },
-        { id: 'track-mfg', label: 'Manufacturing & Materials', value: 'Manufacturing' },
-        { id: 'track-energy', label: 'Renewable & Power Energy', value: 'Energy' },
-        { id: 'track-auto', label: 'Automotive & Aerospace', value: 'Automotive' },
+        {
+          id: 'track-design',
+          label: 'Mechanical & CAD Design',
+          value: 'MechanicalDesign',
+        },
+        {
+          id: 'track-thermal',
+          label: 'Thermal & Fluid Systems',
+          value: 'ThermalFluids',
+        },
+        {
+          id: 'track-mechatronics',
+          label: 'Robotics & Mechatronics',
+          value: 'Mechatronics',
+        },
+        {
+          id: 'track-mfg',
+          label: 'Manufacturing & Materials',
+          value: 'Manufacturing',
+        },
+        {
+          id: 'track-energy',
+          label: 'Renewable & Power Energy',
+          value: 'Energy',
+        },
+        {
+          id: 'track-auto',
+          label: 'Automotive & Aerospace',
+          value: 'Automotive',
+        },
       ],
     },
     {
@@ -200,7 +236,8 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
       id: 'q-join-asme',
       key: 'join_asme_cu',
       title: 'Would you like to join the ASME Cairo University Student Branch team?',
-      description: 'Open to undergraduate engineering students who want to develop leadership and technical skills.',
+      description:
+        'Open to undergraduate engineering students who want to develop leadership and technical skills.',
       type: 'YesNo',
       isRequired: true,
       isActive: true,
@@ -218,10 +255,22 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
       conditionalOnKey: 'join_asme_cu',
       conditionalValue: true,
       options: [
-        { id: 'team-tech', label: 'Technical Projects & Workshops', value: 'Technical' },
+        {
+          id: 'team-tech',
+          label: 'Technical Projects & Workshops',
+          value: 'Technical',
+        },
         { id: 'team-it', label: 'IT & Software Development', value: 'IT' },
-        { id: 'team-pr', label: 'Public Relations & Partnerships', value: 'PR' },
-        { id: 'team-media', label: 'Media, Graphic Design & Marketing', value: 'Media' },
+        {
+          id: 'team-pr',
+          label: 'Public Relations & Partnerships',
+          value: 'PR',
+        },
+        {
+          id: 'team-media',
+          label: 'Media, Graphic Design & Marketing',
+          value: 'Media',
+        },
         { id: 'team-hr', label: 'Human Resources & Logistics', value: 'HR' },
       ],
     },
@@ -241,12 +290,7 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
 
 /* ── Milestone 7: Registration Review, Document & Export Models ── */
 export type RegistrationStatus =
-  | 'Received'
-  | 'UnderReview'
-  | 'Accepted'
-  | 'Rejected'
-  | 'Waitlisted'
-  | 'Confirmed';
+  'Submitted' | 'UnderReview' | 'Accepted' | 'Waitlisted' | 'Rejected' | 'Cancelled';
 
 export interface RegistrationListFilterParams {
   search?: string;
@@ -272,17 +316,16 @@ export interface AdminRegistrationListItem {
   graduationYear: number;
   status: RegistrationStatus;
   submittedAt: string;
-  updatedAt?: string | null;
 }
 
 export interface RegistrationStatusCount {
   all: number;
-  received: number;
+  submitted: number;
   underReview: number;
   accepted: number;
   rejected: number;
   waitlisted: number;
-  confirmed: number;
+  cancelled: number;
 }
 
 export interface AdminRegistrationListResponse {
@@ -296,8 +339,8 @@ export interface AdminRegistrationListResponse {
 
 export interface RegistrationStatusHistoryEntry {
   id: string;
-  fromStatus: RegistrationStatus;
-  toStatus: RegistrationStatus;
+  fromStatus: RegistrationStatus | null;
+  toStatus: RegistrationStatus | null;
   changedBy: string;
   changedAt: string;
   note?: string | null;
@@ -341,8 +384,18 @@ export interface AdminRegistrationDetailResponse {
   hasNationalIdPhoto: boolean;
   hasUniversityIdPhoto: boolean;
   hasCvFile: boolean;
+  documents: AdminRegistrationDocumentDetail[];
   statusHistory: RegistrationStatusHistoryEntry[];
-  internalNotes?: string | null;
+}
+
+export type RegistrationDocumentType = 'NationalIdPhoto' | 'UniversityIdPhoto' | 'Cv';
+
+export interface AdminRegistrationDocumentDetail {
+  documentType: RegistrationDocumentType;
+  displayName: string;
+  contentType: string;
+  byteSize: number;
+  storedAt: string;
 }
 
 export interface UpdateRegistrationStatusRequest {
@@ -351,3 +404,106 @@ export interface UpdateRegistrationStatusRequest {
 }
 
 export type PrivateDocumentType = 'national-id' | 'university-id' | 'cv';
+
+/* Exact wire contracts returned by Backend#8. Keep private object metadata out of these types. */
+export interface RegistrationListApiItem {
+  id: string;
+  registrationId: string;
+  reference: string;
+  status: RegistrationStatus;
+  submittedAt: string;
+  nameEnglish: string;
+  nameArabic: string;
+  email: string;
+  phoneNumber: string;
+  universityId?: string | null;
+  university: string;
+  facultyId?: string | null;
+  facultyOfferingId?: string | null;
+  faculty: string;
+  departmentId?: string | null;
+  department: string;
+  graduationYear: number;
+  documentCount: number;
+  answerCount: number;
+}
+
+export interface RegistrationListApiResponse {
+  items: RegistrationListApiItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface RegistrationSummaryApiResponse {
+  total: number;
+  totalCount: number;
+  counts: Partial<Record<RegistrationStatus, number>>;
+  statusCounts: Array<{ status: RegistrationStatus; count: number }>;
+}
+
+export interface RegistrationAnswerApiResponse {
+  questionId: string;
+  questionKey: string;
+  prompt: string;
+  type: string;
+  isRequired: boolean;
+  answerJson: string;
+  optionsSnapshotJson: string;
+}
+
+export interface RegistrationStatusHistoryApiResponse {
+  fromStatus: RegistrationStatus | null;
+  toStatus: RegistrationStatus | null;
+  note?: string | null;
+  actorAdminId?: string | null;
+  actorAdminName?: string | null;
+  createdAt: string;
+}
+
+export interface RegistrationDetailApiResponse {
+  id: string;
+  registrationId: string;
+  editionYear: number;
+  editionId: string;
+  schemaId: string;
+  schemaVersion: number;
+  reference: string;
+  status: RegistrationStatus;
+  submittedAt: string;
+  nameEnglish: string;
+  nameArabic: string;
+  email: string;
+  phoneNumber: string;
+  gender: string;
+  nationalIdMasked: string;
+  universityId?: string | null;
+  university: string;
+  universityArabicName?: string | null;
+  universityOtherValue?: string | null;
+  facultyOfferingId?: string | null;
+  facultyId?: string | null;
+  faculty: string;
+  facultyArabicName?: string | null;
+  facultyOtherValue?: string | null;
+  departmentId?: string | null;
+  department: string;
+  departmentArabicName?: string | null;
+  departmentOtherValue?: string | null;
+  graduationYear: number;
+  privacyNoticeVersion: string;
+  privacyNoticeAccepted: boolean;
+  privacyNoticeAcknowledgedAt: string;
+  answers: RegistrationAnswerApiResponse[];
+  documents: AdminRegistrationDocumentDetail[];
+  statusHistory: RegistrationStatusHistoryApiResponse[];
+}
+
+export interface RegistrationStatusUpdateApiResponse {
+  id: string;
+  reference: string;
+  status: RegistrationStatus;
+  changedAt: string;
+  note?: string | null;
+}
