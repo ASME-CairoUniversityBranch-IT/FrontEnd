@@ -52,7 +52,7 @@
                 {{ edition.isRegistrationAvailable ? 'CLOSE REGISTRATION' : 'OPEN REGISTRATION' }}
               </button>
 
-              <button type="button" class="btn-save" (click)="saveDraft()" [disabled]="(isSaving$ | async) || !form.dirty">
+              <button *ngIf="activeTab === 'overview'" type="button" class="btn-save" (click)="saveDraft()" [disabled]="(isSaving$ | async) || !form.dirty">
                 {{ (isSaving$ | async) ? 'SAVING...' : 'SAVE DRAFT' }}
               </button>
             </div>
@@ -167,7 +167,7 @@
               </div>
             </div>
 
-            <!-- Section B: Why Main Segment Matters (Story Content) -->
+            <!-- Section B: Why Main Segment Matters -->
             <div class="form-card">
               <h2 class="card-title">2. Editorial Story Narrative ("Why Main Segment Matters")</h2>
               <p class="card-desc">The high-impact editorial narrative framed with engineering design language explaining the purpose of this edition.</p>
@@ -181,7 +181,7 @@
               </div>
             </div>
 
-            <!-- Section C: Career Fair & Review Introductions -->
+            <!-- Section C: Segment Introductions -->
             <div class="form-card">
               <h2 class="card-title">3. Segment Introductions</h2>
               <p class="card-desc">Optional editorial introductions rendered above the Career Fair and Mock Interviews sections.</p>
@@ -288,33 +288,215 @@
           </form>
         </section>
 
-        <!-- Tab 2: Program (Teaser / Milestone 4) -->
-        <section *ngIf="activeTab === 'program'" class="tab-content placeholder-tab">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">🎤</div>
-            <h2>Program & Schedule Management</h2>
-            <p>
-              Manage panel discussions, talks, workshops, and mentorship circles with speakers and mentors.
-            </p>
-            <div class="items-summary-box">
-              <strong>Currently configured:</strong> {{ edition.programItems.length }} program items &bull; {{ edition.people.length }} speakers/mentors.
+        <!-- Tab 2: Program & Schedule Editor -->
+        <section *ngIf="activeTab === 'program'" class="tab-content">
+          <div class="sub-header-bar">
+            <div class="filter-pills">
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'All'" (click)="setProgramFilter('All')">
+                All Items ({{ edition.programItems.length }})
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'PanelDiscussion'" (click)="setProgramFilter('PanelDiscussion')">
+                Panel Discussions
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'Talk'" (click)="setProgramFilter('Talk')">
+                Talks
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'Workshop'" (click)="setProgramFilter('Workshop')">
+                Workshops
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'MentorshipCircle'" (click)="setProgramFilter('MentorshipCircle')">
+                Mentorship Circles
+              </button>
+              <button type="button" class="filter-btn" [class.active]="programFilter === 'Speakers'" (click)="setProgramFilter('Speakers')">
+                Speakers & Mentors ({{ edition.people.length }})
+              </button>
             </div>
-            <p class="sub-note">Full drag-and-drop schedule, speaker roster, and assignment editor is available in Milestone #4.</p>
+
+            <div class="sub-actions">
+              <button *ngIf="programFilter !== 'Speakers'" type="button" class="btn-add-primary" (click)="openAddProgramItemModal()">
+                + ADD PROGRAM ITEM
+              </button>
+              <button type="button" class="btn-add-secondary" (click)="openAddPersonModal()">
+                + ADD SPEAKER / MENTOR
+              </button>
+            </div>
+          </div>
+
+          <!-- Speakers Roster View (when selected) -->
+          <div *ngIf="programFilter === 'Speakers'" class="speakers-roster-view">
+            <div *ngIf="edition.people.length === 0" class="empty-tab-box">
+              <p>No speakers or mentors added yet. Click "+ ADD SPEAKER / MENTOR" to create the first speaker.</p>
+            </div>
+
+            <div *ngIf="edition.people.length > 0" class="people-editor-grid">
+              <article *ngFor="let person of edition.people; let i = index" class="person-editor-card">
+                <div class="person-card-top">
+                  <div class="person-avatar-box">
+                    <img *ngIf="person.photoUrl" [src]="person.photoUrl" [alt]="person.name" class="person-avatar-img" />
+                    <div *ngIf="!person.photoUrl" class="person-avatar-fallback">
+                      {{ getPersonInitials(person.name) }}
+                    </div>
+                  </div>
+
+                  <div class="person-card-meta">
+                    <h3 class="person-name">{{ person.name }}</h3>
+                    <div class="person-job">{{ person.jobTitle }}</div>
+                    <a *ngIf="person.linkedInUrl" [href]="person.linkedInUrl" target="_blank" class="person-linkedin">
+                      LinkedIn Profile ↗
+                    </a>
+                  </div>
+
+                  <div class="person-order-controls">
+                    <button type="button" class="btn-arrow" [disabled]="i === 0" (click)="movePerson(i, 'up', edition.people)" aria-label="Move speaker up">&uarr;</button>
+                    <button type="button" class="btn-arrow" [disabled]="i === edition.people.length - 1" (click)="movePerson(i, 'down', edition.people)" aria-label="Move speaker down">&darr;</button>
+                  </div>
+                </div>
+
+                <p class="person-bio-text">{{ person.shortBio }}</p>
+
+                <div class="person-assignments-row">
+                  <span class="assignment-label">Assigned to:</span>
+                  <span class="assignment-val">{{ getPersonAssignedItemTitles(person.programItemIds, edition.programItems) }}</span>
+                </div>
+
+                <div class="person-card-footer">
+                  <div class="photo-upload-group">
+                    <label class="btn-photo-upload" [class.disabled]="isUploadingImage$ | async">
+                      {{ (isUploadingImage$ | async) ? '...' : (person.photoUrl ? 'REPLACE PHOTO' : 'UPLOAD PHOTO') }}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPersonPhotoSelected(person.id, $event)" [disabled]="isUploadingImage$ | async" />
+                    </label>
+                    <button *ngIf="person.photoUrl" type="button" class="btn-photo-remove" (click)="removePersonPhoto(person.id)" [disabled]="isUploadingImage$ | async">
+                      ✕
+                    </button>
+                  </div>
+
+                  <div class="person-actions-right">
+                    <button type="button" class="btn-edit-inline" (click)="openEditPersonModal(person)">EDIT</button>
+                    <button type="button" class="btn-delete-inline" (click)="deletePerson(person.id)">DELETE</button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- Program Items List View -->
+          <div *ngIf="programFilter !== 'Speakers'" class="program-items-view">
+            <div *ngIf="getFilteredProgramItems(edition.programItems).length === 0" class="empty-tab-box">
+              <p>No program items found for this category. Click "+ ADD PROGRAM ITEM" to create one.</p>
+            </div>
+
+            <div *ngIf="getFilteredProgramItems(edition.programItems).length > 0" class="program-items-list">
+              <article *ngFor="let item of getFilteredProgramItems(edition.programItems); let i = index" class="program-item-card" [class.hidden-item]="!item.isVisible">
+                <div class="item-card-header">
+                  <div class="item-tags-row">
+                    <span class="category-badge">{{ item.category }}</span>
+                    <span *ngIf="!item.isVisible" class="hidden-badge">HIDDEN FROM PUBLIC</span>
+                    <span *ngIf="item.startsAt" class="time-badge">
+                      {{ item.startsAt | date:'shortTime' }}<span *ngIf="item.endsAt"> - {{ item.endsAt | date:'shortTime' }}</span>
+                    </span>
+                    <span *ngIf="item.location" class="location-badge">📍 {{ item.location }}</span>
+                  </div>
+
+                  <div class="item-reorder-group">
+                    <button type="button" class="btn-arrow" [disabled]="i === 0" (click)="moveProgramItem(i, 'up', edition.programItems)" aria-label="Move item up">&uarr;</button>
+                    <button type="button" class="btn-arrow" [disabled]="i === edition.programItems.length - 1" (click)="moveProgramItem(i, 'down', edition.programItems)" aria-label="Move item down">&darr;</button>
+                  </div>
+                </div>
+
+                <h3 class="item-title">{{ item.title }}</h3>
+                <p class="item-description">{{ item.description }}</p>
+
+                <div class="item-assigned-speakers">
+                  <strong>Speakers / Mentors:</strong> {{ getAssignedPeopleNames(item.personIds, edition.people) }}
+                </div>
+
+                <div class="item-card-actions">
+                  <button type="button" class="btn-edit-inline" (click)="openEditProgramItemModal(item)">EDIT ITEM</button>
+                  <button type="button" class="btn-delete-inline" (click)="deleteProgramItem(item.id)">DELETE</button>
+                </div>
+              </article>
+            </div>
           </div>
         </section>
 
-        <!-- Tab 3: Companies & Ecosystem (Teaser / Milestone 4) -->
-        <section *ngIf="activeTab === 'companies'" class="tab-content placeholder-tab">
-          <div class="placeholder-card">
-            <div class="placeholder-icon">🏢</div>
-            <h2>Companies, Sponsors & Partners</h2>
-            <p>
-              Manage career fair companies, reviewer firms, sponsors with tier hierarchy, and collaboration partners.
-            </p>
-            <div class="items-summary-box">
-              <strong>Currently configured:</strong> {{ edition.organizations.length }} partner and sponsor organizations.
+        <!-- Tab 3: Companies & Ecosystem Editor -->
+        <section *ngIf="activeTab === 'companies'" class="tab-content">
+          <div class="sub-header-bar">
+            <div class="filter-pills">
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'All'" (click)="setOrgFilter('All')">
+                All Organizations ({{ edition.organizations.length }})
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'CareerFair'" (click)="setOrgFilter('CareerFair')">
+                Career Fair
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'CvReviewAndMockInterview'" (click)="setOrgFilter('CvReviewAndMockInterview')">
+                CV Review & Interviews
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'Sponsor'" (click)="setOrgFilter('Sponsor')">
+                Sponsors
+              </button>
+              <button type="button" class="filter-btn" [class.active]="orgFilter === 'Partner'" (click)="setOrgFilter('Partner')">
+                Partners
+              </button>
             </div>
-            <p class="sub-note">Full sponsor tier ranking and logo stage editor is available in Milestone #4.</p>
+
+            <div class="sub-actions">
+              <button type="button" class="btn-add-primary" (click)="openAddOrgModal()">
+                + ADD ORGANIZATION
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="getFilteredOrganizations(edition.organizations).length === 0" class="empty-tab-box">
+            <p>No organizations found in this category. Click "+ ADD ORGANIZATION" to add one.</p>
+          </div>
+
+          <div *ngIf="getFilteredOrganizations(edition.organizations).length > 0" class="orgs-editor-grid">
+            <article *ngFor="let org of getFilteredOrganizations(edition.organizations); let i = index" class="org-editor-card" [class.hidden-item]="!org.isVisible">
+              <div class="org-stage-box">
+                <img *ngIf="org.logoUrl" [src]="org.logoUrl" [alt]="org.name" class="org-stage-logo" />
+                <div *ngIf="!org.logoUrl" class="org-stage-fallback">
+                  {{ getOrgInitials(org.name) }}
+                </div>
+              </div>
+
+              <div class="org-card-body">
+                <div class="org-tags-row">
+                  <span class="org-cat-badge">{{ org.category }}</span>
+                  <span *ngIf="org.category === 'Sponsor' && org.sponsorTier" class="sponsor-tier-badge" [class.strategic]="org.sponsorTier === 'Strategic'" [class.platinum]="org.sponsorTier === 'Platinum'" [class.gold]="org.sponsorTier === 'Gold'">
+                    {{ org.sponsorTier }}
+                  </span>
+                  <span *ngIf="!org.isVisible" class="hidden-badge">HIDDEN</span>
+                </div>
+
+                <h3 class="org-name">{{ org.name }}</h3>
+                <a *ngIf="org.websiteUrl" [href]="org.websiteUrl" target="_blank" class="org-website-link">
+                  Website ↗
+                </a>
+              </div>
+
+              <div class="org-card-footer">
+                <div class="photo-upload-group">
+                  <label class="btn-photo-upload" [class.disabled]="isUploadingImage$ | async">
+                    {{ (isUploadingImage$ | async) ? '...' : (org.logoUrl ? 'REPLACE LOGO' : 'UPLOAD LOGO') }}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onOrgLogoSelected(org.id, $event)" [disabled]="isUploadingImage$ | async" />
+                  </label>
+                  <button *ngIf="org.logoUrl" type="button" class="btn-photo-remove" (click)="removeOrgLogo(org.id)" [disabled]="isUploadingImage$ | async">
+                    ✕
+                  </button>
+                </div>
+
+                <div class="org-order-group">
+                  <button type="button" class="btn-arrow" [disabled]="i === 0" (click)="moveOrg(i, 'up', edition.organizations)" aria-label="Move org up">&uarr;</button>
+                  <button type="button" class="btn-arrow" [disabled]="i === edition.organizations.length - 1" (click)="moveOrg(i, 'down', edition.organizations)" aria-label="Move org down">&darr;</button>
+                </div>
+
+                <div class="org-actions-right">
+                  <button type="button" class="btn-edit-inline" (click)="openEditOrgModal(org)">EDIT</button>
+                  <button type="button" class="btn-delete-inline" (click)="deleteOrg(org.id)">DELETE</button>
+                </div>
+              </div>
+            </article>
           </div>
         </section>
 
@@ -340,6 +522,203 @@
 
       </div>
     </ng-container>
+
+    <!-- Program Item Modal -->
+    <div *ngIf="isProgramItemModalOpen$ | async" class="modal-overlay" (click)="closeProgramItemModal()" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="item-modal-title">{{ editingProgramItemId ? 'Edit Program Item' : 'Add Program Item' }}</h2>
+          <button type="button" class="btn-close" (click)="closeProgramItemModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="programItemForm" (ngSubmit)="saveProgramItem()" class="modal-form">
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="item-cat">Category <span class="req">*</span></label>
+              <select id="item-cat" formControlName="category">
+                <option value="PanelDiscussion">Panel Discussion</option>
+                <option value="Talk">Keynote / Technical Talk</option>
+                <option value="Workshop">Workshop</option>
+                <option value="MentorshipCircle">Mentorship Circle</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="item-visible">Visibility</label>
+              <select id="item-visible" formControlName="isVisible">
+                <option [ngValue]="true">Visible on Public Page</option>
+                <option [ngValue]="false">Hidden (Draft Item)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="item-title">Title <span class="req">*</span></label>
+            <input id="item-title" type="text" formControlName="title" placeholder="e.g. Navigating Thermal Systems Engineering" />
+          </div>
+
+          <div class="form-group">
+            <label for="item-desc">Description <span class="req">*</span></label>
+            <textarea id="item-desc" rows="3" formControlName="description" placeholder="Item summary and takeaways..."></textarea>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="item-starts">Starts At</label>
+              <input id="item-starts" type="datetime-local" formControlName="startsAt" />
+            </div>
+
+            <div class="form-group">
+              <label for="item-ends">Ends At</label>
+              <input id="item-ends" type="datetime-local" formControlName="endsAt" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="item-loc">Location / Room</label>
+            <input id="item-loc" type="text" formControlName="location" placeholder="e.g. Hall 3, Main Building" />
+          </div>
+
+          <!-- Assign Speakers -->
+          <div *ngIf="vm$ | async as vm" class="form-group">
+            <label>Assign Speakers / Mentors</label>
+            <div *ngIf="vm.edition?.people?.length === 0" class="helper-text">
+              No speakers exist yet. You can add them from the Speakers Roster.
+            </div>
+            <div *ngIf="(vm.edition?.people?.length || 0) > 0" class="checkbox-selection-grid">
+              <label *ngFor="let person of vm.edition?.people" class="checkbox-label">
+                <input type="checkbox" [checked]="(programItemForm.get('personIds')?.value || []).includes(person.id)" (change)="togglePersonAssignmentInItem(person.id)" />
+                <span>{{ person.name }} ({{ person.jobTitle }})</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeProgramItemModal()" [disabled]="isSaving$ | async">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="programItemForm.invalid || (isSaving$ | async)">
+              {{ (isSaving$ | async) ? 'Saving...' : 'Save Program Item' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Person Modal -->
+    <div *ngIf="isPersonModalOpen$ | async" class="modal-overlay" (click)="closePersonModal()" role="dialog" aria-modal="true" aria-labelledby="person-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="person-modal-title">{{ editingPersonId ? 'Edit Speaker Profile' : 'Add Speaker / Mentor' }}</h2>
+          <button type="button" class="btn-close" (click)="closePersonModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="personForm" (ngSubmit)="savePerson()" class="modal-form">
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="person-name">Full Name <span class="req">*</span></label>
+              <input id="person-name" type="text" formControlName="name" placeholder="Dr. Jane Doe" />
+            </div>
+
+            <div class="form-group">
+              <label for="person-title">Job Title / Company <span class="req">*</span></label>
+              <input id="person-title" type="text" formControlName="jobTitle" placeholder="Lead Aerodynamics Engineer, NASA" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="person-bio">Short Bio <span class="req">*</span></label>
+            <textarea id="person-bio" rows="3" formControlName="shortBio" placeholder="Speaker expertise and background..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="person-linkedin">LinkedIn URL</label>
+            <input id="person-linkedin" type="url" formControlName="linkedInUrl" placeholder="https://linkedin.com/in/janedoe" />
+          </div>
+
+          <!-- Assign Program Items -->
+          <div *ngIf="vm$ | async as vm" class="form-group">
+            <label>Participating in Program Items</label>
+            <div *ngIf="vm.edition?.programItems?.length === 0" class="helper-text">
+              No program items exist yet. You can assign this speaker later.
+            </div>
+            <div *ngIf="(vm.edition?.programItems?.length || 0) > 0" class="checkbox-selection-grid">
+              <label *ngFor="let item of vm.edition?.programItems" class="checkbox-label">
+                <input type="checkbox" [checked]="(personForm.get('programItemIds')?.value || []).includes(item.id)" (change)="toggleItemAssignmentInPerson(item.id)" />
+                <span>{{ item.title }} ({{ item.category }})</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closePersonModal()" [disabled]="isSaving$ | async">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="personForm.invalid || (isSaving$ | async)">
+              {{ (isSaving$ | async) ? 'Saving...' : 'Save Speaker Profile' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Organization Modal -->
+    <div *ngIf="isOrgModalOpen$ | async" class="modal-overlay" (click)="closeOrgModal()" role="dialog" aria-modal="true" aria-labelledby="org-modal-title">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 id="org-modal-title">{{ editingOrgId ? 'Edit Organization' : 'Add Organization' }}</h2>
+          <button type="button" class="btn-close" (click)="closeOrgModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form [formGroup]="orgForm" (ngSubmit)="saveOrg()" class="modal-form">
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="org-name">Organization Name <span class="req">*</span></label>
+              <input id="org-name" type="text" formControlName="name" placeholder="e.g. Siemens Energy" />
+            </div>
+
+            <div class="form-group">
+              <label for="org-category">Category <span class="req">*</span></label>
+              <select id="org-category" formControlName="category">
+                <option value="Sponsor">Sponsor</option>
+                <option value="Partner">Collaboration Partner</option>
+                <option value="CareerFair">Career Fair Company</option>
+                <option value="CvReviewAndMockInterview">CV Review & Mock Interview Firm</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div *ngIf="orgForm.get('category')?.value === 'Sponsor'" class="form-group">
+              <label for="sponsor-tier">Sponsorship Tier <span class="req">*</span></label>
+              <select id="sponsor-tier" formControlName="sponsorTier">
+                <option value="Strategic">Strategic (Top Tier)</option>
+                <option value="Platinum">Platinum</option>
+                <option value="Gold">Gold</option>
+                <option value="Silver">Silver</option>
+                <option value="Bronze">Bronze</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="org-vis">Visibility</label>
+              <select id="org-vis" formControlName="isVisible">
+                <option [ngValue]="true">Visible on Public Page</option>
+                <option [ngValue]="false">Hidden (Draft)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="org-web">Website URL</label>
+            <input id="org-web" type="url" formControlName="websiteUrl" placeholder="https://example.com" />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeOrgModal()" [disabled]="isSaving$ | async">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="orgForm.invalid || (isSaving$ | async)">
+              {{ (isSaving$ | async) ? 'Saving...' : 'Save Organization' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- Preview Modal -->
     <div *ngIf="isPreviewModalOpen$ | async" class="preview-modal-overlay" (click)="closePreview()" role="dialog" aria-modal="true" aria-labelledby="preview-title">
@@ -370,14 +749,22 @@
             <p class="prev-story">{{ prev.storyContent }}</p>
           </div>
 
-          <div *ngIf="prev.careerFairIntro" class="preview-section">
-            <h3>Career Fair</h3>
-            <p>{{ prev.careerFairIntro }}</p>
+          <div *ngIf="prev.programItems && prev.programItems.length > 0" class="preview-section">
+            <h3>Configured Program Items ({{ prev.programItems.length }})</h3>
+            <ul>
+              <li *ngFor="let pi of prev.programItems">
+                <strong>[{{ pi.category }}]</strong> {{ pi.title }} <span *ngIf="pi.location">({{ pi.location }})</span>
+              </li>
+            </ul>
           </div>
 
-          <div *ngIf="prev.cvReviewAndMockInterviewsIntro" class="preview-section">
-            <h3>CV Review & Mock Interviews</h3>
-            <p>{{ prev.cvReviewAndMockInterviewsIntro }}</p>
+          <div *ngIf="prev.organizations && prev.organizations.length > 0" class="preview-section">
+            <h3>Configured Organizations ({{ prev.organizations.length }})</h3>
+            <ul>
+              <li *ngFor="let org of prev.organizations">
+                <strong>[{{ org.category }}]</strong> {{ org.name }} <span *ngIf="org.sponsorTier">({{ org.sponsorTier }})</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>

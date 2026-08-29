@@ -5,9 +5,13 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   CreateMainSegmentEditionRequest,
+  MainSegmentAdminPersonResponse,
   MainSegmentAdminResponse,
   MainSegmentEditionStatus,
   MainSegmentEditionSummary,
+  MainSegmentOrganizationRequest,
+  MainSegmentPersonRequest,
+  MainSegmentProgramItemRequest,
   MainSegmentSectionRequest,
   UpdateMainSegmentEditionRequest,
 } from '../models/main-segment.model';
@@ -19,6 +23,7 @@ export class AdminMainSegmentService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/admin/main-segments`;
 
+  /* ── Edition-level Operations ── */
   getAdminEditions(): Observable<MainSegmentEditionSummary[]> {
     return this.http.get<MainSegmentEditionSummary[]>(this.baseUrl);
   }
@@ -105,6 +110,192 @@ export class AdminMainSegmentService {
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
+  /* ── Program Items ── */
+  createProgramItem(
+    year: number,
+    request: MainSegmentProgramItemRequest
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/program-items`, request)
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  updateProgramItem(
+    year: number,
+    programItemId: string,
+    request: MainSegmentProgramItemRequest
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .put<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/program-items/${programItemId}`,
+        request
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  deleteProgramItem(
+    year: number,
+    programItemId: string
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .delete<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/program-items/${programItemId}`
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  reorderProgramItems(year: number, ids: string[]): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/program-items/order`, { ids })
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  /* ── People / Speakers ── */
+  getPeople(year: number): Observable<MainSegmentAdminPersonResponse[]> {
+    return this.http
+      .get<MainSegmentAdminPersonResponse[]>(`${this.baseUrl}/${year}/people`)
+      .pipe(
+        map((people) =>
+          people.map((p) => ({
+            ...p,
+            photoUrl: this.resolveImageUrl(p.photoUrl),
+          }))
+        )
+      );
+  }
+
+  createPerson(
+    year: number,
+    request: MainSegmentPersonRequest
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people`, request)
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  updatePerson(
+    year: number,
+    personId: string,
+    request: MainSegmentPersonRequest
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/${personId}`, request)
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  deletePerson(year: number, personId: string): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .delete<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/${personId}`)
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  reorderPeople(year: number, ids: string[]): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/order`, { ids })
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  assignPerson(
+    year: number,
+    personId: string,
+    programItemIds: string[]
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .put<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/people/${personId}/assignments`,
+        { programItemIds }
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  uploadPersonPhoto(
+    year: number,
+    personId: string,
+    file: File
+  ): Observable<MainSegmentAdminResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http
+      .post<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/people/${personId}/photo`,
+        formData
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  deletePersonPhoto(year: number, personId: string): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .delete<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/people/${personId}/photo`)
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  /* ── Organizations ── */
+  createOrganization(
+    year: number,
+    request: MainSegmentOrganizationRequest
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/organizations`, request)
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  updateOrganization(
+    year: number,
+    organizationId: string,
+    request: MainSegmentOrganizationRequest
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .put<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/organizations/${organizationId}`,
+        request
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  deleteOrganization(
+    year: number,
+    organizationId: string
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .delete<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/organizations/${organizationId}`
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  reorderOrganizations(year: number, ids: string[]): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/organizations/order`, { ids })
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  uploadOrganizationLogo(
+    year: number,
+    organizationId: string,
+    file: File
+  ): Observable<MainSegmentAdminResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http
+      .post<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/organizations/${organizationId}/logo`,
+        formData
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  deleteOrganizationLogo(
+    year: number,
+    organizationId: string
+  ): Observable<MainSegmentAdminResponse> {
+    return this.http
+      .delete<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/organizations/${organizationId}/logo`
+      )
+      .pipe(map((res) => this.normalizeAdminResponse(res)));
+  }
+
+  /* ── Helper Normalization ── */
   private normalizeAdminResponse(res: MainSegmentAdminResponse): MainSegmentAdminResponse {
     if (!res) return res;
     return {

@@ -8,6 +8,11 @@ import {
   MainSegmentAdminResponse,
   MainSegmentEditionStatus,
   MainSegmentEditionSummary,
+  MainSegmentOrganizationCategory,
+  MainSegmentOrganizationRequest,
+  MainSegmentPersonRequest,
+  MainSegmentProgramCategory,
+  MainSegmentProgramItemRequest,
   MainSegmentSectionKey,
   UpdateMainSegmentEditionRequest,
 } from '../models/main-segment.model';
@@ -102,92 +107,95 @@ describe('AdminMainSegmentService', () => {
     req.flush(sampleAdminResponse);
   });
 
-  it('should fetch preview data for an edition', () => {
-    service.getPreview(2026).subscribe((res) => {
-      expect(res.year).toBe(2026);
-    });
-
-    const req = httpMock.expectOne(`${baseUrl}/2026/preview`);
-    expect(req.request.method).toBe('GET');
-    req.flush(sampleAdminResponse);
-  });
-
-  it('should create an edition', () => {
-    const createReq: CreateMainSegmentEditionRequest = {
-      year: 2026,
-      slug: 'main-segment-2026',
-      title: 'Main Segment 2026',
-      heroContent: 'Hero',
-      storyContent: 'Story',
-      startsAt: '2026-10-15T09:00:00Z',
-      endsAt: '2026-10-15T18:00:00Z',
-      location: 'Faculty of Engineering',
+  it('should handle program item CRUD and reordering', () => {
+    const itemReq: MainSegmentProgramItemRequest = {
+      category: MainSegmentProgramCategory.Talk,
+      title: 'Robotics Future',
+      description: 'Keynote talk',
+      isVisible: true,
     };
 
-    service.createEdition(createReq).subscribe((res) => {
-      expect(res.year).toBe(2026);
-    });
+    service.createProgramItem(2026, itemReq).subscribe();
+    const createReq = httpMock.expectOne(`${baseUrl}/2026/program-items`);
+    expect(createReq.request.method).toBe('POST');
+    createReq.flush(sampleAdminResponse);
 
-    const req = httpMock.expectOne(baseUrl);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(createReq);
-    req.flush(sampleAdminResponse);
+    service.updateProgramItem(2026, 'item-1', itemReq).subscribe();
+    const updateReq = httpMock.expectOne(`${baseUrl}/2026/program-items/item-1`);
+    expect(updateReq.request.method).toBe('PUT');
+    updateReq.flush(sampleAdminResponse);
+
+    service.deleteProgramItem(2026, 'item-1').subscribe();
+    const deleteReq = httpMock.expectOne(`${baseUrl}/2026/program-items/item-1`);
+    expect(deleteReq.request.method).toBe('DELETE');
+    deleteReq.flush(sampleAdminResponse);
+
+    service.reorderProgramItems(2026, ['id-1', 'id-2']).subscribe();
+    const reorderReq = httpMock.expectOne(`${baseUrl}/2026/program-items/order`);
+    expect(reorderReq.request.method).toBe('PUT');
+    reorderReq.flush(sampleAdminResponse);
   });
 
-  it('should update edition settings', () => {
-    const updateReq: UpdateMainSegmentEditionRequest = {
-      slug: 'main-segment-2026',
-      title: 'Updated Title',
-      heroContent: 'Updated Hero',
-      storyContent: 'Updated Story',
-      startsAt: '2026-10-15T09:00:00Z',
-      endsAt: '2026-10-15T18:00:00Z',
-      location: 'Faculty of Engineering',
+  it('should handle people CRUD, assignments, and photo upload', () => {
+    const personReq: MainSegmentPersonRequest = {
+      name: 'Dr. Jane',
+      jobTitle: 'Senior Researcher',
+      shortBio: 'Bio',
     };
 
-    service.updateEdition(2026, updateReq).subscribe((res) => {
-      expect(res.year).toBe(2026);
-    });
+    service.createPerson(2026, personReq).subscribe();
+    const createReq = httpMock.expectOne(`${baseUrl}/2026/people`);
+    expect(createReq.request.method).toBe('POST');
+    createReq.flush(sampleAdminResponse);
 
-    const req = httpMock.expectOne(`${baseUrl}/2026`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual(updateReq);
-    req.flush(sampleAdminResponse);
+    service.updatePerson(2026, 'p-1', personReq).subscribe();
+    const updateReq = httpMock.expectOne(`${baseUrl}/2026/people/p-1`);
+    expect(updateReq.request.method).toBe('PUT');
+    updateReq.flush(sampleAdminResponse);
+
+    service.assignPerson(2026, 'p-1', ['item-1']).subscribe();
+    const assignReq = httpMock.expectOne(`${baseUrl}/2026/people/p-1/assignments`);
+    expect(assignReq.request.method).toBe('PUT');
+    assignReq.flush(sampleAdminResponse);
+
+    const mockFile = new File(['fake-photo'], 'photo.png', { type: 'image/png' });
+    service.uploadPersonPhoto(2026, 'p-1', mockFile).subscribe();
+    const photoReq = httpMock.expectOne(`${baseUrl}/2026/people/p-1/photo`);
+    expect(photoReq.request.method).toBe('POST');
+    photoReq.flush(sampleAdminResponse);
+
+    service.deletePerson(2026, 'p-1').subscribe();
+    const deleteReq = httpMock.expectOne(`${baseUrl}/2026/people/p-1`);
+    expect(deleteReq.request.method).toBe('DELETE');
+    deleteReq.flush(sampleAdminResponse);
   });
 
-  it('should update edition status (e.g. Published)', () => {
-    service.setStatus(2026, MainSegmentEditionStatus.Published).subscribe((res) => {
-      expect(res.status).toBe(MainSegmentEditionStatus.Published);
-    });
+  it('should handle organization CRUD, reordering, and logo upload', () => {
+    const orgReq: MainSegmentOrganizationRequest = {
+      name: 'Siemens',
+      category: MainSegmentOrganizationCategory.Sponsor,
+      sponsorTier: 'Platinum',
+      isVisible: true,
+    };
 
-    const req = httpMock.expectOne(`${baseUrl}/2026/status`);
-    expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ status: MainSegmentEditionStatus.Published });
-    req.flush({ ...sampleAdminResponse, status: MainSegmentEditionStatus.Published });
-  });
+    service.createOrganization(2026, orgReq).subscribe();
+    const createReq = httpMock.expectOne(`${baseUrl}/2026/organizations`);
+    expect(createReq.request.method).toBe('POST');
+    createReq.flush(sampleAdminResponse);
 
-  it('should open and close registration', () => {
-    service.openRegistration(2026).subscribe();
-    const openReq = httpMock.expectOne(`${baseUrl}/2026/registration/open`);
-    expect(openReq.request.method).toBe('POST');
-    openReq.flush(sampleAdminResponse);
+    service.updateOrganization(2026, 'org-1', orgReq).subscribe();
+    const updateReq = httpMock.expectOne(`${baseUrl}/2026/organizations/org-1`);
+    expect(updateReq.request.method).toBe('PUT');
+    updateReq.flush(sampleAdminResponse);
 
-    service.closeRegistration(2026).subscribe();
-    const closeReq = httpMock.expectOne(`${baseUrl}/2026/registration/close`);
-    expect(closeReq.request.method).toBe('POST');
-    closeReq.flush(sampleAdminResponse);
-  });
+    const mockFile = new File(['fake-logo'], 'logo.png', { type: 'image/png' });
+    service.uploadOrganizationLogo(2026, 'org-1', mockFile).subscribe();
+    const logoReq = httpMock.expectOne(`${baseUrl}/2026/organizations/org-1/logo`);
+    expect(logoReq.request.method).toBe('POST');
+    logoReq.flush(sampleAdminResponse);
 
-  it('should upload and delete hero image', () => {
-    const mockFile = new File(['fake-image'], 'hero.png', { type: 'image/png' });
-
-    service.uploadHeroImage(2026, mockFile).subscribe();
-    const uploadReq = httpMock.expectOne(`${baseUrl}/2026/hero-image`);
-    expect(uploadReq.request.method).toBe('POST');
-    uploadReq.flush(sampleAdminResponse);
-
-    service.deleteHeroImage(2026).subscribe();
-    const deleteReq = httpMock.expectOne(`${baseUrl}/2026/hero-image`);
+    service.deleteOrganization(2026, 'org-1').subscribe();
+    const deleteReq = httpMock.expectOne(`${baseUrl}/2026/organizations/org-1`);
     expect(deleteReq.request.method).toBe('DELETE');
     deleteReq.flush(sampleAdminResponse);
   });

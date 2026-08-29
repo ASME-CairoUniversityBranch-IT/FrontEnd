@@ -212,3 +212,41 @@ export interface SetMainSegmentStatusRequest {
 export interface SetMainSegmentRegistrationRequest {
   availabilityOverride: boolean | null;
 }
+
+export interface MainSegmentProgramItemRequest {
+  category: MainSegmentProgramCategory;
+  title: string;
+  description: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  location?: string | null;
+  isVisible: boolean;
+  displayOrder?: number | null;
+  personIds?: string[] | null;
+}
+
+export interface MainSegmentPersonRequest {
+  name: string;
+  jobTitle: string;
+  shortBio: string;
+  linkedInUrl?: string | null;
+  displayOrder?: number | null;
+  programItemIds?: string[] | null;
+}
+
+export interface MainSegmentOrganizationRequest {
+  name: string;
+  category: MainSegmentOrganizationCategory;
+  websiteUrl?: string | null;
+  sponsorTier?: SponsorshipTier | null;
+  isVisible: boolean;
+  displayOrder?: number | null;
+}
+
+export interface ReorderMainSegmentRequest {
+  ids: string[];
+}
+
+export interface AssignMainSegmentPeopleRequest {
+  programItemIds: string[];
+}
