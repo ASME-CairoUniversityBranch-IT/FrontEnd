@@ -23,7 +23,6 @@ import {
   AdminRegistrationDetailResponse,
   AdminRegistrationListResponse,
   AdminRegistrationQuestion,
-  AdminRegistrationQuestionApiRequest,
   AdminRegistrationSchemaApiResponse,
   AdminRegistrationSchemaResponse,
   AdminRegistrationAnswerDetail,
@@ -363,10 +362,29 @@ export class AdminMainSegmentService {
     year: number,
     request: UpdateRegistrationSchemaRequest,
   ): Observable<AdminRegistrationSchemaResponse> {
-    return this.getRegistrationSchema(year).pipe(
-      switchMap((current) => this.ensureRegistrationSchemaDraft(year, current)),
-      switchMap((draft) => this.persistRegistrationQuestions(year, draft, request.questions)),
-    );
+    const questions = [...request.questions].sort((a, b) => a.displayOrder - b.displayOrder);
+    return this.http.put<AdminRegistrationSchemaApiResponse>(`${this.baseUrl}/${year}/registration-schema`, {
+      questions: questions.map((question, index) => {
+        const parent = questions.find(candidate => candidate.key === question.conditionalOnKey);
+        const expected = question.conditionalValue;
+        return {
+          key: question.key, prompt: question.title, helperText: question.description || question.placeholder || null,
+          type: this.enumIndex(this.questionTypes, question.type),
+          isRequired: question.isRequired, isActive: question.isActive, displayOrder: index,
+          minLength: question.minLength ?? null, maxLength: question.maxLength ?? null,
+          minSelections: question.minSelections ?? null, maxSelections: question.maxSelections ?? null,
+          dependsOnKey: question.conditionalOnKey || null,
+          expectedValue: parent?.type === 'YesNo' && expected != null
+            ? (expected === true || expected === 'true' || expected === 'yes' ? 'yes' : expected === false || expected === 'false' || expected === 'no' ? 'no' : String(expected))
+            : expected == null ? null : String(expected),
+          // Draft copies have new IDs. Keys/values, not IDs from a published revision, identify content.
+          options: (question.options || []).map((option, optionIndex) => ({
+            value: option.value, label: option.label, isOther: option.isOther === true,
+            isActive: option.isActive !== false, displayOrder: optionIndex,
+          })),
+        };
+      }),
+    }).pipe(map(response => this.normalizeAdminSchema(response)));
   }
 
   publishRegistrationSchema(
@@ -401,113 +419,6 @@ export class AdminMainSegmentService {
       .pipe(map((response) => this.normalizeAdminSchema(response)));
   }
 
-  private ensureRegistrationSchemaDraft(
-    year: number,
-    current: AdminRegistrationSchemaResponse,
-  ): Observable<AdminRegistrationSchemaResponse> {
-    if (current.status === 'Draft') return of(current);
-
-    return this.http
-      .post<AdminRegistrationSchemaApiResponse>(
-        `${this.baseUrl}/${year}/registration-schemas`,
-        { sourceSchemaId: current.schemaId },
-      )
-      .pipe(map((response) => this.normalizeAdminSchema(response)));
-  }
-
-  private persistRegistrationQuestions(
-    year: number,
-    draft: AdminRegistrationSchemaResponse,
-    desiredQuestions: AdminRegistrationQuestion[],
-  ): Observable<AdminRegistrationSchemaResponse> {
-    const desired = [...desiredQuestions].sort((a, b) => a.displayOrder - b.displayOrder);
-
-    const saved = desired.reduce<Observable<AdminRegistrationSchemaResponse>>(
-      (chain, question) =>
-        chain.pipe(
-          switchMap((current) => {
-            const existing = current.questions.find(
-              (candidate) => candidate.id === question.id || candidate.key === question.key,
-            );
-            const apiRequest = this.toAdminQuestionRequest(question, current);
-            const request$ = existing
-              ? this.http.put<AdminRegistrationSchemaApiResponse>(
-                  `${this.baseUrl}/${year}/registration-schemas/${current.schemaId}/questions/${existing.id}`,
-                  apiRequest,
-                )
-              : this.http.post<AdminRegistrationSchemaApiResponse>(
-                  `${this.baseUrl}/${year}/registration-schemas/${current.schemaId}/questions`,
-                  apiRequest,
-                );
-            return request$.pipe(map((response) => this.normalizeAdminSchema(response)));
-          }),
-        ),
-      of(draft),
-    );
-
-    return saved.pipe(
-      switchMap((current) => {
-        const desiredKeys = new Set(desired.map((question) => question.key));
-        const removed = current.questions.filter(
-          (question) => question.isActive && !desiredKeys.has(question.key),
-        );
-        return removed.reduce<Observable<AdminRegistrationSchemaResponse>>(
-          (chain, question) =>
-            chain.pipe(
-              switchMap((latest) =>
-                this.http
-                  .patch<AdminRegistrationSchemaApiResponse>(
-                    `${this.baseUrl}/${year}/registration-schemas/${latest.schemaId}/questions/${question.id}/active`,
-                    { isActive: false },
-                  )
-                  .pipe(map((response) => this.normalizeAdminSchema(response))),
-              ),
-            ),
-          of(current),
-        );
-      }),
-    );
-  }
-
-  private toAdminQuestionRequest(
-    question: AdminRegistrationQuestion,
-    schema: AdminRegistrationSchemaResponse,
-  ): AdminRegistrationQuestionApiRequest {
-    const dependency = question.conditionalOnKey
-      ? schema.questions.find((candidate) => candidate.key === question.conditionalOnKey)
-      : null;
-    const expectedValue =
-      dependency?.type === 'YesNo' && typeof question.conditionalValue === 'boolean'
-        ? question.conditionalValue
-          ? 'yes'
-          : 'no'
-        : String(question.conditionalValue ?? '');
-
-    return {
-      key: question.key,
-      prompt: question.title,
-      helperText: question.description || question.placeholder || null,
-      type: this.enumIndex(this.questionTypes, question.type) as unknown as RegistrationQuestionType,
-      isRequired: question.isRequired,
-      isActive: question.isActive,
-      displayOrder: question.displayOrder,
-      maxLength: question.maxLength ?? null,
-      condition:
-        dependency && question.conditionalValue !== null && question.conditionalValue !== undefined
-          ? { dependsOnQuestionId: dependency.id, expectedValue }
-          : null,
-      options: question.options?.map((option, index) => ({
-        ...(this.isGuid(option.id) ? { id: option.id } : {}),
-        value: option.value,
-        label: option.label,
-        isOther:
-          option.isOther === true ||
-          (question.allowOther === true && option.value.toLowerCase() === 'other'),
-        isActive: option.isActive !== false,
-        displayOrder: option.displayOrder ?? index + 1,
-      })) ?? null,
-    };
-  }
 
   private normalizeAdminSchema(
     response: AdminRegistrationSchemaApiResponse,
@@ -540,6 +451,9 @@ export class AdminMainSegmentService {
           isActive: question.isActive,
           displayOrder: question.displayOrder,
           maxLength: question.maxLength ?? null,
+          minLength: question.minLength ?? null,
+          minSelections: question.minSelections ?? null,
+          maxSelections: question.maxSelections ?? null,
           options: [...question.options]
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map((option) => ({
@@ -555,7 +469,9 @@ export class AdminMainSegmentService {
             ? questionKeyById.get(question.condition.dependsOnQuestionId) ?? null
             : null,
           conditionalValue: question.condition
-            ? this.normalizeExpectedValue(question.condition.expectedValue)
+            ? this.mapEnum(this.questionTypes, response.questions.find(parent => parent.id === question.condition?.dependsOnQuestionId)?.type ?? '', 'ShortText') === 'YesNo'
+              ? this.normalizeExpectedValue(question.condition.expectedValue)
+              : question.condition.expectedValue
             : null,
         })),
     };
@@ -565,12 +481,6 @@ export class AdminMainSegmentService {
     if (['true', 'yes'].includes(value.toLowerCase())) return true;
     if (['false', 'no'].includes(value.toLowerCase())) return false;
     return value;
-  }
-
-  private isGuid(value: string): boolean {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      value,
-    );
   }
 
   /* ── Registration Review, Detail, Documents & Export (Milestone 7) ── */

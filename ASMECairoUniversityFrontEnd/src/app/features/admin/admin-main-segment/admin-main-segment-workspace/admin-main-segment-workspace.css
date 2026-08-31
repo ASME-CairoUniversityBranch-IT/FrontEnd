@@ -266,7 +266,8 @@
   align-items: center;
   justify-content: center;
 }
-.current-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.current-image-preview { width: 100%; height: 100%; }
+.current-image-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .no-image-placeholder { font-size: 11px; color: #94a3b8; text-align: center; }
 .image-controls h4 { margin: 0 0 2px; font-size: 12px; color: #0f172a; }
 .image-actions { display: flex; gap: 8px; margin-top: 8px; }
@@ -281,6 +282,9 @@
   cursor: pointer;
 }
 .btn-upload input, .btn-photo-upload input { display: none; }
+.btn-upload { border: 0; font-family: inherit; }
+.btn-upload:disabled { opacity: 0.6; cursor: wait; }
+.btn-upload:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
 .btn-remove-img, .btn-photo-remove {
   padding: 6px 10px;
   background: #fff;
@@ -471,7 +475,7 @@
 }
 .schema-meta { max-width: 540px; }
 .schema-badge-row { display: flex; gap: 6px; align-items: center; margin-bottom: 3px; }
-.schema-ver-badge { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.schema-ver-badge { background: rgba(56, 189, 248, 0.15); color: #1e40af; }
 .schema-live-badge.published { background: #065f46; color: #a7f3d0; }
 .schema-live-badge.draft { background: #854d0e; color: #fef08a; }
 .schema-meta-desc { margin: 0; font-size: 11px; color: #94a3b8; }
@@ -498,7 +502,7 @@
 .condition-params-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 /* Modals */
-.modal-overlay, .preview-modal-overlay, .detail-modal-overlay, .doc-lightbox-overlay {
+.modal-overlay, .detail-modal-overlay, .doc-lightbox-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.6);
@@ -512,7 +516,7 @@
 .detail-modal-overlay { justify-content: flex-end; z-index: 1100; padding: 0; }
 .doc-lightbox-overlay { background: rgba(0, 0, 0, 0.85); z-index: 1200; }
 
-.modal-card, .preview-modal-card, .doc-lightbox-card {
+.modal-card, .doc-lightbox-card {
   background: #fff;
   border-radius: 10px;
   width: 100%;
@@ -522,7 +526,6 @@
   padding: 20px 24px;
   box-shadow: 0 15px 25px rgba(0, 0, 0, 0.1);
 }
-.preview-modal-card { max-width: 800px; }
 .doc-lightbox-card { background: #0f172a; color: #fff; max-width: 680px; padding: 0; }
 
 .detail-drawer-card {
@@ -537,7 +540,7 @@
   flex-direction: column;
 }
 
-.modal-header, .preview-modal-header, .doc-lightbox-header, .detail-header {
+.modal-header, .doc-lightbox-header, .detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -545,7 +548,6 @@
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 8px;
 }
-.preview-modal-header { padding: 14px 20px; background: #0f172a; color: #fff; border-radius: 10px 10px 0 0; }
 .doc-lightbox-header { padding: 12px 18px; border-bottom-color: rgba(255, 255, 255, 0.1); }
 .detail-header { align-items: flex-start; padding-bottom: 14px; }
 
@@ -650,15 +652,7 @@
 
 /* Preview */
 .preview-badge { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #38bdf8; display: block; margin-bottom: 2px; }
-.preview-body { padding: 20px; }
-.preview-hero { background: #07102e; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 16px; }
-.prev-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #7ea8f8; margin-bottom: 4px; }
-.prev-title { margin: 0 0 8px; font-family: var(--font-display); font-size: 22px; }
-.prev-hero-copy { margin: 0 0 12px; color: #c9dcff; line-height: 1.45; font-size: 13px; }
-.prev-meta-bar { display: flex; gap: 10px; padding: 8px 12px; background: rgba(255, 255, 255, 0.08); border-radius: 5px; font-size: 12px; flex-wrap: wrap; }
-.badge { padding: 2px 6px; background: #3b82f6; border-radius: 3px; font-weight: 700; font-size: 10px; }
-.preview-section, .preview-q-card { padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
-.prev-story { white-space: pre-line; line-height: 1.6; color: #334155; font-size: 13px; }
+.preview-q-card { padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
 
 .q-label { font-size: 13px; font-weight: 700; color: #0f172a; }
 .q-desc { font-size: 11px; color: #64748b; margin: 0; }
@@ -765,6 +759,7 @@
   font-weight: 650;
 }
 .btn-preview {
+  text-decoration: none;
   background: #fff;
   color: #243047;
   border-color: #d7dce5;

@@ -1,7 +1,10 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { environment } from '../src/environments/environment.development';
 
-const apiOrigin = 'https://asmecairouniversity.runasp.net';
+// Match the dev server's actual origin, including local overrides, so synthetic submissions
+// are always intercepted and never sent to a real API.
+const apiOrigin = environment.apiUrl.replace(/\/+$/, '');
 const schemaId = '11111111-1111-4111-8111-111111111111';
 const questionId = '22222222-2222-4222-8222-222222222222';
 const registrationId = '33333333-3333-4333-8333-333333333333';
@@ -212,7 +215,10 @@ async function mockApi(page: Page) {
       return json({ ...adminEdition, status: editionStatus });
     }
     if (path === '/api/admin/main-segments/2026/registration-schema' && method === 'GET') return json(schema(published ? 'Published' : 'Draft'));
-    if (path.includes(`/registration-schemas/${schemaId}/questions/${questionId}`) && method === 'PUT') return json(schema('Draft'));
+    if (path === '/api/admin/main-segments/2026/registration-schema' && method === 'PUT') {
+      expect(request.postDataJSON().questions[0]).toMatchObject({ key: 'expectations', displayOrder: 0 });
+      return json(schema('Draft'));
+    }
     if (path.endsWith(`/registration-schemas/${schemaId}/publish`) && method === 'POST') {
       published = true;
       return json(schema('Published'));
@@ -283,24 +289,35 @@ test('admin publish → public registration → admin review, document, status, 
   await mockApi(page);
 
   await page.goto('/admin/main-segment');
-  await page.getByRole('button', { name: /CREATE NEW EDITION/ }).click();
-  const createDialog = page.getByRole('dialog', { name: 'Create Main Segment Edition' });
+  await page.getByRole('button', { name: 'New edition', exact: true }).click();
+  const createDialog = page.getByRole('dialog', { name: 'New Main Segment edition' });
   await createDialog.getByLabel('Edition Year').fill('2026');
   await createDialog.getByLabel('Edition Title').fill('Main Segment 2026: Engineering Horizons');
-  await createDialog.getByLabel('Hero Content').fill('One day where engineering insight becomes a career path.');
-  await createDialog.getByLabel('Story Narrative (Why Main Segment Matters)').fill('Main Segment connects students with engineers, mentors, and employers.');
-  await createDialog.getByRole('button', { name: 'Create & Open Workspace' }).click();
+  await createDialog.getByLabel('Hero introduction').fill('One day where engineering insight becomes a career path.');
+  await createDialog.getByLabel('Why this edition matters').fill('Main Segment connects students with engineers, mentors, and employers.');
+  await createDialog.getByLabel('Location', { exact: false }).fill('Faculty of Engineering, Cairo University');
+  await createDialog.getByRole('button', { name: 'Create edition' }).click();
   await expect(page).toHaveURL(/\/admin\/main-segment\/2026$/);
 
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'PUBLISH LIVE' }).click();
+  await page.locator('summary').filter({ hasText: 'Edition actions' }).click();
+  await page.getByRole('button', { name: /Publish edition/ }).click();
   await expect(page.getByText('Edition is now Published.')).toBeVisible();
 
-  await page.getByRole('button', { name: 'REGISTRATION FORM' }).click();
-  await expect(page.getByText('SCHEMA VERSION 2')).toBeVisible();
+  await page.getByRole('button', { name: 'Registration form', exact: true }).click();
+  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Preview form', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Registration form preview' });
+  await expect(preview).toBeVisible();
+  await preview.getByRole('button', { name: '3 Questions', exact: true }).click();
+  await expect(preview.getByRole('button', { name: 'Submission disabled in preview' })).toBeDisabled();
+  await preview.getByRole('button', { name: 'Close registration dialog' }).click();
+  await page.getByRole('button', { name: 'Applications', exact: true }).click();
+  await expect(preview).toHaveCount(0);
+  await page.getByRole('button', { name: 'Registration form', exact: true }).click();
   await expectNoSeriousAxeFindings(page);
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'PUBLISH LIVE SCHEMA' }).click();
+  await page.getByRole('button', { name: 'Publish form', exact: true }).click();
   await expect(page.getByText('Schema v2 published live.')).toBeVisible();
 
   await page.goto('/main-segment/2026');
@@ -340,10 +357,10 @@ test('admin publish → public registration → admin review, document, status, 
   expect(stored).not.toContain('objectKey');
 
   await page.goto('/admin/main-segment/2026');
-  await page.getByRole('button', { name: 'REGISTRATIONS' }).click();
+  await page.getByRole('button', { name: 'Applications', exact: true }).click();
   await expect(page.getByText('MS26-0001')).toBeVisible();
   await page.getByRole('button', { name: /^Review/ }).click();
-  await expect(page.getByRole('dialog', { name: /Ahmed Mohamed Ali/ })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Application details' })).toBeVisible();
   await expectNoSeriousAxeFindings(page);
 
   await page.getByRole('button', { name: /View National ID Photo/ }).click();
@@ -357,7 +374,7 @@ test('admin publish → public registration → admin review, document, status, 
   await page.getByRole('button', { name: 'Close detail view' }).click();
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: /EXPORT CSV/ }).click();
+  await page.getByRole('button', { name: 'Export CSV', exact: true }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain('registrations');
 });

@@ -140,7 +140,7 @@ export class MainSegmentRegistrationService {
       answers: Object.fromEntries(
         submission.answers.map((answer) => [
           answer.questionKey,
-          answer.booleanAnswer ?? answer.selectedOptions ?? answer.answerText ?? null,
+          answer.choiceAnswer ?? answer.booleanAnswer ?? answer.selectedOptions ?? answer.answerText ?? null,
         ])
       ),
       privacyNoticeVersion: submission.consentNoticeVersion,
@@ -214,6 +214,7 @@ export class MainSegmentRegistrationService {
               id: option.id,
               label: option.label,
               value: option.value,
+              isOther: option.isOther,
             })),
           conditionalOnKey: conditionQuestionId
             ? questionKeyById.get(conditionQuestionId) ?? null

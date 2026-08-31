@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Input,
   Output,
   EventEmitter,
@@ -21,6 +22,7 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  filter,
   map,
   switchMap,
   takeUntil,
@@ -56,12 +58,17 @@ export type RegistrationStep = 1 | 2 | 3;
 export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy {
   @Input({ required: true }) year!: number;
   @Input() editionTitle = 'Main Segment 2026';
+  @Input() previewMode = false;
+  @Input() previewSchema: RegistrationSchema | null = null;
   @Output() closed = new EventEmitter<void>();
 
   private readonly fb = inject(FormBuilder);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly academicService = inject(AcademicDirectoryService);
   private readonly regService = inject(MainSegmentRegistrationService);
   private readonly destroy$ = new Subject<void>();
+  private previousBodyOverflow = '';
+  readonly otherAnswers: Record<string, string> = {};
 
   currentStep: RegistrationStep = 1;
   readonly isSubmitting$ = new BehaviorSubject<boolean>(false);
@@ -140,6 +147,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
   ngOnInit(): void {
     // Lock body scrolling
+    this.previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     this.loadRegistrationSchema();
@@ -151,6 +159,12 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
   }
 
   loadRegistrationSchema(): void {
+    if (this.previewMode) {
+      this.schema$.next(this.previewSchema);
+      this.initializeQuestionsForm(this.previewSchema?.questions ?? []);
+      this.isLoadingSchema$.next(false);
+      return;
+    }
     this.isLoadingSchema$.next(true);
     this.schemaError$.next(null);
     this.regService
@@ -178,12 +192,13 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
   ngOnDestroy(): void {
     // Restore body scroll
-    document.body.style.overflow = '';
+    document.body.style.overflow = this.previousBodyOverflow;
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   requestClose(): void {
+    if (this.previewMode) { this.closed.emit(); return; }
     if (this.submissionResponse$.value) {
       this.closed.emit();
       return;
@@ -212,6 +227,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
   /* ── Step Navigation ── */
   goToStep(step: RegistrationStep): void {
+    if (this.previewMode) { this.currentStep = step; this.errorMessage$.next(null); return; }
     if (step === 2) {
       if (!this.validateStep1()) return;
     } else if (step === 3) {
@@ -270,8 +286,8 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
       this.nationalIdFileError = 'Please select a valid image file (JPEG, PNG, or WebP).';
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      this.nationalIdFileError = 'National ID image must be under 10MB.';
+    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.nationalIdFileError = 'National ID image must be a non-empty file up to 5 MB.';
       return;
     }
 
@@ -281,6 +297,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     const reader = new FileReader();
     reader.onload = () => {
       this.nationalIdPreviewUrl = reader.result as string;
+      this.changeDetector.markForCheck();
     };
     reader.readAsDataURL(file);
   }
@@ -303,8 +320,8 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
       this.cvFileError = 'CV must be a PDF or DOCX file.';
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      this.cvFileError = 'CV document must be under 10MB.';
+    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
+      this.cvFileError = 'CV document must be a non-empty file up to 10 MB.';
       return;
     }
 
@@ -323,8 +340,8 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
       this.universityIdFileError = 'Please select a valid image file (JPEG, PNG, or WebP).';
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      this.universityIdFileError = 'University ID image must be under 10MB.';
+    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.universityIdFileError = 'University ID image must be a non-empty file up to 5 MB.';
       return;
     }
 
@@ -334,6 +351,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     const reader = new FileReader();
     reader.onload = () => {
       this.universityIdPreviewUrl = reader.result as string;
+      this.changeDetector.markForCheck();
     };
     reader.readAsDataURL(file);
   }
@@ -375,10 +393,12 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
         distinctUntilChanged(),
         switchMap((term) => {
           if (!this.selectedUniversity || this.isUniversityOther) return of([]);
+          const universityId = this.selectedUniversity.id;
           this.isLoadingFaculties$.next(true);
-          return this.academicService.getFaculties(this.selectedUniversity.id, term, 1, 50).pipe(
+          return this.academicService.getFaculties(universityId, term, 1, 50).pipe(
             map((p) => p.items),
-            catchError(() => of([]))
+            catchError(() => of([])),
+            filter(() => this.selectedUniversity?.id === universityId),
           );
         })
       )
@@ -396,10 +416,12 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
         distinctUntilChanged(),
         switchMap((term) => {
           if (!this.selectedFaculty || this.isFacultyOther) return of([]);
+          const offeringId = this.selectedFaculty.offeringId;
           this.isLoadingDepartments$.next(true);
-          return this.academicService.getDepartments(this.selectedFaculty.offeringId, term, 1, 50).pipe(
+          return this.academicService.getDepartments(offeringId, term, 1, 50).pipe(
             map((p) => p.items),
-            catchError(() => of([]))
+            catchError(() => of([])),
+            filter(() => this.selectedFaculty?.offeringId === offeringId),
           );
         })
       )
@@ -410,6 +432,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
   }
 
   selectUniversity(uni: AcademicUniversityItem | 'other'): void {
+    this.clearFaculty();
     if (uni === 'other') {
       this.isUniversityOther = true;
       this.selectedUniversity = null;
@@ -425,22 +448,24 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     }
     this.educationForm.get('universityOtherName')?.updateValueAndValidity();
 
-    // Reset dependent faculty and department
-    this.clearFaculty();
   }
 
   private loadFaculties(uniId: string): void {
     this.isLoadingFaculties$.next(true);
     this.academicService.getFaculties(uniId, '', 1, 50).subscribe({
       next: (page) => {
+        if (this.selectedUniversity?.id !== uniId) return;
         this.facultiesList$.next(page.items);
         this.isLoadingFaculties$.next(false);
       },
-      error: () => this.isLoadingFaculties$.next(false),
+      error: () => {
+        if (this.selectedUniversity?.id === uniId) this.isLoadingFaculties$.next(false);
+      },
     });
   }
 
   selectFaculty(fac: AcademicFacultyItem | 'other'): void {
+    this.clearDepartment();
     if (fac === 'other') {
       this.isFacultyOther = true;
       this.selectedFaculty = null;
@@ -456,18 +481,19 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     }
     this.educationForm.get('facultyOtherName')?.updateValueAndValidity();
 
-    // Reset dependent department
-    this.clearDepartment();
   }
 
   private loadDepartments(offeringId: string): void {
     this.isLoadingDepartments$.next(true);
     this.academicService.getDepartments(offeringId, '', 1, 50).subscribe({
       next: (page) => {
+        if (this.selectedFaculty?.offeringId !== offeringId) return;
         this.departmentsList$.next(page.items);
         this.isLoadingDepartments$.next(false);
       },
-      error: () => this.isLoadingDepartments$.next(false),
+      error: () => {
+        if (this.selectedFaculty?.offeringId === offeringId) this.isLoadingDepartments$.next(false);
+      },
     });
   }
 
@@ -491,6 +517,9 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     this.isFacultyOther = false;
     this.facultiesList$.next([]);
     this.educationForm.patchValue({ facultyOfferingId: '', facultyOtherName: '' });
+    this.educationForm.get('facultyOtherName')?.clearValidators();
+    this.educationForm.get('facultyOtherName')?.updateValueAndValidity();
+    this.isLoadingFaculties$.next(false);
     this.clearDepartment();
   }
 
@@ -499,6 +528,9 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     this.isDepartmentOther = false;
     this.departmentsList$.next([]);
     this.educationForm.patchValue({ departmentId: '', departmentOtherName: '' });
+    this.educationForm.get('departmentOtherName')?.clearValidators();
+    this.educationForm.get('departmentOtherName')?.updateValueAndValidity();
+    this.isLoadingDepartments$.next(false);
   }
 
   /* ── Dynamic Questions Initialization ── */
@@ -526,7 +558,17 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     if (q.conditionalValue === false) {
       return parentVal === false || parentVal === 'false';
     }
-    return parentVal === q.conditionalValue;
+    return Array.isArray(parentVal) ? parentVal.includes(q.conditionalValue) : parentVal === q.conditionalValue;
+  }
+
+  hasOtherAnswer(q: RegistrationQuestion): boolean {
+    const value = this.questionsForm.get(q.key)?.value;
+    return !!q.options?.some(option => option.isOther && (Array.isArray(value) ? value.includes(option.value) : value === option.value));
+  }
+
+  setOtherAnswer(q: RegistrationQuestion, value: string): void {
+    this.otherAnswers[q.key] = value;
+    this.questionsForm.get(q.key)?.markAsDirty();
   }
 
   isQuestionsStepValid(): boolean {
@@ -548,10 +590,12 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
     const isEmpty =
       value === null ||
       value === undefined ||
-      value === '' ||
+      (typeof value === 'string' && value.trim() === '') ||
       (Array.isArray(value) && value.length === 0);
     if (q.isRequired && isEmpty) return 'This question is required.';
     if (isEmpty) return null;
+    if (this.hasOtherAnswer(q) && !this.otherAnswers[q.key]?.trim()) return 'Please specify your Other answer.';
+    if (this.hasOtherAnswer(q) && this.otherAnswers[q.key]?.trim().length > 200) return 'Enter no more than 200 characters for Other.';
 
     if (typeof value === 'string') {
       if (q.minLength != null && value.trim().length < q.minLength) {
@@ -584,6 +628,7 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
 
   /* ── Final Submission ── */
   submitAll(): void {
+    if (this.previewMode) return;
     if (this.isSubmitting$.value) return;
     if (!this.validateStep1() || !this.validateStep2()) return;
 
@@ -604,17 +649,21 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
       for (const q of schema.questions) {
         if (!this.isQuestionVisible(q)) continue;
         const val = this.questionsForm.get(q.key)?.value;
+        if (val === null || val === undefined || val === '' || (Array.isArray(val) && val.length === 0)) continue;
         if (q.type === 'YesNo') {
           answers.push({
             questionId: q.id,
             questionKey: q.key,
             booleanAnswer: val === true || val === 'true',
           });
-        } else if (q.type === 'MultipleChoice') {
+        } else if (q.type === 'MultipleChoice' || q.type === 'SingleChoice') {
+          const values: string[] = Array.isArray(val) ? val : [val];
+          const choices = values.map(value => q.options?.some(option => option.value === value && option.isOther)
+            ? { value, otherText: this.otherAnswers[q.key]?.trim() || '' } : value);
           answers.push({
             questionId: q.id,
             questionKey: q.key,
-            selectedOptions: Array.isArray(val) ? val : [],
+            choiceAnswer: q.type === 'MultipleChoice' ? choices : choices[0],
           });
         } else {
           answers.push({
@@ -677,15 +726,15 @@ export class MainSegmentRegistrationModalComponent implements OnInit, OnDestroy 
         this.isSubmitting$.next(false);
         if (err.status === 409) {
           this.errorMessage$.next(
-            err?.error?.message ||
+            err?.error?.message || err?.error?.Message ||
               'Registration could not be accepted because the form or event availability changed.'
           );
         } else if (err.status === 429) {
           this.errorMessage$.next(
             'Too many registration requests. Please wait a moment before trying again.'
           );
-        } else if (err?.error?.message) {
-          this.errorMessage$.next(err.error.message);
+        } else if (err?.error?.message || err?.error?.Message) {
+          this.errorMessage$.next(err.error.message || err.error.Message);
         } else {
           this.errorMessage$.next(
             'Failed to submit registration. Please verify all information and retry.'

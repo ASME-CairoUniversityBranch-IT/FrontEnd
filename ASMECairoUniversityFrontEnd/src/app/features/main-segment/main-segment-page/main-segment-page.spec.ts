@@ -182,6 +182,17 @@ describe('MainSegmentPageComponent', () => {
     fixture.destroy();
   });
 
+  it('orders and numbers roadmap steps from the visible section content, without modifying the edition', () => {
+    const edition = { ...fullSampleEdition, sections: fullSampleEdition.sections.map(section => ({
+      ...section, displayOrder: section.sectionKey === MainSegmentSectionKey.CareerFair ? 0 : section.displayOrder,
+    })) };
+    expect(component.getJourneySteps(edition).map(step => [step.step, step.sectionId])).toEqual([
+      ['01', 'section-CareerFair'], ['02', 'section-PanelDiscussion'],
+    ]);
+    expect(edition.sections[0].sectionKey).toBe(MainSegmentSectionKey.PanelDiscussion);
+    expect(component.getJourneySteps({ ...edition, sections: [] })).toEqual([]);
+  });
+
   it('should create the component', () => {
     expect(component).toBeTruthy();
   });
@@ -226,11 +237,11 @@ describe('MainSegmentPageComponent', () => {
     );
     expect(compiled.querySelectorAll('.story-stop').length).toBe(4);
 
-    // 3. Experience Journey Roadmap (6 steps)
+    // 3. Roadmap includes only the experience sections that are actually displayed.
     const journeyCards = compiled.querySelectorAll('.ms-journey-card');
-    expect(journeyCards.length).toBe(6);
+    expect(journeyCards.length).toBe(2);
     expect(journeyCards[0].textContent).toContain('Panel Discussions');
-    expect(journeyCards[4].textContent).toContain('Career Fair');
+    expect(journeyCards[1].textContent).toContain('Career Fair');
 
     // 4. Panel Discussion with Speakers
     const panelSection = compiled.querySelector('#section-PanelDiscussion');

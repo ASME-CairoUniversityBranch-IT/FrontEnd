@@ -17,7 +17,7 @@ The browser suite uses intercepted synthetic API responses and synthetic files. 
 
 | Area | Automated evidence |
 | --- | --- |
-| API contracts | Unit tests cover the public schema mapping, exact multipart payload, idempotency header, academic routes, admin schema revision endpoints, review/detail/status/document/export mappings, and error propagation. |
+| API contracts | Unit tests cover the public schema mapping, exact multipart payload, idempotency header, academic routes, atomic admin draft saving and publishing, review/detail/status/document/export mappings, and error propagation. |
 | Publish-to-review journey | Playwright publishes the active draft through the admin workspace, opens the public edition, completes all three registration steps, submits synthetic files, reviews the new applicant, opens an authorized document, changes status, and downloads the filtered CSV. |
 | Accessibility | Modal focus trapping/restoration and Escape behavior are unit- and browser-tested. The public page is scanned for serious/critical WCAG 2.0/2.1 A/AA axe findings. Reduced-motion behavior and 200% zoom visibility are checked. |
 | Responsive layout | The public page is checked at 390px, 768px, and 1440px for horizontal overflow. Sponsor cards within a tier are checked for equal logo-stage dimensions. |
@@ -38,4 +38,10 @@ Before production release, repeat these checks against the release API and R2 co
 
 ## Known environment boundary
 
-Local production-mode frontend configuration points to the deployed API. A fully green intercepted browser suite proves the frontend contract and UI behavior, while live API/R2 readiness still requires the manual release checks above.
+The browser suite intercepts the API origin selected by the development environment file, including local overrides. It uses synthetic data only. The production build points to the deployed API. A green intercepted browser suite verifies frontend behavior, not live API/R2 readiness.
+
+## Deployment handoff
+
+Deploy the backend first: the editor requires the atomic `PUT /api/admin/main-segments/{year}/registration-schema` endpoint. Follow the backend [deployment checklist](https://github.com/ASME-CairoUniversityBranch-IT/Backend/blob/main/ASME_Cairo_University_Branch_Backend/DEPLOYMENT.md) for runtime secrets, private R2 configuration, migrations, seeding, and remaining production protections.
+
+Angular needs no secrets. Its API URL and privacy notice version are compiled from `src/environments/environment.ts`; rebuild after changing them. Do not put R2, JWT, database, or National ID encryption keys in frontend configuration. Deploy `dist/ASMECairoUniversityFrontEnd/browser` with SPA fallback for direct links and refreshes.

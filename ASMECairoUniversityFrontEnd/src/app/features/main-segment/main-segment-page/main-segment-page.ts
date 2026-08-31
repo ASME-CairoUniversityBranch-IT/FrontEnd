@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  Input,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -68,6 +69,7 @@ const DEFAULT_DESCRIPTION =
   styleUrl: './main-segment-page.css',
 })
 export class MainSegmentPageComponent implements OnInit, OnDestroy {
+  @Input() isPreview = false;
   private readonly route = inject(ActivatedRoute);
   private readonly mainSegmentService = inject(MainSegmentService);
   private readonly titleService = inject(Title);
@@ -213,7 +215,23 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
   }
 
   openRegistrationModal(): void {
+    if (this.isPreview) return;
     this.isRegistrationModalOpen = true;
+  }
+
+  pageRoute(year: number): (string | number)[] {
+    return this.isPreview
+      ? ['/admin/main-segment', year, 'preview']
+      : ['/main-segment', year];
+  }
+
+  getJourneySteps(edition: MainSegmentEdition): JourneyStep[] {
+    return [...edition.sections]
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .filter(section => this.hasSectionContent(section))
+      .map(section => this.journeySteps.find(step => step.sectionId === `section-${section.sectionKey}`))
+      .filter((step): step is JourneyStep => !!step)
+      .map((step, index) => ({ ...step, step: String(index + 1).padStart(2, '0') }));
   }
 
   closeRegistrationModal(): void {

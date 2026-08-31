@@ -78,7 +78,7 @@ describe('MainSegmentRegistrationService', () => {
       expect(res.questions[1].conditionalOnKey).toBe('join_team');
       expect(res.questions[1].conditionalValue).toBe(true);
       expect(res.questions[1].options).toEqual([
-        { id: 'active', value: 'technical', label: 'Technical' },
+        { id: 'active', value: 'technical', label: 'Technical', isOther: false },
       ]);
     });
 

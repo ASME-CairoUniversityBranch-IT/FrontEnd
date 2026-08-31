@@ -6,7 +6,7 @@ import {
   DEFAULT_REGISTRATION_SCHEMA,
   MainSegmentRegistrationService,
 } from '../../../core/services/main-segment-registration.service';
-import { RegistrationSubmissionResponse } from '../../../core/models/registration.model';
+import { RegistrationQuestion, RegistrationSubmissionResponse } from '../../../core/models/registration.model';
 
 describe('MainSegmentRegistrationModalComponent', () => {
   let component: MainSegmentRegistrationModalComponent;
@@ -364,6 +364,66 @@ describe('MainSegmentRegistrationModalComponent', () => {
     const firstKey = mockRegService.submitRegistration.mock.calls[0][1].idempotencyKey;
     const retryKey = mockRegService.submitRegistration.mock.calls[1][1].idempotencyKey;
     expect(retryKey).toBe(firstKey);
+  });
+
+  it('previews the supplied draft across all steps without loading or submitting a public schema', () => {
+    mockRegService.getRegistrationSchema.mockClear();
+    component.previewMode = true;
+    component.previewSchema = { ...DEFAULT_REGISTRATION_SCHEMA, questions: [] };
+    component.loadRegistrationSchema();
+    component.goToStep(3);
+    expect(component.currentStep).toBe(3);
+    component.submitAll();
+    expect(mockRegService.getRegistrationSchema).not.toHaveBeenCalled();
+    expect(mockRegService.submitRegistration).not.toHaveBeenCalled();
+    expect(component.schema$.value?.questions).toEqual([]);
+    component.goToStep(2);
+    expect(component.currentStep).toBe(2);
+  });
+
+  it('requires and serializes Other text, retains multichoice conditions, and omits unanswered optional YesNo', () => {
+    const questions: RegistrationQuestion[] = [
+      { id: 'choices', key: 'choices', title: 'Source', type: 'MultipleChoice', isRequired: true, options: [
+        { id: 'known', label: 'Friend', value: 'friend' }, { id: 'other', label: 'Other', value: 'other', isOther: true },
+      ] },
+      { id: 'followup', key: 'followup', title: 'Which friend?', type: 'ShortText', isRequired: true, conditionalOnKey: 'choices', conditionalValue: 'friend' },
+      { id: 'optional', key: 'optional', title: 'Optional', type: 'YesNo', isRequired: false },
+    ];
+    mockRegService.getRegistrationSchema.mockReturnValue(of({ ...DEFAULT_REGISTRATION_SCHEMA, questions }));
+    component.loadRegistrationSchema();
+    expect(component.isQuestionVisible(questions[1])).toBe(false);
+    component.questionsForm.patchValue({ choices: ['other', 'friend'], followup: '   ', consentAgreed: true });
+    expect(component.isQuestionVisible(questions[1])).toBe(true);
+    expect(component.questionValidationMessage(questions[1])).toContain('required');
+    expect(component.questionValidationMessage(questions[0])).toContain('Other');
+    component.setOtherAnswer(questions[0], ' A student newsletter ');
+    component.questionsForm.patchValue({ followup: 'A classmate' });
+    expect(component.isQuestionsStepValid()).toBe(true);
+    vi.spyOn(component, 'validateStep1').mockReturnValue(true);
+    vi.spyOn(component, 'validateStep2').mockReturnValue(true);
+    component.submitAll();
+    const submission = mockRegService.submitRegistration.mock.calls[0][1];
+    expect(submission.answers).toEqual([
+      { questionId: 'choices', questionKey: 'choices', choiceAnswer: [{ value: 'other', otherText: 'A student newsletter' }, 'friend'] },
+      { questionId: 'followup', questionKey: 'followup', answerText: 'A classmate' },
+    ]);
+  });
+
+  it('clears hidden Other validators when academic parent selections change', () => {
+    component.selectFaculty('other');
+    component.selectDepartment('other');
+    expect(component.educationForm.get('facultyOtherName')?.invalid).toBe(true);
+    component.selectUniversity('other');
+    expect(component.educationForm.get('facultyOtherName')?.valid).toBe(true);
+    expect(component.educationForm.get('departmentOtherName')?.valid).toBe(true);
+  });
+
+  it('rejects a photo above the backend 5 MB limit before reading it', () => {
+    const file = new File(['image'], 'large.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: 5 * 1024 * 1024 + 1 });
+    component.onNationalIdFileSelected({ target: { files: [file], value: 'large.png' } } as unknown as Event);
+    expect(component.nationalIdFile).toBeNull();
+    expect(component.nationalIdFileError).toContain('5');
   });
 
   it('should emit closed when requestClose is called on clean or confirmed form', () => {

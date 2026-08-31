@@ -2,10 +2,11 @@ import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, BehaviorSubject, Subject, of } from 'rxjs';
-import { catchError, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, Subject, of, EMPTY } from 'rxjs';
+import { catchError, expand, map, reduce, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AdminNavComponent } from '../../../../shared/components/admin-nav/admin-nav';
 import { FocusTrapDirective } from '../../../../shared/directives/focus-trap.directive';
+import { MainSegmentRegistrationModalComponent } from '../../../main-segment/main-segment-registration-modal/main-segment-registration-modal';
 import { AdminMainSegmentService } from '../../../../core/services/admin-main-segment.service';
 import {
   AcademicDirectoryService,
@@ -42,6 +43,7 @@ import {
   RegistrationQuestionOption,
   RegistrationQuestionType,
   RegistrationSettings,
+  RegistrationSchema,
   RegistrationStatus,
   UpdateRegistrationSchemaRequest,
   UpdateRegistrationStatusRequest,
@@ -75,6 +77,7 @@ export interface WorkspaceVM {
     DatePipe,
     AdminNavComponent,
     FocusTrapDirective,
+    MainSegmentRegistrationModalComponent,
   ],
   templateUrl: './admin-main-segment-workspace.html',
   styleUrl: './admin-main-segment-workspace.css',
@@ -95,8 +98,7 @@ export class AdminMainSegmentWorkspaceComponent
   readonly vm$ = new BehaviorSubject<WorkspaceVM>({ status: 'loading' });
   readonly isSaving$ = new BehaviorSubject<boolean>(false);
   readonly isUploadingImage$ = new BehaviorSubject<boolean>(false);
-  readonly isPreviewModalOpen$ = new BehaviorSubject<boolean>(false);
-  readonly previewData$ = new BehaviorSubject<MainSegmentAdminResponse | null>(null);
+  readonly heroImageError$ = new BehaviorSubject<string | null>(null);
 
   readonly successMessage$ = new BehaviorSubject<string | null>(null);
   readonly errorMessage$ = new BehaviorSubject<string | null>(null);
@@ -141,6 +143,9 @@ export class AdminMainSegmentWorkspaceComponent
   readonly schemaError$ = new BehaviorSubject<string | null>(null);
   readonly isSavingSchema$ = new BehaviorSubject<boolean>(false);
   readonly isSchemaPreviewOpen$ = new BehaviorSubject<boolean>(false);
+  schemaPreview: RegistrationSchema | null = null;
+  schemaDirty = false;
+  questionEditorError: string | null = null;
 
   readonly schemaSettingsForm: FormGroup = this.fb.group({
     minGraduationYear: [2020, [Validators.required, Validators.min(1990), Validators.max(2040)]],
@@ -155,7 +160,7 @@ export class AdminMainSegmentWorkspaceComponent
   editingQuestionId: string | null = null;
   readonly questionForm: FormGroup = this.fb.group({
     title: ['', [Validators.required]],
-    key: ['', [Validators.required, Validators.pattern(/^[a-z0-9_]+$/)]],
+    key: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-z0-9_-]+$/)]],
     description: [''],
     type: ['ShortText', [Validators.required]],
     placeholder: [''],
@@ -186,6 +191,8 @@ export class AdminMainSegmentWorkspaceComponent
   readonly registrationFaculties$ = new BehaviorSubject<AcademicFacultyItem[]>([]);
 
   regSearch = '';
+  regSearchInput = '';
+  readonly registrationGraduationYears = Array.from({ length: 71 }, (_, index) => new Date().getFullYear() + 10 - index);
   regStatusFilter: RegistrationStatus | 'All' = 'All';
   regUniversityIdFilter = '';
   regFacultyIdFilter = '';
@@ -271,6 +278,14 @@ export class AdminMainSegmentWorkspaceComponent
       )
       .subscribe();
 
+    this.questionForm.get('type')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(type => {
+      if (type === 'SingleChoice' || type === 'MultipleChoice') {
+        this.questionOptionsArray.enable({ emitEvent: false });
+      } else {
+        this.questionOptionsArray.disable({ emitEvent: false });
+      }
+    });
+
     // Adjust sponsorTier requirement when category changes
     this.orgForm.get('category')?.valueChanges.subscribe((cat) => {
       const tierCtrl = this.orgForm.get('sponsorTier');
@@ -293,7 +308,7 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   canDeactivate(): boolean {
-    if (this.form.dirty || this.schemaSettingsForm.dirty) {
+    if (this.form.dirty || this.schemaSettingsForm.dirty || this.schemaDirty) {
       return confirm(
         'You have unsaved changes in this edition workspace. Are you sure you want to navigate away?',
       );
@@ -302,6 +317,11 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   setTab(tab: WorkspaceTab): void {
+    this.closeSchemaPreview();
+    this.closeQuestionModal();
+    if (tab !== 'registrations') this.closeRegistrationDetail();
+    this.errorMessage$.next(null);
+    this.successMessage$.next(null);
     this.activeTab = tab;
     if (tab === 'form-builder' && !this.schema$.value) {
       this.loadSchema(this.year);
@@ -434,9 +454,23 @@ export class AdminMainSegmentWorkspaceComponent
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
+    // Clear the native selection so choosing the same file after a failure retries it.
+    input.value = '';
+    if (this.isUploadingImage$.value) return;
+
+    this.heroImageError$.next(null);
+    this.errorMessage$.next(null);
+    this.successMessage$.next(null);
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.heroImageError$.next('Choose a JPEG, PNG, or WebP image.');
+      return;
+    }
+    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.heroImageError$.next(file.size === 0 ? 'This image file is empty.' : 'Choose an image no larger than 5 MB.');
+      return;
+    }
 
     this.isUploadingImage$.next(true);
-    this.errorMessage$.next(null);
 
     this.adminService.uploadHeroImage(this.year, file).subscribe({
       next: (updated) => {
@@ -446,14 +480,16 @@ export class AdminMainSegmentWorkspaceComponent
       },
       error: (err) => {
         this.isUploadingImage$.next(false);
-        this.errorMessage$.next(err?.error?.message || 'Failed to upload hero image.');
+        this.heroImageError$.next(err?.error?.message || 'Failed to upload hero image. Please try again.');
       },
     });
   }
 
   removeHeroImage(): void {
+    if (this.isUploadingImage$.value) return;
     if (!confirm('Are you sure you want to remove the hero visual?')) return;
 
+    this.heroImageError$.next(null);
     this.isUploadingImage$.next(true);
     this.errorMessage$.next(null);
 
@@ -465,7 +501,7 @@ export class AdminMainSegmentWorkspaceComponent
       },
       error: (err) => {
         this.isUploadingImage$.next(false);
-        this.errorMessage$.next(err?.error?.message || 'Failed to remove hero image.');
+        this.heroImageError$.next(err?.error?.message || 'Failed to remove hero image.');
       },
     });
   }
@@ -948,6 +984,7 @@ export class AdminMainSegmentWorkspaceComponent
       .pipe(
         tap((schema) => {
           this.schema$.next(schema);
+          this.schemaDirty = false;
           this.populateSchemaSettings(schema.settings);
           this.isLoadingSchema$.next(false);
         }),
@@ -976,6 +1013,7 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   saveDraftSchema(): void {
+    if (this.isSavingSchema$.value) return;
     if (this.schemaSettingsForm.invalid) {
       this.schemaSettingsForm.markAllAsTouched();
       this.errorMessage$.next('Please resolve errors in registration settings before saving.');
@@ -994,17 +1032,23 @@ export class AdminMainSegmentWorkspaceComponent
       next: (updated) => {
         this.isSavingSchema$.next(false);
         this.schema$.next(updated);
+        this.schemaDirty = false;
         this.populateSchemaSettings(updated.settings);
         this.showSuccess('Registration schema draft saved.');
       },
       error: (err) => {
         this.isSavingSchema$.next(false);
-        this.errorMessage$.next(err?.error?.message || 'Failed to save schema draft.');
+        this.errorMessage$.next(this.registrationActionError(err, 'Failed to save form draft.'));
       },
     });
   }
 
   publishSchema(): void {
+    if (this.isSavingSchema$.value || !this.schema$.value) return;
+    if (!this.schema$.value?.questions.some(question => question.isActive)) {
+      this.errorMessage$.next('Add at least one active question before publishing.');
+      return;
+    }
     const conf = confirm(
       'Publishing this registration form schema will make it live for all future applicants. ' +
         'Existing registrations will remain linked to their previous submission versions. Continue?',
@@ -1023,12 +1067,13 @@ export class AdminMainSegmentWorkspaceComponent
         next: (published) => {
           this.isSavingSchema$.next(false);
           this.schema$.next(published);
+          this.schemaDirty = false;
           this.populateSchemaSettings(published.settings);
           this.showSuccess(`Schema v${published.version} published live.`);
         },
         error: (err) => {
           this.isSavingSchema$.next(false);
-          this.errorMessage$.next(err?.error?.message || 'Failed to publish registration schema.');
+          this.errorMessage$.next(this.registrationActionError(err, 'Failed to publish registration form.'));
         },
       });
   }
@@ -1052,6 +1097,7 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   seedDefaultQuestions(): void {
+    if (this.isSavingSchema$.value) return;
     const conf = confirm('Reset question builder to the standard 2026 default question set?');
     if (!conf) return;
 
@@ -1060,6 +1106,7 @@ export class AdminMainSegmentWorkspaceComponent
       next: (seeded) => {
         this.isSavingSchema$.next(false);
         this.schema$.next(seeded);
+        this.schemaDirty = false;
         this.populateSchemaSettings(seeded.settings);
         this.showSuccess('Standard 2026 questions successfully applied.');
       },
@@ -1071,6 +1118,8 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   openAddQuestionModal(): void {
+    if (this.isSavingSchema$.value) return;
+    this.questionEditorError = null;
     this.editingQuestionId = null;
     this.questionOptionsArray.clear();
     this.questionForm.reset({
@@ -1091,6 +1140,8 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   openEditQuestionModal(q: AdminRegistrationQuestion): void {
+    if (this.isSavingSchema$.value) return;
+    this.questionEditorError = null;
     this.editingQuestionId = q.id;
     this.questionOptionsArray.clear();
 
@@ -1100,6 +1151,9 @@ export class AdminMainSegmentWorkspaceComponent
         this.fb.group({
           label: [opt.label, [Validators.required]],
           value: [opt.value, [Validators.required]],
+          id: [opt.id],
+          isOther: [opt.isOther === true],
+          isActive: [opt.isActive !== false],
         }),
       );
     }
@@ -1135,6 +1189,7 @@ export class AdminMainSegmentWorkspaceComponent
       this.fb.group({
         label: ['', [Validators.required]],
         value: ['', [Validators.required]],
+        id: [''], isOther: [false], isActive: [true],
       }),
     );
   }
@@ -1153,6 +1208,8 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   saveQuestion(): void {
+    if (this.isSavingSchema$.value) return;
+    this.questionEditorError = null;
     if (this.questionForm.invalid) {
       this.questionForm.markAllAsTouched();
       return;
@@ -1163,24 +1220,60 @@ export class AdminMainSegmentWorkspaceComponent
 
     const val = this.questionForm.value;
     const isChoice = val.type === 'SingleChoice' || val.type === 'MultipleChoice';
+    const key = val.key.trim().toLowerCase();
+    const original = currentSchema.questions.find(question => question.id === this.editingQuestionId);
+    if (!val.title.trim() || currentSchema.questions.some(question => question.key === key && question.id !== this.editingQuestionId)) {
+      this.questionEditorError = 'Enter a question title and a unique key.';
+      return;
+    }
 
     const options: RegistrationQuestionOption[] = isChoice
       ? val.options.map((opt: any, idx: number) => ({
-          id: `opt-${idx + 1}`,
+          id: opt.id || `opt-${idx + 1}`,
           label: opt.label.trim(),
           value: opt.value.trim(),
+          displayOrder: idx,
+          isActive: opt.isActive !== false,
+          isOther: Boolean(val.allowOther) && (opt.isOther === true || opt.value.trim().toLowerCase() === 'other'),
         }))
       : [];
+    if (isChoice && val.allowOther && !options.some(option => option.isOther)) {
+      options.push({ id: 'new-other', label: 'Other', value: 'other', isOther: true, isActive: true, displayOrder: options.length });
+    }
+    if (isChoice && (!options.some(option => option.isActive !== false) || options.some(option => !option.label || !option.value || /\s/.test(option.value)) || new Set(options.map(option => option.value.toLowerCase())).size !== options.length)) {
+      this.questionEditorError = 'Add at least one active choice. Choice values must be unique and contain no spaces.';
+      return;
+    }
+    if (val.maxLength != null && val.maxLength !== '' && (Number(val.maxLength) < 0 || Number(val.maxLength) > 10000)) {
+      this.questionEditorError = 'Maximum length must be between 0 and 10,000.';
+      return;
+    }
 
     let conditionalValue: string | boolean | null = null;
     if (val.hasCondition && val.conditionalOnKey) {
-      if (val.conditionalValue === 'true') {
+      const parent = currentSchema.questions.find(question => question.key === val.conditionalOnKey);
+      if (parent?.type === 'YesNo' && val.conditionalValue === 'true') {
         conditionalValue = true;
-      } else if (val.conditionalValue === 'false') {
+      } else if (parent?.type === 'YesNo' && val.conditionalValue === 'false') {
         conditionalValue = false;
       } else {
         conditionalValue = val.conditionalValue ? val.conditionalValue.trim() : null;
       }
+    }
+    if (val.hasCondition) {
+      const parent = currentSchema.questions.find(question => question.key === val.conditionalOnKey);
+      const validValue = parent?.type === 'YesNo'
+        ? typeof conditionalValue === 'boolean'
+        : parent?.options?.some(option => option.isActive !== false && option.value === conditionalValue);
+      if (!parent || !parent.isActive || parent.conditionalOnKey || parent.id === this.editingQuestionId || !validValue) {
+        this.questionEditorError = 'Choose an active, unconditional parent question and one of its valid answers.';
+        return;
+      }
+    }
+    const dependents = currentSchema.questions.filter(question => question.isActive && question.conditionalOnKey === original?.key);
+    if (original && dependents.length && (!val.isActive || val.type !== original.type || key !== original.key || dependents.some(dependent => isChoice && !options.some(option => option.isActive !== false && option.value === dependent.conditionalValue)))) {
+      this.questionEditorError = 'Update the questions that depend on this answer before changing its key, type, availability, or choices.';
+      return;
     }
 
     const question: AdminRegistrationQuestion = {
@@ -1190,12 +1283,15 @@ export class AdminMainSegmentWorkspaceComponent
       description: val.description ? val.description.trim() : null,
       type: val.type as RegistrationQuestionType,
       placeholder: val.placeholder ? val.placeholder.trim() : null,
-      maxLength: val.maxLength ? Number(val.maxLength) : null,
+      maxLength: ['ShortText', 'LongText'].includes(val.type) && val.maxLength != null && val.maxLength !== '' ? Number(val.maxLength) : null,
+      minLength: original && original.type === val.type ? original.minLength : null,
+      minSelections: original && original.type === val.type ? original.minSelections : null,
+      maxSelections: original && original.type === val.type ? original.maxSelections : null,
       isRequired: Boolean(val.isRequired),
       isActive: Boolean(val.isActive),
       displayOrder: this.editingQuestionId
-        ? currentSchema.questions.find((q) => q.id === this.editingQuestionId)?.displayOrder || 1
-        : currentSchema.questions.length + 1,
+        ? original?.displayOrder ?? 0
+        : currentSchema.questions.length,
       options: options.length > 0 ? options : null,
       allowOther: Boolean(val.allowOther),
       conditionalOnKey: val.hasCondition && val.conditionalOnKey ? val.conditionalOnKey : null,
@@ -1215,11 +1311,13 @@ export class AdminMainSegmentWorkspaceComponent
     };
 
     this.schema$.next(updatedSchema);
+    this.schemaDirty = true;
     this.closeQuestionModal();
     this.showSuccess('Question updated. Remember to save or publish your schema draft.');
   }
 
   deleteQuestion(id: string): void {
+    if (this.isSavingSchema$.value) return;
     if (!confirm('Are you sure you want to remove this question from the registration form?'))
       return;
 
@@ -1242,16 +1340,18 @@ export class AdminMainSegmentWorkspaceComponent
 
     const nextQuestions = currentSchema.questions
       .filter((q) => q.id !== id)
-      .map((q, idx) => ({ ...q, displayOrder: idx + 1 }));
+      .map((q, idx) => ({ ...q, displayOrder: idx }));
 
     this.schema$.next({
       ...currentSchema,
       questions: nextQuestions,
     });
     this.showSuccess('Question removed.');
+    this.schemaDirty = true;
   }
 
   moveQuestion(currentIndex: number, direction: 'up' | 'down'): void {
+    if (this.isSavingSchema$.value) return;
     const currentSchema = this.schema$.value;
     if (!currentSchema) return;
 
@@ -1262,7 +1362,8 @@ export class AdminMainSegmentWorkspaceComponent
     const [moved] = copy.splice(currentIndex, 1);
     copy.splice(targetIndex, 0, moved);
 
-    const reordered = copy.map((q, idx) => ({ ...q, displayOrder: idx + 1 }));
+    const reordered = copy.map((q, idx) => ({ ...q, displayOrder: idx }));
+    this.schemaDirty = true;
     this.schema$.next({
       ...currentSchema,
       questions: reordered,
@@ -1274,7 +1375,7 @@ export class AdminMainSegmentWorkspaceComponent
     if (!currentSchema) return [];
 
     return currentSchema.questions.filter(
-      (q) => (q.type === 'YesNo' || q.type === 'SingleChoice') && q.id !== currentQuestionId,
+      (q) => ['YesNo', 'SingleChoice', 'MultipleChoice'].includes(q.type) && q.isActive && !q.conditionalOnKey && q.id !== currentQuestionId,
     );
   }
 
@@ -1284,15 +1385,25 @@ export class AdminMainSegmentWorkspaceComponent
     if (!currentSchema) return [];
 
     const target = currentSchema.questions.find((q) => q.key === targetKey);
-    return target?.options || [];
+    return target?.options?.filter(option => option.isActive !== false) || [];
   }
 
   openSchemaPreview(): void {
+    const schema = this.schema$.value;
+    if (!schema || this.activeTab !== 'form-builder') return;
+    this.schemaPreview = {
+      id: schema.id, schemaId: schema.schemaId, version: schema.version,
+      consentNoticeVersion: schema.settings.privacyNoticeVersion,
+      questions: [...schema.questions].filter(question => question.isActive)
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map(question => ({ ...question, options: question.options?.filter(option => option.isActive !== false) })),
+    };
     this.isSchemaPreviewOpen$.next(true);
   }
 
   closeSchemaPreview(): void {
     this.isSchemaPreviewOpen$.next(false);
+    this.schemaPreview = null;
   }
 
   /* ── Registrations Review, Detail & Export (Milestone 7) ── */
@@ -1336,8 +1447,14 @@ export class AdminMainSegmentWorkspaceComponent
   }
 
   loadRegistrationUniversityFilters(): void {
-    this.academicDirectoryService.getUniversities(undefined, 1, 100).subscribe({
-      next: (response) => this.registrationUniversities$.next(response.items ?? []),
+    this.academicDirectoryService.getUniversities(undefined, 1, 100).pipe(
+      expand(response => response.hasNextPage
+        ? this.academicDirectoryService.getUniversities(undefined, response.page + 1, 100)
+        : EMPTY),
+      reduce((items, response) => [...items, ...(response.items ?? [])], [] as AcademicUniversityItem[]),
+      takeUntil(this.destroy$),
+    ).subscribe({
+      next: (items) => this.registrationUniversities$.next(items),
       error: () => this.registrationUniversities$.next([]),
     });
   }
@@ -1350,6 +1467,7 @@ export class AdminMainSegmentWorkspaceComponent
 
   onRegistrationSearch(query: string): void {
     this.regSearch = query.trim();
+    this.regSearchInput = this.regSearch;
     this.regPage = 1;
     this.loadRegistrations();
   }
@@ -1360,8 +1478,12 @@ export class AdminMainSegmentWorkspaceComponent
     this.registrationFaculties$.next([]);
     if (universityId) {
       this.academicDirectoryService.getFaculties(universityId, undefined, 1, 100).subscribe({
-        next: (response) => this.registrationFaculties$.next(response.items ?? []),
-        error: () => this.registrationFaculties$.next([]),
+        next: (response) => {
+          if (this.regUniversityIdFilter === universityId) this.registrationFaculties$.next(response.items ?? []);
+        },
+        error: () => {
+          if (this.regUniversityIdFilter === universityId) this.registrationFaculties$.next([]);
+        },
       });
     }
     this.regPage = 1;
@@ -1392,6 +1514,7 @@ export class AdminMainSegmentWorkspaceComponent
 
   clearRegistrationFilters(): void {
     this.regSearch = '';
+    this.regSearchInput = '';
     this.regStatusFilter = 'All';
     this.regUniversityIdFilter = '';
     this.regFacultyIdFilter = '';
@@ -1466,6 +1589,7 @@ export class AdminMainSegmentWorkspaceComponent
       note: val.note ? val.note.trim() : null,
     };
 
+    const detailSequence = this.registrationDetailSequence;
     this.isUpdatingStatus$.next(true);
     this.registrationErrorMessage$.next(null);
     this.adminService
@@ -1474,16 +1598,16 @@ export class AdminMainSegmentWorkspaceComponent
       .subscribe({
         next: (refreshedDetail) => {
           this.isUpdatingStatus$.next(false);
-          this.selectedRegistration$.next(refreshedDetail);
-          this.statusUpdateForm.reset({
-            status: refreshedDetail.status,
-            note: '',
-          });
+          if (detailSequence === this.registrationDetailSequence) {
+            this.selectedRegistration$.next(refreshedDetail);
+            this.statusUpdateForm.reset({ status: refreshedDetail.status, note: '' });
+          }
           this.showSuccess(`Applicant status updated to ${refreshedDetail.status}.`);
           this.loadRegistrations();
         },
         error: (err) => {
           this.isUpdatingStatus$.next(false);
+          if (detailSequence !== this.registrationDetailSequence) return;
           this.registrationErrorMessage$.next(
             this.registrationActionError(err, 'Failed to update registration status.'),
           );
@@ -1656,7 +1780,7 @@ export class AdminMainSegmentWorkspaceComponent
 
   private toRegistrationDateBoundary(value: string, endOfDay: boolean): string | null {
     if (!value) return null;
-    const suffix = endOfDay ? 'T23:59:59.999Z' : 'T00:00:00.000Z';
+    const suffix = endOfDay ? 'T23:59:59.999' : 'T00:00:00.000';
     const parsed = new Date(`${value}${suffix}`);
     return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
   }
@@ -1673,7 +1797,7 @@ export class AdminMainSegmentWorkspaceComponent
     if (error?.status === 401) return 'Your session expired. Sign in again to continue.';
     if (error?.status === 403) return 'You are not authorized to perform this registration action.';
     if (error?.status === 404) return 'The requested registration was not found.';
-    return error?.error?.message || fallback;
+    return error?.error?.message || error?.error?.Message || fallback;
   }
 
   private safeDownloadFileName(value: string): string {
@@ -1727,23 +1851,6 @@ export class AdminMainSegmentWorkspaceComponent
       ? current.filter((id) => id !== itemId)
       : [...current, itemId];
     this.personForm.patchValue({ programItemIds: next });
-  }
-
-  /* ── Live Preview ── */
-  openPreview(): void {
-    this.adminService.getPreview(this.year).subscribe({
-      next: (preview) => {
-        this.previewData$.next(preview);
-        this.isPreviewModalOpen$.next(true);
-      },
-      error: (err) => {
-        this.errorMessage$.next(err?.error?.message || 'Failed to load live preview.');
-      },
-    });
-  }
-
-  closePreview(): void {
-    this.isPreviewModalOpen$.next(false);
   }
 
   getSectionTitle(key: MainSegmentSectionKey): string {

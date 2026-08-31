@@ -1,6 +1,6 @@
 .main-segment-page {
   min-height: 100dvh;
-  padding-top: 80px;
+  padding-top: var(--main-segment-top-offset, 80px);
   background: var(--off-white);
   color: var(--text-body);
   overflow-x: clip;
@@ -202,7 +202,7 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  scroll-margin-top: 82px;
+  scroll-margin-top: calc(var(--main-segment-top-offset, 80px) + 2px);
   background:
     radial-gradient(circle at 82% 12%, rgb(95 143 233 / 18%), transparent 30%),
     linear-gradient(135deg, #f7f9ff 0%, #edf2ff 100%);
@@ -415,7 +415,7 @@
   border: 1px solid rgb(126 168 248 / 65%);
   border-radius: 50%;
   background: var(--navy-deep);
-  color: var(--accent);
+  color: #fff;
   font-family: var(--font-display);
   font-size: 8px;
   font-weight: 700;

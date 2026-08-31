@@ -41,6 +41,7 @@ export interface RegistrationAnswerSubmission {
   answerText?: string | null;
   selectedOptions?: string[] | null;
   booleanAnswer?: boolean | null;
+  choiceAnswer?: string | { value: string; otherText: string } | (string | { value: string; otherText: string })[] | null;
 }
 
 export interface MainSegmentRegistrationSubmission {
@@ -156,6 +157,9 @@ export interface AdminRegistrationQuestion {
   displayOrder: number;
   placeholder?: string | null;
   maxLength?: number | null;
+  minLength?: number | null;
+  minSelections?: number | null;
+  maxSelections?: number | null;
   options?: RegistrationQuestionOption[] | null;
   allowOther?: boolean;
   conditionalOnKey?: string | null;
@@ -275,7 +279,7 @@ export const DEFAULT_ADMIN_SCHEMA: AdminRegistrationSchemaResponse = {
           label: 'On-Campus ASME Booth',
           value: 'OnCampusBooth',
         },
-        { id: 'opt-other', label: 'Other', value: 'Other' },
+        { id: 'opt-other', label: 'Other', value: 'Other', isOther: true },
       ],
     },
     {

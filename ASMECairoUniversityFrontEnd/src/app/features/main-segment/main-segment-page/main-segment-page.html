@@ -65,7 +65,7 @@
           </div>
 
           <div class="ms-hero-actions">
-            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="ms-primary-cta" (click)="openRegistrationModal()">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="ms-primary-cta" [disabled]="isPreview" (click)="openRegistrationModal()">
               Register for Main Segment {{ vm.edition.year }}
             </button>
             <span *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" class="ms-disabled-cta">
@@ -76,7 +76,7 @@
             </span>
 
             <a
-              [routerLink]="['/main-segment', vm.edition.year]"
+              [routerLink]="pageRoute(vm.edition.year)"
               fragment="story"
               class="ms-secondary-cta">
               Explore Event Story
@@ -149,7 +149,7 @@
     </section>
 
     <!-- 3. Experience Journey Roadmap -->
-    <section id="journey" class="ms-section ms-journey-section">
+    <section *ngIf="getJourneySteps(vm.edition).length" id="journey" class="ms-section ms-journey-section">
       <div class="ms-container">
         <div class="ms-section-header">
           <span class="section-eyebrow">Experience Roadmap</span>
@@ -160,7 +160,7 @@
         </div>
 
         <div class="ms-journey-grid">
-          <article class="ms-journey-card" *ngFor="let step of journeySteps">
+          <article class="ms-journey-card" *ngFor="let step of getJourneySteps(vm.edition)">
             <div class="ms-journey-card-header">
               <span class="journey-step-num">{{ step.step }}</span>
               <span class="journey-eyebrow">{{ step.eyebrow }}</span>
@@ -171,7 +171,7 @@
             <h3 class="journey-title">{{ step.title }}</h3>
             <p class="journey-desc">{{ step.description }}</p>
             <a
-              [routerLink]="['/main-segment', vm.edition.year]"
+              [routerLink]="pageRoute(vm.edition.year)"
               [fragment]="step.sectionId"
               class="journey-anchor-link"
               [attr.aria-label]="'Jump to ' + step.title + ' section'">
@@ -407,7 +407,7 @@
           </div>
 
           <div class="reg-cta-wrapper">
-            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="reg-btn-primary" (click)="openRegistrationModal()">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="reg-btn-primary" [disabled]="isPreview" (click)="openRegistrationModal()">
               Register for Main Segment {{ vm.edition.year }}
             </button>
 

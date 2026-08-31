@@ -5,10 +5,11 @@
     <header class="reg-modal-header">
       <div>
         <span class="reg-modal-eyebrow">ASME CAIRO UNIVERSITY &bull; {{ year }}</span>
-        <h2 id="modal-title" class="reg-modal-title">Registration Application</h2>
+        <h2 id="modal-title" class="reg-modal-title">{{ previewMode ? 'Registration form preview' : 'Registration Application' }}</h2>
       </div>
       <button type="button" class="btn-close-modal" (click)="requestClose()" aria-label="Close registration dialog">&times;</button>
     </header>
+    <p *ngIf="previewMode" class="preview-notice" role="note">Preview only. Switch between all three steps to try the form. No application or files will be submitted.</p>
 
     <div *ngIf="!(submissionResponse$ | async) && (isLoadingSchema$ | async)" class="reg-schema-state" aria-live="polite" aria-busy="true">
       <div class="reg-schema-spinner" aria-hidden="true"></div>
@@ -39,7 +40,7 @@
       </div>
 
       <p class="success-instructions">
-        Please save your reference code for event check-in and application inquiries. An email confirmation has also been scheduled.
+        Please save your reference code for event check-in and application inquiries.
       </p>
 
       <button type="button" class="btn-primary-done" (click)="requestClose()">
@@ -62,10 +63,10 @@
           <span class="step-label">Education</span>
         </button>
         <div class="step-divider" [class.completed]="currentStep > 2" aria-hidden="true"></div>
-        <div class="step-indicator" [class.active]="currentStep === 3" [class.completed]="currentStep === 3" [attr.aria-current]="currentStep === 3 ? 'step' : null">
+        <button type="button" class="step-indicator" [class.active]="currentStep === 3" [class.completed]="currentStep === 3" [attr.aria-current]="currentStep === 3 ? 'step' : null" (click)="goToStep(3)">
           <span class="step-num">3</span>
           <span class="step-label">Questions</span>
-        </div>
+        </button>
       </nav>
 
       <!-- Global Error Alert -->
@@ -107,7 +108,7 @@
           <div class="form-group">
             <label for="email-input">Email Address <span class="req">*</span></label>
             <input id="email-input" type="email" formControlName="email" placeholder="name@example.com" autocomplete="email" />
-            <span class="helper-text">Official confirmation will be sent here.</span>
+            <span class="helper-text">Use an email address you check regularly.</span>
             <div *ngIf="detailsForm.get('email')?.touched && detailsForm.get('email')?.errors" class="field-error">
               Valid email address is required.
             </div>
@@ -148,7 +149,7 @@
           <div class="file-card" [class.has-file]="nationalIdFile">
             <div class="file-card-header">
               <h4>National ID Card Photo <span class="req">*</span></h4>
-              <span id="national-id-file-hint" class="file-hint">JPEG, PNG, WebP (Max 10MB)</span>
+              <span id="national-id-file-hint" class="file-hint">JPEG, PNG, WebP (Max 5 MB)</span>
             </div>
 
             <div *ngIf="nationalIdPreviewUrl" class="file-preview-wrap">
@@ -227,7 +228,7 @@
           <div class="custom-select-box" [class.disabled-box]="!selectedUniversity && !isUniversityOther">
             <input id="faculty-search" type="text" role="combobox" aria-autocomplete="list" aria-controls="faculty-options" [attr.aria-expanded]="!!selectedUniversity || isUniversityOther" placeholder="Search faculties in selected university..." [ngModel]="facultySearch$ | async" (ngModelChange)="facultySearch$.next($event)" [ngModelOptions]="{standalone: true}" [disabled]="!selectedUniversity && !isUniversityOther" class="search-input" />
 
-            <div id="faculty-options" class="options-list-scroll" role="listbox" aria-label="Faculties">
+            <div *ngIf="selectedUniversity || isUniversityOther" id="faculty-options" class="options-list-scroll" role="listbox" aria-label="Faculties">
               <div *ngIf="isLoadingFaculties$ | async" class="select-loading">Loading faculties...</div>
               <button *ngFor="let fac of facultiesList$ | async" type="button" role="option" class="select-option-item" [class.selected]="selectedFaculty?.offeringId === fac.offeringId" [attr.aria-selected]="selectedFaculty?.offeringId === fac.offeringId" (click)="selectFaculty(fac)">
                 <strong>{{ fac.englishName }}</strong>
@@ -251,7 +252,7 @@
           <div class="custom-select-box" [class.disabled-box]="!selectedFaculty && !isFacultyOther">
             <input id="department-search" type="text" role="combobox" aria-autocomplete="list" aria-controls="department-options" [attr.aria-expanded]="!!selectedFaculty || isFacultyOther" placeholder="Search departments..." [ngModel]="departmentSearch$ | async" (ngModelChange)="departmentSearch$.next($event)" [ngModelOptions]="{standalone: true}" [disabled]="!selectedFaculty && !isFacultyOther" class="search-input" />
 
-            <div id="department-options" class="options-list-scroll" role="listbox" aria-label="Departments">
+            <div *ngIf="selectedFaculty || isFacultyOther" id="department-options" class="options-list-scroll" role="listbox" aria-label="Departments">
               <div *ngIf="isLoadingDepartments$ | async" class="select-loading">Loading departments...</div>
               <button *ngFor="let dept of departmentsList$ | async" type="button" role="option" class="select-option-item" [class.selected]="selectedDepartment?.id === dept.id" [attr.aria-selected]="selectedDepartment?.id === dept.id" (click)="selectDepartment(dept)">
                 <strong>{{ dept.englishName }}</strong>
@@ -279,7 +280,7 @@
           <div class="file-card compact-file-card" [class.has-file]="universityIdFile">
             <div class="file-card-header">
               <h4>University Student ID Card <span class="req">*</span></h4>
-              <span id="university-id-file-hint" class="file-hint">JPEG, PNG, WebP (Max 10MB)</span>
+              <span id="university-id-file-hint" class="file-hint">JPEG, PNG, WebP (Max 5 MB)</span>
             </div>
 
             <div *ngIf="universityIdPreviewUrl" class="file-preview-wrap">
@@ -310,7 +311,7 @@
       <form *ngIf="currentStep === 3" [formGroup]="questionsForm" class="step-form">
         <div class="form-section-intro">
           <h3 class="step-heading">Edition Application Questions</h3>
-          <p class="step-subheading">Please answer the questions below to finalize your Main Segment 2026 application.</p>
+          <p class="step-subheading">Please answer the questions below to finalize your {{ editionTitle }} application.</p>
         </div>
 
         <div *ngIf="schema$ | async as schema" class="dynamic-questions-list">
@@ -355,6 +356,10 @@
                   <span>No</span>
                 </label>
               </div>
+              <div *ngIf="hasOtherAnswer(q)" class="other-answer">
+                <label [for]="'other-answer-' + q.id">Please specify <span class="req">*</span></label>
+                <input [id]="'other-answer-' + q.id" type="text" maxlength="200" [value]="otherAnswers[q.key] || ''" (input)="setOtherAnswer(q, $any($event.target).value)" class="question-input" />
+              </div>
               <div *ngIf="questionsForm.get(q.key)?.touched && questionValidationMessage(q) as questionError" [id]="'question-error-' + q.id" class="field-error" role="alert">{{ questionError }}</div>
             </div>
           </div>
@@ -377,8 +382,8 @@
           <button type="button" class="btn-step-back" (click)="goToStep(2)" [disabled]="isSubmitting$ | async">
             &larr; Back to Education
           </button>
-          <button type="button" class="btn-submit-final" (click)="submitAll()" [disabled]="isSubmitting$ | async">
-            {{ (isSubmitting$ | async) ? 'SUBMITTING APPLICATION...' : 'SUBMIT REGISTRATION' }}
+          <button type="button" class="btn-submit-final" (click)="submitAll()" [disabled]="previewMode || (isSubmitting$ | async)">
+            {{ previewMode ? 'Submission disabled in preview' : ((isSubmitting$ | async) ? 'Submitting application...' : 'Submit registration') }}
           </button>
         </div>
       </form>

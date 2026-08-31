@@ -69,6 +69,18 @@ describe('AdminMainSegmentService', () => {
     httpMock.verify();
   });
 
+  it('uploads the hero as multipart file data and returns its updated media URL', () => {
+    const file = new File(['image'], 'hero.png', { type: 'image/png' });
+    service.uploadHeroImage(2026, file).subscribe(response => {
+      expect(response.heroImageUrl).toBe(`${environment.apiUrl}/api/storage/public/main-segment/2026/page/hero/new.png`);
+    });
+    const request = httpMock.expectOne(`${baseUrl}/2026/hero-image`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body.get('file')).toBe(file);
+    expect(request.request.headers.has('Content-Type')).toBe(false);
+    request.flush({ ...sampleAdminResponse, heroImageUrl: '/api/storage/public/main-segment/2026/page/hero/new.png' });
+  });
+
   it('should fetch admin edition summaries', () => {
     const mockSummaries: MainSegmentEditionSummary[] = [
       {
@@ -276,6 +288,7 @@ describe('AdminMainSegmentService', () => {
     });
 
     const publishGetReq = httpMock.expectOne(`${baseUrl}/2026/registration-schema`);
+    expect(publishGetReq.request.method).toBe('PUT');
     publishGetReq.flush(draftApiResponse);
 
     const pubReq = httpMock.expectOne(
@@ -290,7 +303,7 @@ describe('AdminMainSegmentService', () => {
     });
   });
 
-  it('should persist conditional questions through the backend revision endpoints', () => {
+  it('should persist conditional questions in one atomic draft request using keys instead of revision IDs', () => {
     const schemaId = '11111111-1111-4111-8111-111111111111';
     const joinId = '22222222-2222-4222-8222-222222222222';
     const teamId = '33333333-3333-4333-8333-333333333333';
@@ -358,24 +371,15 @@ describe('AdminMainSegmentService', () => {
       })
       .subscribe((result) => expect(result.questions).toHaveLength(2));
 
-    httpMock.expectOne(`${baseUrl}/2026/registration-schema`).flush(apiSchema);
-    const joinRequest = httpMock.expectOne(
-      `${baseUrl}/2026/registration-schemas/${schemaId}/questions/${joinId}`,
-    );
-    expect(joinRequest.request.method).toBe('PUT');
-    expect(joinRequest.request.body.type).toBe(4);
-    joinRequest.flush(apiSchema);
-
-    const teamRequest = httpMock.expectOne(
-      `${baseUrl}/2026/registration-schemas/${schemaId}/questions/${teamId}`,
-    );
-    expect(teamRequest.request.method).toBe('PUT');
-    expect(teamRequest.request.body.type).toBe(2);
-    expect(teamRequest.request.body.condition).toEqual({
-      dependsOnQuestionId: joinId,
-      expectedValue: 'yes',
+    const saveRequest = httpMock.expectOne(`${baseUrl}/2026/registration-schema`);
+    expect(saveRequest.request.method).toBe('PUT');
+    expect(saveRequest.request.body.questions[0]).toMatchObject({ type: 4, displayOrder: 0 });
+    expect(saveRequest.request.body.questions[1]).toMatchObject({
+      type: 2, displayOrder: 1, dependsOnKey: 'join_team', expectedValue: 'yes',
     });
-    teamRequest.flush(apiSchema);
+    expect(JSON.stringify(saveRequest.request.body)).not.toContain(joinId);
+    expect(JSON.stringify(saveRequest.request.body)).not.toContain(teamId);
+    saveRequest.flush(apiSchema);
   });
 
   it('should handle getRegistrations, getRegistrationDetail, updateStatus, getDocument, and exportCsv', () => {
