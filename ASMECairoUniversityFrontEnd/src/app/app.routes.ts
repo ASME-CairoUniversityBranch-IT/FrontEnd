@@ -67,6 +67,14 @@ export const routes: Routes = [
       ).then((m) => m.AdminMainSegmentListComponent),
   },
   {
+    path: 'admin/main-segment/:year/preview',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import(
+        './features/admin/admin-main-segment/admin-main-segment-preview/admin-main-segment-preview'
+      ).then((m) => m.AdminMainSegmentPreviewComponent),
+  },
+  {
     path: 'admin/main-segment/:year',
     canActivate: [authGuard],
     canDeactivate: [pendingChangesGuard],

@@ -49,11 +49,11 @@ export class AdminMainSegmentListComponent implements OnInit {
     year: [new Date().getFullYear(), [Validators.required, Validators.min(2000), Validators.max(2100)]],
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
     title: ['', [Validators.required, Validators.minLength(3)]],
-    heroContent: ['Shape the future with engineering leadership and industrial innovation.', [Validators.required]],
-    storyContent: ['The annual premiere gathering for mechanical engineers.', [Validators.required]],
+    heroContent: ['', [Validators.required]],
+    storyContent: ['', [Validators.required]],
     startsAt: [toInputDateTime(new Date().toISOString()), [Validators.required]],
     endsAt: [toInputDateTime(new Date(Date.now() + 86400000).toISOString()), [Validators.required]],
-    location: ['Faculty of Engineering, Cairo University', [Validators.required]],
+    location: ['', [Validators.required]],
     capacity: [500, [Validators.min(1)]],
   });
 

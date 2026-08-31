@@ -28,9 +28,9 @@
   <!-- Loaded Storytelling Page -->
   <main id="main-content" class="main-segment-page" *ngIf="vm.status === 'loaded'">
     <!-- 1. Hero Section -->
-    <header class="ms-hero" [class.has-image]="!!vm.edition.heroImageUrl">
+    <header class="ms-hero" [class.has-image]="!!getHeroMediaUrl(vm.edition)">
       <div class="ms-hero-grid-bg" aria-hidden="true"></div>
-      <div class="ms-hero-backdrop" *ngIf="vm.edition.heroImageUrl" [style.backgroundImage]="'url(' + vm.edition.heroImageUrl + ')'"></div>
+      <div class="ms-hero-backdrop" *ngIf="getHeroMediaUrl(vm.edition)" [style.backgroundImage]="'url(' + getHeroMediaUrl(vm.edition) + ')'"></div>
 
       <div class="ms-hero-inner">
         <div class="ms-hero-content">
@@ -65,7 +65,7 @@
           </div>
 
           <div class="ms-hero-actions">
-            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="ms-primary-cta" (click)="openRegistrationModal()">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="ms-primary-cta" [disabled]="isPreview" (click)="openRegistrationModal()">
               Register for Main Segment {{ vm.edition.year }}
             </button>
             <span *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" class="ms-disabled-cta">
@@ -75,15 +75,18 @@
               Registration Closed
             </span>
 
-            <a href="#story" class="ms-secondary-cta">
+            <a
+              [routerLink]="pageRoute(vm.edition.year)"
+              fragment="story"
+              class="ms-secondary-cta">
               Explore Event Story
             </a>
           </div>
         </div>
 
-        <div class="ms-hero-visual" *ngIf="vm.edition.heroImageUrl">
+        <div class="ms-hero-visual" *ngIf="getHeroMediaUrl(vm.edition)">
           <div class="ms-visual-frame">
-            <img [src]="vm.edition.heroImageUrl" [alt]="'Main Segment ' + vm.edition.year + ' Event Visual'" class="ms-visual-img" loading="eager" decoding="async">
+            <img [src]="getHeroMediaUrl(vm.edition)" [alt]="'Main Segment ' + vm.edition.year + ' Event Visual'" class="ms-visual-img" loading="eager" decoding="async">
             <div class="ms-visual-glare" aria-hidden="true"></div>
           </div>
         </div>
@@ -91,24 +94,62 @@
     </header>
 
     <!-- 2. Why Main Segment Matters -->
-    <section id="story" class="ms-section ms-story-section" *ngIf="vm.edition.storyContent">
-      <div class="ms-container">
-        <div class="ms-section-header">
+    <section
+      #storySection
+      id="story"
+      class="ms-section ms-story-section"
+      [class.is-visible]="storyIsVisible"
+      *ngIf="vm.edition.storyContent">
+      <div class="story-blueprint-grid" aria-hidden="true"></div>
+      <div class="story-ghost-type" aria-hidden="true">WHY</div>
+
+      <div class="ms-container ms-story-layout">
+        <div class="ms-story-heading">
           <span class="section-eyebrow">Why Main Segment Matters</span>
-          <h2>The Premiere Mechanical Engineering Gathering</h2>
+          <h2>One day.<br><em>A career in motion.</em></h2>
+          <p class="story-heading-note">Where engineering knowledge starts moving toward real opportunity.</p>
         </div>
 
-        <div class="ms-story-card">
-          <div class="ms-story-lead-line" aria-hidden="true"></div>
-          <div class="ms-story-body">
+        <div class="ms-story-stage">
+          <div class="story-stage-grid" aria-hidden="true"></div>
+          <div class="story-edition-mark" aria-hidden="true">
+            <span>Edition</span>
+            <strong>{{ vm.edition.year }}</strong>
+          </div>
+
+          <div class="story-stage-content">
+            <div class="story-stage-label">
+              <span class="live-signal" aria-hidden="true"></span>
+              The engineering current
+            </div>
             <p class="ms-story-paragraph">{{ vm.edition.storyContent }}</p>
+
+            <div class="story-motion-map" aria-label="From questions to career opportunity">
+              <div class="story-track" aria-hidden="true"><span></span></div>
+              <div class="story-stop">
+                <span class="story-stop-node">01</span>
+                <span class="story-stop-label">Question</span>
+              </div>
+              <div class="story-stop">
+                <span class="story-stop-node">02</span>
+                <span class="story-stop-label">Skill</span>
+              </div>
+              <div class="story-stop">
+                <span class="story-stop-node">03</span>
+                <span class="story-stop-label">Conversation</span>
+              </div>
+              <div class="story-stop">
+                <span class="story-stop-node">04</span>
+                <span class="story-stop-label">Opportunity</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- 3. Experience Journey Roadmap -->
-    <section id="journey" class="ms-section ms-journey-section">
+    <section *ngIf="getJourneySteps(vm.edition).length" id="journey" class="ms-section ms-journey-section">
       <div class="ms-container">
         <div class="ms-section-header">
           <span class="section-eyebrow">Experience Roadmap</span>
@@ -119,7 +160,7 @@
         </div>
 
         <div class="ms-journey-grid">
-          <article class="ms-journey-card" *ngFor="let step of journeySteps">
+          <article class="ms-journey-card" *ngFor="let step of getJourneySteps(vm.edition)">
             <div class="ms-journey-card-header">
               <span class="journey-step-num">{{ step.step }}</span>
               <span class="journey-eyebrow">{{ step.eyebrow }}</span>
@@ -129,7 +170,11 @@
             </div>
             <h3 class="journey-title">{{ step.title }}</h3>
             <p class="journey-desc">{{ step.description }}</p>
-            <a [href]="'#' + step.sectionId" class="journey-anchor-link" [attr.aria-label]="'Jump to ' + step.title + ' section'">
+            <a
+              [routerLink]="pageRoute(vm.edition.year)"
+              [fragment]="step.sectionId"
+              class="journey-anchor-link"
+              [attr.aria-label]="'Jump to ' + step.title + ' section'">
               View Details <span class="arrow" aria-hidden="true">&rarr;</span>
             </a>
           </article>
@@ -184,13 +229,13 @@
                   <div class="person-card" *ngFor="let person of item.people">
                     <div class="person-avatar-wrap">
                       <img
-                        *ngIf="person.photoUrl"
-                        [src]="person.photoUrl"
+                        *ngIf="person.photoUrl || showPreviewMedia"
+                        [src]="getPersonMediaUrl(person)"
                         [alt]="person.name + ' - ' + person.jobTitle"
                         class="person-photo"
                         loading="lazy"
                         decoding="async">
-                      <div class="person-fallback-avatar" *ngIf="!person.photoUrl" aria-hidden="true">
+                      <div class="person-fallback-avatar" *ngIf="!person.photoUrl && !showPreviewMedia" aria-hidden="true">
                         {{ getPersonInitials(person.name) }}
                       </div>
                     </div>
@@ -223,13 +268,13 @@
             <article class="ms-org-card" *ngFor="let org of section.organizations">
               <div class="org-logo-stage">
                 <img
-                  *ngIf="org.logoUrl"
-                  [src]="org.logoUrl"
+                  *ngIf="org.logoUrl || showPreviewMedia"
+                  [src]="getOrganizationMediaUrl(org)"
                   [alt]="org.name + ' logo'"
                   class="org-logo"
                   loading="lazy"
                   decoding="async">
-                <div class="org-fallback-logo" *ngIf="!org.logoUrl">
+                <div class="org-fallback-logo" *ngIf="!org.logoUrl && !showPreviewMedia">
                   <span class="org-initials">{{ getOrgInitials(org.name) }}</span>
                 </div>
               </div>
@@ -262,13 +307,13 @@
                 <article class="sponsor-card" *ngFor="let sponsor of group.organizations">
                   <div class="sponsor-logo-stage">
                     <img
-                      *ngIf="sponsor.logoUrl"
-                      [src]="sponsor.logoUrl"
+                      *ngIf="sponsor.logoUrl || showPreviewMedia"
+                      [src]="getOrganizationMediaUrl(sponsor)"
                       [alt]="sponsor.name + ' logo'"
                       class="sponsor-logo"
                       loading="lazy"
                       decoding="async">
-                    <div class="sponsor-fallback-logo" *ngIf="!sponsor.logoUrl">
+                    <div class="sponsor-fallback-logo" *ngIf="!sponsor.logoUrl && !showPreviewMedia">
                       <span class="sponsor-initials">{{ getOrgInitials(sponsor.name) }}</span>
                       <span class="sponsor-name-text">{{ sponsor.name }}</span>
                     </div>
@@ -293,13 +338,13 @@
             <article class="partner-card" *ngFor="let partner of section.organizations">
               <div class="partner-logo-stage">
                 <img
-                  *ngIf="partner.logoUrl"
-                  [src]="partner.logoUrl"
+                  *ngIf="partner.logoUrl || showPreviewMedia"
+                  [src]="getOrganizationMediaUrl(partner)"
                   [alt]="partner.name + ' logo'"
                   class="partner-logo"
                   loading="lazy"
                   decoding="async">
-                <div class="partner-fallback-logo" *ngIf="!partner.logoUrl">
+                <div class="partner-fallback-logo" *ngIf="!partner.logoUrl && !showPreviewMedia">
                   <span class="partner-initials">{{ getOrgInitials(partner.name) }}</span>
                 </div>
               </div>
@@ -362,7 +407,7 @@
           </div>
 
           <div class="reg-cta-wrapper">
-            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="reg-btn-primary" (click)="openRegistrationModal()">
+            <button *ngIf="vm.edition.registration.isAvailable" type="button" class="reg-btn-primary" [disabled]="isPreview" (click)="openRegistrationModal()">
               Register for Main Segment {{ vm.edition.year }}
             </button>
 

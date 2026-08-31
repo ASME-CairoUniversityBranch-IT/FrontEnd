@@ -78,7 +78,7 @@ describe('MainSegmentRegistrationService', () => {
       expect(res.questions[1].conditionalOnKey).toBe('join_team');
       expect(res.questions[1].conditionalValue).toBe(true);
       expect(res.questions[1].options).toEqual([
-        { id: 'active', value: 'technical', label: 'Technical' },
+        { id: 'active', value: 'technical', label: 'Technical', isOther: false },
       ]);
     });
 
@@ -94,6 +94,47 @@ describe('MainSegmentRegistrationService', () => {
     const req = httpMock.expectOne(`${baseUrl}/2026/registration-schema`);
     req.flush({ message: 'No published schema.' }, { status: 404, statusText: 'Not Found' });
     expect(errorSpy).toHaveBeenCalledOnce();
+  });
+
+  it('should normalize numeric ASP.NET enum values from older deployments', () => {
+    const numericSchema = {
+      id: 'schema-legacy',
+      schemaId: 'schema-legacy',
+      editionYear: 2026,
+      version: 1,
+      publishedAt: '2026-08-29T15:00:00Z',
+      questions: [
+        {
+          id: 'q-join',
+          key: 'join_team',
+          prompt: 'Join the team?',
+          helperText: null,
+          type: 4,
+          isRequired: true,
+          displayOrder: 0,
+          options: [],
+        },
+        {
+          id: 'q-team',
+          key: 'team',
+          prompt: 'Which team?',
+          helperText: null,
+          type: 2,
+          isRequired: true,
+          displayOrder: 1,
+          condition: { dependsOnQuestionId: 'q-join', expectedValue: 'yes' },
+          options: [],
+        },
+      ],
+    };
+
+    service.getRegistrationSchema(2026).subscribe((res) => {
+      expect(res.questions.map((question) => question.type)).toEqual(['YesNo', 'SingleChoice']);
+      expect(res.questions[1].conditionalValue).toBe(true);
+    });
+
+    const req = httpMock.expectOne(`${baseUrl}/2026/registration-schema`);
+    req.flush(numericSchema);
   });
 
   it('should submit registration with files and data payload', () => {

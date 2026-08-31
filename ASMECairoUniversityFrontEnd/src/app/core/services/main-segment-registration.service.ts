@@ -7,6 +7,7 @@ import {
   MainSegmentRegistrationSubmission,
   RegistrationSchema,
   RegistrationSchemaApiResponse,
+  RegistrationQuestionType,
   RegistrationSubmissionResponse,
 } from '../models/registration.model';
 
@@ -90,6 +91,14 @@ export const DEFAULT_REGISTRATION_SCHEMA: RegistrationSchema = {
 export class MainSegmentRegistrationService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/main-segments`;
+  private readonly questionTypes: readonly RegistrationQuestionType[] = [
+    'ShortText',
+    'LongText',
+    'SingleChoice',
+    'MultipleChoice',
+    'YesNo',
+    'ConditionalTeam',
+  ];
 
   getRegistrationSchema(year: number): Observable<RegistrationSchema> {
     return this.http
@@ -131,7 +140,7 @@ export class MainSegmentRegistrationService {
       answers: Object.fromEntries(
         submission.answers.map((answer) => [
           answer.questionKey,
-          answer.booleanAnswer ?? answer.selectedOptions ?? answer.answerText ?? null,
+          answer.choiceAnswer ?? answer.booleanAnswer ?? answer.selectedOptions ?? answer.answerText ?? null,
         ])
       ),
       privacyNoticeVersion: submission.consentNoticeVersion,
@@ -164,10 +173,13 @@ export class MainSegmentRegistrationService {
     const orderedQuestions = [...(response.questions ?? [])].sort(
       (a, b) => a.displayOrder - b.displayOrder
     );
-    const questionKeyById = new Map(orderedQuestions.map((question) => [question.id, question.key]));
-    const questionTypeById = new Map(
-      orderedQuestions.map((question) => [question.id, question.type])
+    const normalizedTypes = new Map(
+      orderedQuestions.map((question) => [
+        question.id,
+        this.mapEnum(this.questionTypes, question.type, 'ShortText'),
+      ])
     );
+    const questionKeyById = new Map(orderedQuestions.map((question) => [question.id, question.key]));
 
     return {
       id: response.id,
@@ -177,7 +189,7 @@ export class MainSegmentRegistrationService {
       questions: orderedQuestions.map((question) => {
         const conditionQuestionId = question.condition?.dependsOnQuestionId;
         const conditionQuestionType = conditionQuestionId
-          ? questionTypeById.get(conditionQuestionId)
+          ? normalizedTypes.get(conditionQuestionId)
           : undefined;
         let conditionalValue: string | boolean | null =
           question.condition?.expectedValue ?? null;
@@ -189,7 +201,7 @@ export class MainSegmentRegistrationService {
           key: question.key,
           title: question.prompt,
           description: question.helperText,
-          type: question.type,
+          type: normalizedTypes.get(question.id) ?? 'ShortText',
           isRequired: question.isRequired,
           minLength: question.minLength ?? null,
           maxLength: question.maxLength ?? null,
@@ -202,6 +214,7 @@ export class MainSegmentRegistrationService {
               id: option.id,
               label: option.label,
               value: option.value,
+              isOther: option.isOther,
             })),
           conditionalOnKey: conditionQuestionId
             ? questionKeyById.get(conditionQuestionId) ?? null
@@ -210,5 +223,13 @@ export class MainSegmentRegistrationService {
         };
       }),
     };
+  }
+
+  private mapEnum<T extends string>(values: readonly T[], raw: unknown, fallback: T): T {
+    if (typeof raw === 'number' && Number.isInteger(raw)) {
+      return values[raw] ?? fallback;
+    }
+
+    return typeof raw === 'string' && values.includes(raw as T) ? (raw as T) : fallback;
   }
 }

@@ -182,6 +182,17 @@ describe('MainSegmentPageComponent', () => {
     fixture.destroy();
   });
 
+  it('orders and numbers roadmap steps from the visible section content, without modifying the edition', () => {
+    const edition = { ...fullSampleEdition, sections: fullSampleEdition.sections.map(section => ({
+      ...section, displayOrder: section.sectionKey === MainSegmentSectionKey.CareerFair ? 0 : section.displayOrder,
+    })) };
+    expect(component.getJourneySteps(edition).map(step => [step.step, step.sectionId])).toEqual([
+      ['01', 'section-CareerFair'], ['02', 'section-PanelDiscussion'],
+    ]);
+    expect(edition.sections[0].sectionKey).toBe(MainSegmentSectionKey.PanelDiscussion);
+    expect(component.getJourneySteps({ ...edition, sections: [] })).toEqual([]);
+  });
+
   it('should create the component', () => {
     expect(component).toBeTruthy();
   });
@@ -221,12 +232,16 @@ describe('MainSegmentPageComponent', () => {
     expect(compiled.querySelector('.ms-story-paragraph')?.textContent).toContain(
       'The premiere mechanical engineering gathering'
     );
+    expect(compiled.querySelector('.ms-story-heading h2')?.textContent).toContain(
+      'A career in motion.'
+    );
+    expect(compiled.querySelectorAll('.story-stop').length).toBe(4);
 
-    // 3. Experience Journey Roadmap (6 steps)
+    // 3. Roadmap includes only the experience sections that are actually displayed.
     const journeyCards = compiled.querySelectorAll('.ms-journey-card');
-    expect(journeyCards.length).toBe(6);
+    expect(journeyCards.length).toBe(2);
     expect(journeyCards[0].textContent).toContain('Panel Discussions');
-    expect(journeyCards[4].textContent).toContain('Career Fair');
+    expect(journeyCards[1].textContent).toContain('Career Fair');
 
     // 4. Panel Discussion with Speakers
     const panelSection = compiled.querySelector('#section-PanelDiscussion');
@@ -235,7 +250,9 @@ describe('MainSegmentPageComponent', () => {
     const speakerCards = panelSection?.querySelectorAll('.person-card');
     expect(speakerCards?.length).toBe(2);
     expect(speakerCards?.[0].textContent).toContain('Dr. Jane Smith');
-    expect(speakerCards?.[1].querySelector('.person-fallback-avatar')?.textContent?.trim()).toBe('ET');
+    expect(speakerCards?.[1].querySelector('.person-photo')?.getAttribute('src')).toContain(
+      '/images/main-segment/speaker-portrait-'
+    );
 
     // 5. Career Fair with equal stages & fallbacks
     const careerFairSection = compiled.querySelector('#section-CareerFair');
@@ -243,7 +260,9 @@ describe('MainSegmentPageComponent', () => {
     const orgCards = careerFairSection?.querySelectorAll('.ms-org-card');
     expect(orgCards?.length).toBe(2);
     expect(orgCards?.[0].textContent).toContain('ABB Robotics');
-    expect(orgCards?.[1].querySelector('.org-fallback-logo')?.textContent?.trim()).toBe('SE');
+    expect(orgCards?.[1].querySelector('.org-logo')?.getAttribute('src')).toContain(
+      '/images/main-segment/logo-generic.svg'
+    );
 
     // 7. Sponsors with explicit tier hierarchy (Strategic before Gold)
     const sponsorsSection = compiled.querySelector('#section-Sponsors');

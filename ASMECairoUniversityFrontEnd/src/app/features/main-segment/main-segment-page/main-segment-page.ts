@@ -1,4 +1,14 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Title, Meta } from '@angular/platform-browser';
@@ -8,9 +18,11 @@ import { MainSegmentService } from '../../../core/services/main-segment.service'
 import {
   MainSegmentEdition,
   MainSegmentOrganization,
+  MainSegmentPerson,
   MainSegmentSection,
   MainSegmentSectionKey,
 } from '../../../core/models/main-segment.model';
+import { environment } from '../../../../environments/environment';
 import {
   getOrgInitials,
   getPersonInitials,
@@ -57,13 +69,26 @@ const DEFAULT_DESCRIPTION =
   styleUrl: './main-segment-page.css',
 })
 export class MainSegmentPageComponent implements OnInit, OnDestroy {
+  @Input() isPreview = false;
   private readonly route = inject(ActivatedRoute);
   private readonly mainSegmentService = inject(MainSegmentService);
   private readonly titleService = inject(Title);
   private readonly metaService = inject(Meta);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   private metaSubscription?: Subscription;
+  private storyObserver?: IntersectionObserver;
   isRegistrationModalOpen = false;
+  storyIsVisible = false;
+  /** Local preview media is only used by non-production builds until admins upload approved assets. */
+  readonly showPreviewMedia = !environment.production;
+
+  private readonly previewPersonAssets = [
+    '/images/main-segment/speaker-portrait-blue.svg',
+    '/images/main-segment/speaker-portrait-gold.svg',
+    '/images/main-segment/speaker-portrait-teal.svg',
+    '/images/main-segment/speaker-portrait-purple.svg',
+  ];
 
   readonly journeySteps: JourneyStep[] = [
     {
@@ -154,11 +179,34 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
     })
   );
 
+  @ViewChild('storySection')
+  set storySection(section: ElementRef<HTMLElement> | undefined) {
+    this.storyObserver?.disconnect();
+    if (!section) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      this.storyIsVisible = true;
+      return;
+    }
+
+    this.storyObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        this.storyIsVisible = true;
+        this.changeDetector.markForCheck();
+        this.storyObserver?.disconnect();
+      },
+      { threshold: 0.2 },
+    );
+    this.storyObserver.observe(section.nativeElement);
+  }
+
   ngOnInit(): void {
     // VM stream handles initialization and meta updates through tap()
   }
 
   ngOnDestroy(): void {
+    this.storyObserver?.disconnect();
     this.metaSubscription?.unsubscribe();
     this.titleService.setTitle(DEFAULT_TITLE);
     this.metaService.updateTag({ name: 'description', content: DEFAULT_DESCRIPTION });
@@ -167,7 +215,23 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
   }
 
   openRegistrationModal(): void {
+    if (this.isPreview) return;
     this.isRegistrationModalOpen = true;
+  }
+
+  pageRoute(year: number): (string | number)[] {
+    return this.isPreview
+      ? ['/admin/main-segment', year, 'preview']
+      : ['/main-segment', year];
+  }
+
+  getJourneySteps(edition: MainSegmentEdition): JourneyStep[] {
+    return [...edition.sections]
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .filter(section => this.hasSectionContent(section))
+      .map(section => this.journeySteps.find(step => step.sectionId === `section-${section.sectionKey}`))
+      .filter((step): step is JourneyStep => !!step)
+      .map((step, index) => ({ ...step, step: String(index + 1).padStart(2, '0') }));
   }
 
   closeRegistrationModal(): void {
@@ -178,8 +242,33 @@ export class MainSegmentPageComponent implements OnInit, OnDestroy {
     return getPersonInitials(name);
   }
 
+  getPersonMediaUrl(person: MainSegmentPerson): string {
+    if (person.photoUrl) return person.photoUrl;
+    const source = `${person.id}:${person.name}`;
+    const hash = Array.from(source).reduce((total, character) => total + character.charCodeAt(0), 0);
+    return this.previewPersonAssets[hash % this.previewPersonAssets.length];
+  }
+
   getOrgInitials(name: string): string {
     return getOrgInitials(name);
+  }
+
+  getOrganizationMediaUrl(organization: MainSegmentOrganization): string {
+    if (organization.logoUrl) return organization.logoUrl;
+
+    const name = organization.name.toLowerCase();
+    if (name.includes('altium')) return '/images/main-segment/logo-altium.svg';
+    if (name.includes('simscale')) return '/images/main-segment/logo-simscale.svg';
+    if (name.includes('marakby')) return '/images/main-segment/logo-elmarakby.svg';
+    if (name.includes('symbios')) return '/images/main-segment/logo-symbios.svg';
+    if (name.includes('informatics') || name.includes('eui')) return '/images/main-segment/logo-eui.svg';
+    if (name.includes('gdg')) return '/images/main-segment/logo-gdg.svg';
+    if (name.includes('cairo university')) return '/images/main-segment/logo-cairo-career.svg';
+    return '/images/main-segment/logo-generic.svg';
+  }
+
+  getHeroMediaUrl(edition: MainSegmentEdition): string | null {
+    return edition.heroImageUrl || (this.showPreviewMedia ? '/images/team.jpg' : null);
   }
 
   groupSponsors(sponsors: MainSegmentOrganization[]): SponsorGroup[] {

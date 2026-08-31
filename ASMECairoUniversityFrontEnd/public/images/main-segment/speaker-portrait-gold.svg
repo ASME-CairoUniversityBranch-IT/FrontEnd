@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-label="Speaker portrait placeholder">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#183b57"/><stop offset="1" stop-color="#d28b3e"/></linearGradient></defs>
+  <rect width="480" height="480" rx="44" fill="url(#bg)"/>
+  <circle cx="70" cy="76" r="82" fill="#f5c65d" opacity=".2"/><circle cx="404" cy="402" r="96" fill="#fff" opacity=".1"/>
+  <circle cx="240" cy="184" r="76" fill="#9f634b"/><path d="M163 177c10-79 146-99 157 13-22-31-50-44-79-42-27 2-54 17-78 29Z" fill="#241a29"/>
+  <path d="M112 420c8-102 57-154 128-154s120 52 128 154Z" fill="#f7eee0"/><path d="M180 292c20 26 41 39 60 39s40-13 60-39v-26H180Z" fill="#8d5643"/><path d="M158 420c7-84 35-129 82-129s75 45 82 129Z" fill="#bb6d2d"/>
+</svg>

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AdminMainSegmentWorkspaceComponent } from './admin-main-segment-workspace';
 import { AdminMainSegmentService } from '../../../../core/services/admin-main-segment.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -281,6 +281,83 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
     expect(mockAdminService.getRegistrationSchema).toHaveBeenCalledWith(2026);
   });
 
+  it('opens the saved-page preview in a separate tab without saving or replacing editor state', () => {
+    component.form.markAsDirty();
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('a.btn-preview') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/admin/main-segment/2026/preview');
+    expect(link.target).toBe('_blank');
+    expect(link.rel).toBe('noopener');
+    expect(link.textContent).toContain('Preview saved page');
+    expect(component.form.dirty).toBe(true);
+    expect(mockAdminService.updateEdition).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.preview-modal-overlay')).toBeNull();
+  });
+
+  function selectHero(file: File) {
+    const input = { files: [file], value: file.name };
+    component.onHeroImageSelected({ target: input } as unknown as Event);
+    return input;
+  }
+
+  it('opens the hero file picker from a keyboard-accessible button', () => {
+    const input = fixture.nativeElement.querySelector('input[aria-label="Hero image"]') as HTMLInputElement;
+    const openPicker = vi.spyOn(input, 'click').mockImplementation(() => {});
+    const button = fixture.nativeElement.querySelector('button.btn-upload') as HTMLButtonElement;
+    button.click();
+    expect(button.type).toBe('button');
+    expect(openPicker).toHaveBeenCalledOnce();
+  });
+
+  it('updates the hero image without discarding unsaved text edits', () => {
+    const file = new File(['image'], 'hero.png', { type: 'image/png' });
+    component.form.patchValue({ title: 'Unsaved title' });
+    component.form.markAsDirty();
+    mockAdminService.uploadHeroImage.mockReturnValue(of({ ...sampleAdminResponse, heroImageUrl: '/uploads/new-hero.png' }));
+    const input = selectHero(file);
+    expect(mockAdminService.uploadHeroImage).toHaveBeenCalledWith(2026, file);
+    expect(component.vm$.value.edition?.heroImageUrl).toBe('/uploads/new-hero.png');
+    expect(component.form.value.title).toBe('Unsaved title');
+    expect(component.form.dirty).toBe(true);
+    expect(input.value).toBe('');
+    expect(component.isUploadingImage$.value).toBe(false);
+  });
+
+  it('rejects unsupported, empty, and oversized hero files before upload', () => {
+    selectHero(new File(['pdf'], 'hero.pdf', { type: 'application/pdf' }));
+    expect(component.heroImageError$.value).toContain('JPEG, PNG, or WebP');
+    selectHero(new File([], 'empty.png', { type: 'image/png' }));
+    expect(component.heroImageError$.value).toContain('empty');
+    selectHero(new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' }));
+    expect(component.heroImageError$.value).toContain('5 MB');
+    expect(mockAdminService.uploadHeroImage).not.toHaveBeenCalled();
+  });
+
+  it('shows upload failures beside the hero control and permits retrying the same file', () => {
+    const file = new File(['image'], 'hero.png', { type: 'image/png' });
+    mockAdminService.uploadHeroImage.mockReturnValueOnce(throwError(() => ({ error: { message: 'Invalid image data' } })));
+    expect(selectHero(file).value).toBe('');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.image-controls [role="alert"]')?.textContent).toContain('Invalid image data');
+    expect(component.isUploadingImage$.value).toBe(false);
+    selectHero(file);
+    expect(mockAdminService.uploadHeroImage).toHaveBeenCalledTimes(2);
+    expect(component.heroImageError$.value).toBeNull();
+  });
+
+  it('does not send overlapping hero uploads', () => {
+    const pending = new Subject<MainSegmentAdminResponse>();
+    mockAdminService.uploadHeroImage.mockReturnValue(pending);
+    const file = new File(['image'], 'hero.webp', { type: 'image/webp' });
+    selectHero(file);
+    selectHero(file);
+    expect(mockAdminService.uploadHeroImage).toHaveBeenCalledOnce();
+    expect(component.isUploadingImage$.value).toBe(true);
+    pending.next(sampleAdminResponse);
+    pending.complete();
+    expect(component.isUploadingImage$.value).toBe(false);
+  });
+
   it('should open and submit program item modal for creation and editing', () => {
     component.openAddProgramItemModal();
     expect(component.isProgramItemModalOpen$.value).toBe(true);
@@ -552,7 +629,7 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       2026,
       expect.objectContaining({
         facultyId: 'faculty-1',
-        submittedFrom: '2026-09-01T00:00:00.000Z',
+        submittedFrom: new Date('2026-09-01T00:00:00.000').toISOString(),
       }),
     );
 
@@ -684,6 +761,99 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
 
     component.closeRegistrationDetail();
     expect(component.isDetailModalOpen$.value).toBe(false);
+  });
+
+  it('preserves zero order and hyphenated keys while editing and protects unsaved questions', () => {
+    component.setTab('form-builder');
+    const question: AdminRegistrationQuestion = {
+      id: 'existing-first', key: 'where-heard', title: 'Where did you hear?',
+      type: 'SingleChoice', isActive: true, isRequired: true, displayOrder: 0, allowOther: true,
+      options: [{ id: 'other', value: 'other', label: 'Other', isOther: true }],
+    };
+    component.schema$.next({ ...DEFAULT_ADMIN_SCHEMA, questions: [question] });
+    component.openEditQuestionModal(question);
+    component.questionForm.patchValue({ title: 'How did you hear about us?' });
+    expect(component.questionForm.valid).toBe(true);
+    component.saveQuestion();
+    expect(component.schema$.value?.questions[0]).toMatchObject({ displayOrder: 0, key: 'where-heard' });
+    expect(component.schema$.value?.questions[0].options).toHaveLength(1);
+    expect(component.schemaDirty).toBe(true);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    expect(component.canDeactivate()).toBe(false);
+  });
+
+  it('does not let hidden option inputs prevent switching a question to text', () => {
+    component.setTab('form-builder');
+    component.openAddQuestionModal();
+    component.questionForm.patchValue({ title: 'A text question', key: 'a-text-question', type: 'SingleChoice' });
+    component.addQuestionOption();
+    expect(component.questionForm.invalid).toBe(true);
+    component.questionForm.patchValue({ type: 'LongText' });
+    expect(component.questionForm.valid).toBe(true);
+    component.saveQuestion();
+    expect(component.schema$.value?.questions.at(-1)).toMatchObject({ type: 'LongText', options: null });
+  });
+
+  it('clears the form preview when switching to Applications and retains local questions', () => {
+    component.setTab('form-builder');
+    component.moveQuestion(0, 'down');
+    const schema = component.schema$.value;
+    component.openSchemaPreview();
+    expect(component.isSchemaPreviewOpen$.value).toBe(true);
+    expect(component.schemaPreview?.questions.length).toBeGreaterThan(0);
+    component.setTab('registrations');
+    expect(component.isSchemaPreviewOpen$.value).toBe(false);
+    expect(component.schemaPreview).toBeNull();
+    expect(component.schema$.value).toBe(schema);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-main-segment-registration-modal')).toBeNull();
+  });
+
+  it('surfaces backend form validation messages and preserves unsaved work on failure', () => {
+    component.setTab('form-builder');
+    component.moveQuestion(0, 'down');
+    mockAdminService.publishRegistrationSchema.mockReturnValue(throwError(() => ({ status: 400, error: { Message: 'A condition is invalid.' } })));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    component.publishSchema();
+    expect(component.errorMessage$.value).toBe('A condition is invalid.');
+    expect(component.schemaDirty).toBe(true);
+    expect(component.isSavingSchema$.value).toBe(false);
+  });
+
+  it('loads all university pages for application filters', () => {
+    mockAcademicDirectoryService.getUniversities.mockReturnValueOnce(of({ items: [{ id: 'first' }], page: 1, hasNextPage: true }))
+      .mockReturnValueOnce(of({ items: [{ id: 'last' }], page: 2, hasNextPage: false }));
+    component.loadRegistrationUniversityFilters();
+    expect(mockAcademicDirectoryService.getUniversities).toHaveBeenLastCalledWith(undefined, 2, 100);
+    expect(component.registrationUniversities$.value.map(item => item.id)).toEqual(['first', 'last']);
+  });
+
+  it('ignores stale faculty filter results and applies only submitted search text', () => {
+    const older = new Subject<any>();
+    mockAcademicDirectoryService.getFaculties.mockReturnValueOnce(older).mockReturnValue(of({ items: [{ facultyId: 'new' }] }));
+    component.setRegistrationUniversityFilter('old-university');
+    component.setRegistrationUniversityFilter('new-university');
+    older.next({ items: [{ facultyId: 'old' }] });
+    expect(component.registrationFaculties$.value[0].facultyId).toBe('new');
+    component.onRegistrationSearch('applied');
+    component.regSearchInput = 'not searched';
+    component.setRegistrationStatusFilter('Accepted');
+    expect(mockAdminService.getRegistrations).toHaveBeenLastCalledWith(2026, expect.objectContaining({ search: 'applied' }));
+  });
+
+  it('does not reopen applicant details when a pending status save finishes after closing', () => {
+    const pending = new Subject<any>();
+    mockAdminService.getRegistrationDetail.mockReturnValue(of({ id: 'reg-1', referenceNumber: 'R-1', status: 'Submitted' }));
+    mockAdminService.updateRegistrationStatus.mockReturnValue(pending);
+    component.openRegistrationDetail('reg-1');
+    component.statusUpdateForm.patchValue({ status: 'UnderReview' });
+    component.submitStatusUpdate();
+    component.closeRegistrationDetail();
+    pending.next({});
+    pending.complete();
+    expect(component.selectedRegistration$.value).toBeNull();
+    expect(component.isDetailModalOpen$.value).toBe(false);
+    expect(component.isUpdatingStatus$.value).toBe(false);
   });
 
   it('should view private document in lightbox and export CSV file', () => {

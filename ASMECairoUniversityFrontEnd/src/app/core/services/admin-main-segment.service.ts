@@ -9,17 +9,20 @@ import {
   MainSegmentAdminResponse,
   MainSegmentEditionStatus,
   MainSegmentEditionSummary,
+  MainSegmentOrganizationCategory,
   MainSegmentOrganizationRequest,
   MainSegmentPersonRequest,
+  MainSegmentProgramCategory,
   MainSegmentProgramItemRequest,
+  MainSegmentSectionKey,
   MainSegmentSectionRequest,
+  SponsorshipTier,
   UpdateMainSegmentEditionRequest,
 } from '../models/main-segment.model';
 import {
   AdminRegistrationDetailResponse,
   AdminRegistrationListResponse,
   AdminRegistrationQuestion,
-  AdminRegistrationQuestionApiRequest,
   AdminRegistrationSchemaApiResponse,
   AdminRegistrationSchemaResponse,
   AdminRegistrationAnswerDetail,
@@ -29,6 +32,7 @@ import {
   RegistrationDetailApiResponse,
   RegistrationListApiResponse,
   RegistrationListFilterParams,
+  RegistrationQuestionType,
   RegistrationStatus,
   RegistrationStatusUpdateApiResponse,
   RegistrationSummaryApiResponse,
@@ -42,10 +46,39 @@ import {
 export class AdminMainSegmentService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/admin/main-segments`;
+  private readonly editionStatuses = Object.values(MainSegmentEditionStatus);
+  private readonly sectionKeys = Object.values(MainSegmentSectionKey);
+  private readonly programCategories = Object.values(MainSegmentProgramCategory);
+  private readonly organizationCategories = Object.values(MainSegmentOrganizationCategory);
+  private readonly sponsorshipTiers: readonly SponsorshipTier[] = [
+    'Strategic',
+    'Gold',
+    'Silver',
+    'Bronze',
+    'Platinum',
+  ];
+  private readonly schemaStatuses = ['Draft', 'Published', 'Archived'] as const;
+  private readonly questionTypes = [
+    'ShortText',
+    'LongText',
+    'SingleChoice',
+    'MultipleChoice',
+    'YesNo',
+  ] as const;
+  private readonly registrationStatuses: readonly RegistrationStatus[] = [
+    'Submitted',
+    'UnderReview',
+    'Accepted',
+    'Waitlisted',
+    'Rejected',
+    'Cancelled',
+  ];
 
   /* ── Edition-level Operations ── */
   getAdminEditions(): Observable<MainSegmentEditionSummary[]> {
-    return this.http.get<MainSegmentEditionSummary[]>(this.baseUrl);
+    return this.http
+      .get<MainSegmentEditionSummary[]>(this.baseUrl)
+      .pipe(map((summaries) => summaries.map((summary) => this.normalizeEditionSummary(summary))));
   }
 
   getAdminByYear(year: number): Observable<MainSegmentAdminResponse> {
@@ -62,7 +95,7 @@ export class AdminMainSegmentService {
 
   createEdition(request: CreateMainSegmentEditionRequest): Observable<MainSegmentAdminResponse> {
     return this.http
-      .post<MainSegmentAdminResponse>(this.baseUrl, request)
+      .post<MainSegmentAdminResponse>(this.baseUrl, this.toEditionApiRequest(request))
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
@@ -71,7 +104,7 @@ export class AdminMainSegmentService {
     request: UpdateMainSegmentEditionRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
-      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}`, request)
+      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}`, this.toEditionApiRequest(request))
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
@@ -80,14 +113,20 @@ export class AdminMainSegmentService {
     sections: MainSegmentSectionRequest[],
   ): Observable<MainSegmentAdminResponse> {
     return this.http
-      .put<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/sections`, sections)
+      .put<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/sections`,
+        sections.map((section) => ({
+          ...section,
+          sectionKey: this.enumIndex(this.sectionKeys, section.sectionKey),
+        })),
+      )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
   setStatus(year: number, status: MainSegmentEditionStatus): Observable<MainSegmentAdminResponse> {
     return this.http
       .patch<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/status`, {
-        status,
+        status: this.enumIndex(this.editionStatuses, status),
       })
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
@@ -135,7 +174,10 @@ export class AdminMainSegmentService {
     request: MainSegmentProgramItemRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
-      .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/program-items`, request)
+      .post<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/program-items`,
+        this.toProgramItemApiRequest(request),
+      )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
@@ -147,7 +189,7 @@ export class AdminMainSegmentService {
     return this.http
       .put<MainSegmentAdminResponse>(
         `${this.baseUrl}/${year}/program-items/${programItemId}`,
-        request,
+        this.toProgramItemApiRequest(request),
       )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
@@ -245,7 +287,10 @@ export class AdminMainSegmentService {
     request: MainSegmentOrganizationRequest,
   ): Observable<MainSegmentAdminResponse> {
     return this.http
-      .post<MainSegmentAdminResponse>(`${this.baseUrl}/${year}/organizations`, request)
+      .post<MainSegmentAdminResponse>(
+        `${this.baseUrl}/${year}/organizations`,
+        this.toOrganizationApiRequest(request),
+      )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
 
@@ -257,7 +302,7 @@ export class AdminMainSegmentService {
     return this.http
       .put<MainSegmentAdminResponse>(
         `${this.baseUrl}/${year}/organizations/${organizationId}`,
-        request,
+        this.toOrganizationApiRequest(request),
       )
       .pipe(map((res) => this.normalizeAdminResponse(res)));
   }
@@ -317,10 +362,29 @@ export class AdminMainSegmentService {
     year: number,
     request: UpdateRegistrationSchemaRequest,
   ): Observable<AdminRegistrationSchemaResponse> {
-    return this.getRegistrationSchema(year).pipe(
-      switchMap((current) => this.ensureRegistrationSchemaDraft(year, current)),
-      switchMap((draft) => this.persistRegistrationQuestions(year, draft, request.questions)),
-    );
+    const questions = [...request.questions].sort((a, b) => a.displayOrder - b.displayOrder);
+    return this.http.put<AdminRegistrationSchemaApiResponse>(`${this.baseUrl}/${year}/registration-schema`, {
+      questions: questions.map((question, index) => {
+        const parent = questions.find(candidate => candidate.key === question.conditionalOnKey);
+        const expected = question.conditionalValue;
+        return {
+          key: question.key, prompt: question.title, helperText: question.description || question.placeholder || null,
+          type: this.enumIndex(this.questionTypes, question.type),
+          isRequired: question.isRequired, isActive: question.isActive, displayOrder: index,
+          minLength: question.minLength ?? null, maxLength: question.maxLength ?? null,
+          minSelections: question.minSelections ?? null, maxSelections: question.maxSelections ?? null,
+          dependsOnKey: question.conditionalOnKey || null,
+          expectedValue: parent?.type === 'YesNo' && expected != null
+            ? (expected === true || expected === 'true' || expected === 'yes' ? 'yes' : expected === false || expected === 'false' || expected === 'no' ? 'no' : String(expected))
+            : expected == null ? null : String(expected),
+          // Draft copies have new IDs. Keys/values, not IDs from a published revision, identify content.
+          options: (question.options || []).map((option, optionIndex) => ({
+            value: option.value, label: option.label, isOther: option.isOther === true,
+            isActive: option.isActive !== false, displayOrder: optionIndex,
+          })),
+        };
+      }),
+    }).pipe(map(response => this.normalizeAdminSchema(response)));
   }
 
   publishRegistrationSchema(
@@ -355,117 +419,11 @@ export class AdminMainSegmentService {
       .pipe(map((response) => this.normalizeAdminSchema(response)));
   }
 
-  private ensureRegistrationSchemaDraft(
-    year: number,
-    current: AdminRegistrationSchemaResponse,
-  ): Observable<AdminRegistrationSchemaResponse> {
-    if (current.status === 'Draft') return of(current);
-
-    return this.http
-      .post<AdminRegistrationSchemaApiResponse>(
-        `${this.baseUrl}/${year}/registration-schemas`,
-        { sourceSchemaId: current.schemaId },
-      )
-      .pipe(map((response) => this.normalizeAdminSchema(response)));
-  }
-
-  private persistRegistrationQuestions(
-    year: number,
-    draft: AdminRegistrationSchemaResponse,
-    desiredQuestions: AdminRegistrationQuestion[],
-  ): Observable<AdminRegistrationSchemaResponse> {
-    const desired = [...desiredQuestions].sort((a, b) => a.displayOrder - b.displayOrder);
-
-    const saved = desired.reduce<Observable<AdminRegistrationSchemaResponse>>(
-      (chain, question) =>
-        chain.pipe(
-          switchMap((current) => {
-            const existing = current.questions.find(
-              (candidate) => candidate.id === question.id || candidate.key === question.key,
-            );
-            const apiRequest = this.toAdminQuestionRequest(question, current);
-            const request$ = existing
-              ? this.http.put<AdminRegistrationSchemaApiResponse>(
-                  `${this.baseUrl}/${year}/registration-schemas/${current.schemaId}/questions/${existing.id}`,
-                  apiRequest,
-                )
-              : this.http.post<AdminRegistrationSchemaApiResponse>(
-                  `${this.baseUrl}/${year}/registration-schemas/${current.schemaId}/questions`,
-                  apiRequest,
-                );
-            return request$.pipe(map((response) => this.normalizeAdminSchema(response)));
-          }),
-        ),
-      of(draft),
-    );
-
-    return saved.pipe(
-      switchMap((current) => {
-        const desiredKeys = new Set(desired.map((question) => question.key));
-        const removed = current.questions.filter(
-          (question) => question.isActive && !desiredKeys.has(question.key),
-        );
-        return removed.reduce<Observable<AdminRegistrationSchemaResponse>>(
-          (chain, question) =>
-            chain.pipe(
-              switchMap((latest) =>
-                this.http
-                  .patch<AdminRegistrationSchemaApiResponse>(
-                    `${this.baseUrl}/${year}/registration-schemas/${latest.schemaId}/questions/${question.id}/active`,
-                    { isActive: false },
-                  )
-                  .pipe(map((response) => this.normalizeAdminSchema(response))),
-              ),
-            ),
-          of(current),
-        );
-      }),
-    );
-  }
-
-  private toAdminQuestionRequest(
-    question: AdminRegistrationQuestion,
-    schema: AdminRegistrationSchemaResponse,
-  ): AdminRegistrationQuestionApiRequest {
-    const dependency = question.conditionalOnKey
-      ? schema.questions.find((candidate) => candidate.key === question.conditionalOnKey)
-      : null;
-    const expectedValue =
-      dependency?.type === 'YesNo' && typeof question.conditionalValue === 'boolean'
-        ? question.conditionalValue
-          ? 'yes'
-          : 'no'
-        : String(question.conditionalValue ?? '');
-
-    return {
-      key: question.key,
-      prompt: question.title,
-      helperText: question.description || question.placeholder || null,
-      type: question.type,
-      isRequired: question.isRequired,
-      isActive: question.isActive,
-      displayOrder: question.displayOrder,
-      maxLength: question.maxLength ?? null,
-      condition:
-        dependency && question.conditionalValue !== null && question.conditionalValue !== undefined
-          ? { dependsOnQuestionId: dependency.id, expectedValue }
-          : null,
-      options: question.options?.map((option, index) => ({
-        ...(this.isGuid(option.id) ? { id: option.id } : {}),
-        value: option.value,
-        label: option.label,
-        isOther:
-          option.isOther === true ||
-          (question.allowOther === true && option.value.toLowerCase() === 'other'),
-        isActive: option.isActive !== false,
-        displayOrder: option.displayOrder ?? index + 1,
-      })) ?? null,
-    };
-  }
 
   private normalizeAdminSchema(
     response: AdminRegistrationSchemaApiResponse,
   ): AdminRegistrationSchemaResponse {
+    const status = this.mapEnum(this.schemaStatuses, response.status, 'Draft');
     const questionKeyById = new Map(
       response.questions.map((question) => [question.id, question.key]),
     );
@@ -474,10 +432,10 @@ export class AdminMainSegmentService {
       schemaId: response.schemaId,
       editionYear: response.editionYear,
       version: response.version,
-      status: response.status,
+      status,
       createdAt: response.createdAt,
-      isPublished: response.status === 'Published',
-      publishedVersion: response.status === 'Published' ? response.version : null,
+      isPublished: status === 'Published',
+      publishedVersion: status === 'Published' ? response.version : null,
       publishedAt: response.publishedAt ?? null,
       updatedAt: response.createdAt,
       settings: { ...DEFAULT_ADMIN_SCHEMA.settings },
@@ -488,11 +446,14 @@ export class AdminMainSegmentService {
           key: question.key,
           title: question.prompt,
           description: question.helperText ?? null,
-          type: question.type,
+          type: this.mapEnum(this.questionTypes, question.type, 'ShortText'),
           isRequired: question.isRequired,
           isActive: question.isActive,
           displayOrder: question.displayOrder,
           maxLength: question.maxLength ?? null,
+          minLength: question.minLength ?? null,
+          minSelections: question.minSelections ?? null,
+          maxSelections: question.maxSelections ?? null,
           options: [...question.options]
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map((option) => ({
@@ -508,7 +469,9 @@ export class AdminMainSegmentService {
             ? questionKeyById.get(question.condition.dependsOnQuestionId) ?? null
             : null,
           conditionalValue: question.condition
-            ? this.normalizeExpectedValue(question.condition.expectedValue)
+            ? this.mapEnum(this.questionTypes, response.questions.find(parent => parent.id === question.condition?.dependsOnQuestionId)?.type ?? '', 'ShortText') === 'YesNo'
+              ? this.normalizeExpectedValue(question.condition.expectedValue)
+              : question.condition.expectedValue
             : null,
         })),
     };
@@ -518,12 +481,6 @@ export class AdminMainSegmentService {
     if (['true', 'yes'].includes(value.toLowerCase())) return true;
     if (['false', 'no'].includes(value.toLowerCase())) return false;
     return value;
-  }
-
-  private isGuid(value: string): boolean {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      value,
-    );
   }
 
   /* ── Registration Review, Detail, Documents & Export (Milestone 7) ── */
@@ -612,10 +569,18 @@ export class AdminMainSegmentService {
     list: RegistrationListApiResponse,
     summary: RegistrationSummaryApiResponse,
   ): AdminRegistrationListResponse {
-    const count = (status: RegistrationStatus): number =>
-      summary.counts?.[status] ??
-      summary.statusCounts?.find((item) => item.status === status)?.count ??
-      0;
+    const count = (status: RegistrationStatus): number => {
+      const counts = summary.counts as Record<string, number> | undefined;
+      const numericKey = String(this.registrationStatuses.indexOf(status));
+      return (
+        counts?.[status] ??
+        counts?.[numericKey] ??
+        summary.statusCounts?.find(
+          (item) => this.mapEnum(this.registrationStatuses, item.status, 'Submitted') === status,
+        )?.count ??
+        0
+      );
+    };
     return {
       items: (list.items ?? []).map((item) => ({
         id: item.id,
@@ -627,7 +592,7 @@ export class AdminMainSegmentService {
         universityName: item.university,
         facultyName: item.faculty,
         graduationYear: item.graduationYear,
-        status: item.status,
+        status: this.mapEnum(this.registrationStatuses, item.status, 'Submitted'),
         submittedAt: item.submittedAt,
       })),
       totalCount: list.totalCount,
@@ -649,11 +614,21 @@ export class AdminMainSegmentService {
   private normalizeRegistrationDetail(
     response: RegistrationDetailApiResponse,
   ): AdminRegistrationDetailResponse {
-    const documents = response.documents ?? [];
+    const documentTypes = ['NationalIdPhoto', 'UniversityIdPhoto', 'Cv'] as const;
+    const documents = (response.documents ?? []).map((document) => ({
+      ...document,
+      documentType: this.mapEnum(documentTypes, document.documentType, 'NationalIdPhoto'),
+    }));
     const history = (response.statusHistory ?? []).map((entry, index) => ({
       id: `${entry.createdAt}-${index}`,
-      fromStatus: entry.fromStatus,
-      toStatus: entry.toStatus,
+      fromStatus:
+        entry.fromStatus == null
+          ? null
+          : this.mapEnum(this.registrationStatuses, entry.fromStatus, 'Submitted'),
+      toStatus:
+        entry.toStatus == null
+          ? null
+          : this.mapEnum(this.registrationStatuses, entry.toStatus, 'Submitted'),
       changedBy: entry.actorAdminName?.trim() || (entry.actorAdminId ? 'Admin' : 'System'),
       changedAt: entry.createdAt,
       note: entry.note,
@@ -662,14 +637,18 @@ export class AdminMainSegmentService {
       id: response.id,
       editionYear: response.editionYear,
       referenceNumber: response.reference,
-      status: response.status,
+      status: this.mapEnum(this.registrationStatuses, response.status, 'Submitted'),
       submittedAt: response.submittedAt,
       updatedAt: history.at(-1)?.changedAt ?? response.submittedAt,
       nameEnglish: response.nameEnglish,
       nameArabic: response.nameArabic,
       email: response.email,
       phoneNumber: response.phoneNumber,
-      gender: response.gender,
+      gender: this.mapEnum(
+        ['Male', 'Female', 'Other', 'PreferNotToSay'] as const,
+        response.gender,
+        'PreferNotToSay',
+      ),
       maskedNationalId: response.nationalIdMasked,
       academicSnapshot: {
         universityName: response.universityOtherValue?.trim() || response.university,
@@ -703,19 +682,21 @@ export class AdminMainSegmentService {
       questionId: answer.questionId,
       questionKey: answer.questionKey,
       questionTitle: answer.prompt,
-      questionType: answer.type,
+      questionType: this.mapEnum(this.questionTypes, answer.type, 'ShortText'),
     };
     const optionLabels = this.registrationAnswerOptionLabels(answer.optionsSnapshotJson);
     if (
       typeof parsed === 'boolean' ||
-      (answer.type === 'YesNo' && typeof parsed === 'string' && ['yes', 'no'].includes(parsed))
+      (normalized.questionType === 'YesNo' &&
+        typeof parsed === 'string' &&
+        ['yes', 'no'].includes(parsed))
     ) {
       normalized.booleanAnswer = typeof parsed === 'boolean' ? parsed : parsed === 'yes';
     } else if (Array.isArray(parsed)) {
       normalized.selectedOptions = parsed.map((value) =>
         this.registrationChoiceAnswerToText(value, optionLabels),
       );
-    } else if (answer.type === 'SingleChoice') {
+    } else if (normalized.questionType === 'SingleChoice') {
       normalized.answerText = this.registrationChoiceAnswerToText(parsed, optionLabels);
     } else {
       normalized.answerText = this.answerValueToText(parsed);
@@ -769,20 +750,93 @@ export class AdminMainSegmentService {
   }
 
   /* ── Helper Normalization ── */
+  private normalizeEditionSummary(summary: MainSegmentEditionSummary): MainSegmentEditionSummary {
+    return {
+      ...summary,
+      status: this.mapEnum(this.editionStatuses, summary.status, MainSegmentEditionStatus.Draft),
+    };
+  }
+
   private normalizeAdminResponse(res: MainSegmentAdminResponse): MainSegmentAdminResponse {
     if (!res) return res;
     return {
       ...res,
+      status: this.mapEnum(this.editionStatuses, res.status, MainSegmentEditionStatus.Draft),
       heroImageUrl: this.resolveImageUrl(res.heroImageUrl),
+      sections: (res.sections || []).map((section) => ({
+        ...section,
+        sectionKey: this.mapEnum(
+          this.sectionKeys,
+          section.sectionKey,
+          MainSegmentSectionKey.PanelDiscussion,
+        ),
+      })),
+      programItems: (res.programItems || []).map((item) => ({
+        ...item,
+        category: this.mapEnum(
+          this.programCategories,
+          item.category,
+          MainSegmentProgramCategory.Talk,
+        ),
+      })),
       people: (res.people || []).map((p) => ({
         ...p,
         photoUrl: this.resolveImageUrl(p.photoUrl),
       })),
       organizations: (res.organizations || []).map((o) => ({
         ...o,
+        category: this.mapEnum(
+          this.organizationCategories,
+          o.category,
+          MainSegmentOrganizationCategory.Partner,
+        ),
+        sponsorTier:
+          o.sponsorTier == null
+            ? null
+            : this.mapEnum(this.sponsorshipTiers, o.sponsorTier, 'Strategic'),
         logoUrl: this.resolveImageUrl(o.logoUrl),
       })),
     };
+  }
+
+  private toEditionApiRequest(
+    request: CreateMainSegmentEditionRequest | UpdateMainSegmentEditionRequest,
+  ): object {
+    return {
+      ...request,
+      sections: request.sections?.map((section) => ({
+        ...section,
+        sectionKey: this.enumIndex(this.sectionKeys, section.sectionKey),
+      })) ?? request.sections,
+    };
+  }
+
+  private toProgramItemApiRequest(request: MainSegmentProgramItemRequest): object {
+    return {
+      ...request,
+      category: this.enumIndex(this.programCategories, request.category),
+    };
+  }
+
+  private toOrganizationApiRequest(request: MainSegmentOrganizationRequest): object {
+    return {
+      ...request,
+      category: this.enumIndex(this.organizationCategories, request.category),
+      sponsorTier:
+        request.sponsorTier == null
+          ? null
+          : this.enumIndex(this.sponsorshipTiers, request.sponsorTier),
+    };
+  }
+
+  private mapEnum<T extends string>(values: readonly T[], raw: unknown, fallback: T): T {
+    if (typeof raw === 'number' && Number.isInteger(raw)) return values[raw] ?? fallback;
+    return typeof raw === 'string' && values.includes(raw as T) ? (raw as T) : fallback;
+  }
+
+  private enumIndex<T extends string>(values: readonly T[], value: T): number {
+    const index = values.indexOf(value);
+    return index >= 0 ? index : 0;
   }
 
   private resolveImageUrl(url?: string | null): string | null {
