@@ -17,10 +17,16 @@ export class EgyptDatePipe implements PipeTransform {
 
   transform(value: string | number | Date | null | undefined, format = 'mediumDate'): string | null {
     if (value == null || value === '') return null;
+
     const date = value instanceof Date ? value : new Date(value);
+
     if (Number.isNaN(date.getTime())) return null;
 
-    const options = DATE_FORMATS[format] ?? DATE_FORMATS.mediumDate;
-    return new Intl.DateTimeFormat(this.locale, { ...options, timeZone: EGYPT_TIME_ZONE }).format(date);
+    const options = DATE_FORMATS[format] ?? DATE_FORMATS['mediumDate'];
+
+    return new Intl.DateTimeFormat(this.locale, {
+      ...options,
+      timeZone: EGYPT_TIME_ZONE
+    }).format(date);
   }
 }
