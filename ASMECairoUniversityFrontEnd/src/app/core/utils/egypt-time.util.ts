@@ -61,53 +61,54 @@ export function toEgyptDateInput(isoString?: string | null): string {
 }
 
 /**
- * Converts a `datetime-local` value interpreted in Egypt time to the UTC ISO instant expected by
- * the API. This deliberately does not use the visitor's browser timezone.
+ * Converts a datetime-local value into the API DateTime format.
+ *
+ * The backend uses C# DateTime and the application's business timezone
+ * is Egypt, so we deliberately send the Egypt wall-clock value without
+ * a UTC "Z" suffix or timezone offset.
+ *
+ * Example:
+ * 2026-09-03T03:19 -> 2026-09-03T03:19:00
  */
 export function toEgyptIsoDateTime(inputValue?: string | null): string | null {
   if (!inputValue || !inputValue.trim()) return null;
 
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/.exec(inputValue);
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
+      inputValue.trim()
+    );
+
   if (!match) return null;
 
-  const [year, month, day, hour, minute, second = '0', milliseconds = '0'] = match.slice(1);
-  const expected = {
-    year: Number(year), month: Number(month), day: Number(day), hour: Number(hour),
-    minute: Number(minute), second: Number(second),
-  };
-  const desiredUtcMilliseconds = Date.UTC(
-    expected.year,
-    expected.month - 1,
-    expected.day,
-    expected.hour,
-    expected.minute,
-    expected.second,
-    Number(milliseconds.padEnd(3, '0')),
-  );
-  const parsed = new Date(desiredUtcMilliseconds);
-  if (
-    parsed.getUTCFullYear() !== expected.year || parsed.getUTCMonth() + 1 !== expected.month
-    || parsed.getUTCDate() !== expected.day || parsed.getUTCHours() !== expected.hour
-    || parsed.getUTCMinutes() !== expected.minute || parsed.getUTCSeconds() !== expected.second
-  ) return null;
+  const [, year, month, day, hour, minute, second = '00'] = match;
 
-  // The offset changes with Egypt's daylight saving time. Re-evaluate it until it stabilizes.
-  let instantMilliseconds = desiredUtcMilliseconds;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const next = desiredUtcMilliseconds - egyptUtcOffsetMilliseconds(new Date(instantMilliseconds));
-    if (next === instantMilliseconds) break;
-    instantMilliseconds = next;
+  // Validate the entered date without involving the browser's timezone.
+  const validationDate = new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    )
+  );
+
+  if (
+    validationDate.getUTCFullYear() !== Number(year) ||
+    validationDate.getUTCMonth() + 1 !== Number(month) ||
+    validationDate.getUTCDate() !== Number(day) ||
+    validationDate.getUTCHours() !== Number(hour) ||
+    validationDate.getUTCMinutes() !== Number(minute) ||
+    validationDate.getUTCSeconds() !== Number(second)
+  ) {
+    return null;
   }
 
-  const resolved = new Date(instantMilliseconds);
-  const resolvedParts = egyptParts(resolved);
-  if (
-    resolvedParts.year !== expected.year || resolvedParts.month !== expected.month
-    || resolvedParts.day !== expected.day || resolvedParts.hour !== expected.hour
-    || resolvedParts.minute !== expected.minute || resolvedParts.second !== expected.second
-  ) return null;
-
-  return resolved.toISOString();
+  // IMPORTANT:
+  // Do NOT call .toISOString() here.
+  // We want the exact Egypt wall-clock value.
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
 }
 
 /** Converts an Egypt calendar date to the ISO instant at Egypt midnight. */
