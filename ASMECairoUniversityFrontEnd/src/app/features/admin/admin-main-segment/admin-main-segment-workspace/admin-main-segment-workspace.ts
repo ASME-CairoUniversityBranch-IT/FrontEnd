@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { EgyptDatePipe } from '../../../../shared/pipes/egypt-date.pipe';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, BehaviorSubject, Subject, of, EMPTY } from 'rxjs';
@@ -75,7 +76,7 @@ export interface WorkspaceVM {
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    DatePipe,
+    EgyptDatePipe,
     AdminNavComponent,
     FocusTrapDirective,
     MainSegmentRegistrationModalComponent,

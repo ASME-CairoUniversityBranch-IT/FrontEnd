@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { EgyptDatePipe } from '../../../../shared/pipes/egypt-date.pipe';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, BehaviorSubject, of } from 'rxjs';
@@ -27,7 +28,7 @@ export type AdminEditionListVM =
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    DatePipe,
+    EgyptDatePipe,
     AdminNavComponent,
     FocusTrapDirective,
   ],

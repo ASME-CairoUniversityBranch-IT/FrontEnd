@@ -9,7 +9,8 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { EgyptDatePipe } from '../../../shared/pipes/egypt-date.pipe';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Title, Meta } from '@angular/platform-browser';
 import { Observable, of, Subscription } from 'rxjs';
@@ -61,7 +62,7 @@ const DEFAULT_DESCRIPTION =
   imports: [
     CommonModule,
     RouterModule,
-    DatePipe,
+    EgyptDatePipe,
     NotFoundComponent,
     MainSegmentRegistrationModalComponent,
   ],

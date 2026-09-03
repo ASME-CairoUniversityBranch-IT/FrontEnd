@@ -629,7 +629,7 @@ describe('AdminMainSegmentWorkspaceComponent', () => {
       2026,
       expect.objectContaining({
         facultyId: 'faculty-1',
-        submittedFrom: new Date('2026-09-01T00:00:00.000').toISOString(),
+        submittedFrom: '2026-08-31T21:00:00.000Z',
       }),
     );
 
