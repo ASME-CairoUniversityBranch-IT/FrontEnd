@@ -61,4 +61,16 @@ describe('CreateProjectComponent multipart media mapping', () => {
     expect(formData.getAll('SpeakerPhotos')).toHaveLength(0);
     expect(formData.getAll('SpeakerPhotoIndexes')).toHaveLength(0);
   });
+
+  it('requires only a title and short description, and omits an unset main date', () => {
+    const component = createComponent();
+    component.date = '';
+    component.location = '';
+    component.coverImage = null;
+
+    expect(component.requiredRemaining).toBe(0);
+
+    const formData = (component as any).buildFormData() as FormData;
+    expect(formData.has('MainDateAndTime')).toBe(false);
+  });
 });

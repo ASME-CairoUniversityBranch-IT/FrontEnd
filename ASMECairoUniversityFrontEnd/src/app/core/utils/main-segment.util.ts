@@ -3,6 +3,7 @@ import {
   MainSegmentSection,
   MainSegmentSectionKey,
 } from '../models/main-segment.model';
+import { toEgyptDateTimeInput, toEgyptIsoDateTime } from './egypt-time.util';
 
 export interface SponsorGroup {
   tierName: string;
@@ -138,24 +139,12 @@ export function getSectionEyebrow(sectionKey: MainSegmentSectionKey): string {
  * Formats an ISO string to 'YYYY-MM-DDTHH:mm' for datetime-local inputs.
  */
 export function toInputDateTime(isoString?: string | null): string {
-  if (!isoString) return '';
-  const d = new Date(isoString);
-  if (isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const year = d.getFullYear();
-  const month = pad(d.getMonth() + 1);
-  const day = pad(d.getDate());
-  const hours = pad(d.getHours());
-  const minutes = pad(d.getMinutes());
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return toEgyptDateTimeInput(isoString);
 }
 
 /**
  * Converts a datetime-local input string to an ISO 8601 string.
  */
 export function toIsoDateTime(inputVal?: string | null): string | null {
-  if (!inputVal || !inputVal.trim()) return null;
-  const d = new Date(inputVal);
-  if (isNaN(d.getTime())) return null;
-  return d.toISOString();
+  return toEgyptIsoDateTime(inputVal);
 }

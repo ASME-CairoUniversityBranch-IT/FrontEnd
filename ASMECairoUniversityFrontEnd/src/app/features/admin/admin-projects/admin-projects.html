@@ -66,7 +66,7 @@
 
                 <h3 class="card-title">{{ card.summary.title }}</h3>
                 <p class="card-description">{{ card.summary.shortDescription }}</p>
-                <p class="card-date"><span class="date-label">DATE</span> {{ card.summary.mainDateAndTime | date: 'mediumDate' }}</p>
+                <p class="card-date"><span class="date-label">DATE</span> {{ card.summary.mainDateAndTime | egyptDate: 'mediumDate' }}</p>
 
                 <div class="card-analytics" *ngIf="card.analytics as a">
                   <span>VIEWS {{ a.totalViews }}</span>

@@ -9,6 +9,7 @@ import {
   EventProject, WorkshopProject, FieldTripProject, SchoolVisitProject,
 } from '../../../core/models/project.model';
 import { ALL_PROJECT_TYPES, projectTypeIcon, projectTypeLabel } from '../../../core/utils/project-route.util';
+import { egyptDateToIso, toEgyptDateInput, toEgyptDateTimeInput, toEgyptIsoDateTime } from '../../../core/utils/egypt-time.util';
 import { AdminNavComponent, AdminNavSection } from '../../../shared/components/admin-nav/admin-nav';
 
 /** Local form shapes add transient upload state (photoFile/photoPreview/removePhoto) on top of
@@ -168,7 +169,7 @@ export class CreateProjectComponent implements OnInit {
     this.shortDescription = project.shortDescription;
     this.longDescription = project.longDescription;
     this.location = project.location;
-    const { date, time } = this.isoToLocalParts(project.mainDateAndTime);
+    const { date, time } = this.isoToEgyptParts(project.mainDateAndTime);
     this.date = date;
     this.time = time;
 
@@ -206,18 +207,18 @@ export class CreateProjectComponent implements OnInit {
   }
 
   private populateWorkshop(p: WorkshopProject): void {
-    // Date-only fields (no time picker for these two) — see buildFormData()'s comment on why
-    // these round-trip through the UTC calendar date rather than the local one.
-    this.startDate = this.isoToDateOnlyUTC(p.startDate);
-    this.endDate = this.isoToDateOnlyUTC(p.endDate);
+    // Date-only fields (no time picker for these two).
+    // They use Egypt's calendar date when loading and submitting.
+    this.startDate = toEgyptDateInput(p.startDate);
+    this.endDate = toEgyptDateInput(p.endDate);
     this.numberOfSessions = p.numberOfSessions;
     this.instructors = p.instructors.map(i => ({ ...i, photoFile: null, photoPreview: i.profileImagePath ?? null, removePhoto: false }));
   }
 
   private populateFieldTrip(p: FieldTripProject): void {
     this.destinationName = p.destinationName;
-    this.departureTime = this.isoToDateTimeLocal(p.departureTime);
-    this.returnTime = this.isoToDateTimeLocal(p.returnTime);
+    this.departureTime = toEgyptDateTimeInput(p.departureTime);
+    this.returnTime = toEgyptDateTimeInput(p.returnTime);
     this.meetingPoint = p.meetingPoint;
     this.transportationDetails = p.transportationDetails;
     this.capacity = p.capacity ?? undefined;
@@ -239,40 +240,15 @@ export class CreateProjectComponent implements OnInit {
   }
 
   // ── Date helpers ──
-  // mainDateAndTime/departureTime/returnTime round-trip through the browser's LOCAL time,
-  // matching how buildFormData() below builds `${date}T${time}` (no timezone suffix, so the
-  // browser parses/serializes it as local) before calling .toISOString().
-  private isoToLocalParts(iso: string | null | undefined): { date: string; time: string } {
-    if (!iso) return { date: '', time: '' };
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return { date: '', time: '' };
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return {
-      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
-    };
+  // Project form inputs always show and submit Egypt wall-clock time.
+  private isoToEgyptParts(iso: string | null | undefined): { date: string; time: string } {
+    const input = toEgyptDateTimeInput(iso);
+    return input ? { date: input.slice(0, 10), time: input.slice(11) } : { date: '', time: '' };
   }
-  private isoToDateTimeLocal(iso: string | null | undefined): string {
-    const { date, time } = this.isoToLocalParts(iso);
-    return date ? `${date}T${time}` : '';
-  }
-  // startDate/endDate are submitted as bare 'yyyy-MM-dd' (see buildFormData), which JS parses as
-  // UTC midnight (date-only strings are a special case in the ECMA-262 Date spec) — so on load,
-  // pull the UTC calendar date back out rather than the local one, or the value could shift by a
-  // day for anyone west/east of UTC.
-  private isoToDateOnlyUTC(iso: string | null | undefined): string {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? '' : d.toISOString().substring(0, 10);
-  }
-
   get requiredRemaining(): number {
     let missing = 0;
     if (!this.title.trim()) missing++;
     if (!this.shortDescription.trim()) missing++;
-    if (!this.date) missing++;
-    if (!this.location.trim()) missing++;
-    if (this.mode === 'create' && !this.coverImage) missing++; // required on create, optional on update
     return missing;
   }
 
@@ -387,8 +363,11 @@ export class CreateProjectComponent implements OnInit {
     fd.append('ShortDescription', this.shortDescription);
     fd.append('LongDescription', this.longDescription);
     fd.append('Location', this.location);
-    fd.append('MainDateAndTime', new Date(`${this.date}T${this.time || '00:00'}`).toISOString());
-    if (this.coverImage) fd.append('CoverImage', this.coverImage); // omitted on update = keep current cover
+    if (this.date) {
+      const mainDateAndTime = toEgyptIsoDateTime(`${this.date}T${this.time || '00:00'}`);
+      if (mainDateAndTime) fd.append('MainDateAndTime', mainDateAndTime);
+    }
+    if (this.coverImage) fd.append('CoverImage', this.coverImage);
 
     if (this.mode === 'edit') {
       this.galleryIdsToKeep.forEach(id => fd.append('GalleryImageIdsToKeep', String(id)));
@@ -450,8 +429,10 @@ export class CreateProjectComponent implements OnInit {
       }
 
       case ProjectType.Workshop: {
-        if (this.startDate) fd.append('StartDate', new Date(this.startDate).toISOString());
-        if (this.endDate) fd.append('EndDate', new Date(this.endDate).toISOString());
+        const startDate = egyptDateToIso(this.startDate);
+        const endDate = egyptDateToIso(this.endDate);
+        if (startDate) fd.append('StartDate', startDate);
+        if (endDate) fd.append('EndDate', endDate);
         if (this.numberOfSessions != null) fd.append('NumberOfSessions', String(this.numberOfSessions));
 
         const validInstructors = this.instructors.filter(i => i.fullName.trim());
@@ -465,8 +446,10 @@ export class CreateProjectComponent implements OnInit {
 
       case ProjectType.FieldTrip:
         fd.append('DestinationName', this.destinationName);
-        if (this.departureTime) fd.append('DepartureTime', new Date(this.departureTime).toISOString());
-        if (this.returnTime) fd.append('ReturnTime', new Date(this.returnTime).toISOString());
+        const departureTime = toEgyptIsoDateTime(this.departureTime);
+        const returnTime = toEgyptIsoDateTime(this.returnTime);
+        if (departureTime) fd.append('DepartureTime', departureTime);
+        if (returnTime) fd.append('ReturnTime', returnTime);
         fd.append('MeetingPoint', this.meetingPoint);
         fd.append('TransportationDetails', this.transportationDetails);
         if (this.capacity != null) fd.append('Capacity', String(this.capacity));

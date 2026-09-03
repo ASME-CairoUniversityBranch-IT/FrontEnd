@@ -6,6 +6,7 @@ import { catchError, map, startWith } from 'rxjs/operators';
 import { ProjectsService } from '../../app/core/services/projects.service';
 import { ProjectSummary, ProjectType } from '../../app/core/models/project.model';
 import { ALL_PROJECT_TYPES, projectDetailPath, projectTypeIcon, projectTypeLabel } from '../../app/core/utils/project-route.util';
+import { EgyptDatePipe } from '../../app/shared/pipes/egypt-date.pipe';
 
 type OurProjectsVM =
   | { status: 'loading' }
@@ -13,7 +14,7 @@ type OurProjectsVM =
 
 @Component({
   selector: 'app-our-project',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, EgyptDatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './our-projects.html',
   styleUrl: './our-projects.css',

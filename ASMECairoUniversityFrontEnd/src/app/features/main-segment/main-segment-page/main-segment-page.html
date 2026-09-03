@@ -48,7 +48,7 @@
           <div class="ms-meta-bar" aria-label="Event summary">
             <div class="ms-meta-item" *ngIf="vm.edition.startsAt">
               <span class="meta-label">Date & Time</span>
-              <span class="meta-value">{{ vm.edition.startsAt | date: 'EEEE, MMMM d, y' }}</span>
+              <span class="meta-value">{{ vm.edition.startsAt | egyptDate: 'EEEE, MMMM d, y' }}</span>
             </div>
 
             <div class="ms-meta-item" *ngIf="vm.edition.location">
@@ -69,7 +69,7 @@
               Register for Main Segment {{ vm.edition.year }}
             </button>
             <span *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" class="ms-disabled-cta">
-              Opens {{ vm.edition.registration.opensAt | date: 'mediumDate' }}
+              Opens {{ vm.edition.registration.opensAt | egyptDate: 'mediumDate' }}
             </span>
             <span *ngIf="!vm.edition.registration.isAvailable && !isRegistrationScheduled(vm.edition)" class="ms-disabled-cta">
               Registration Closed
@@ -209,8 +209,8 @@
                   <span class="item-category-tag">{{ item.category }}</span>
                   <span class="item-time-tag" *ngIf="item.startsAt">
                     <i class="fa-regular fa-clock" aria-hidden="true"></i>
-                    {{ item.startsAt | date: 'shortTime' }}
-                    <ng-container *ngIf="item.endsAt"> – {{ item.endsAt | date: 'shortTime' }}</ng-container>
+                    {{ item.startsAt | egyptDate: 'shortTime' }}
+                    <ng-container *ngIf="item.endsAt"> – {{ item.endsAt | egyptDate: 'shortTime' }}</ng-container>
                   </span>
                   <span class="item-loc-tag" *ngIf="item.location">
                     <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
@@ -387,7 +387,7 @@
           <div class="reg-details-grid">
             <div class="reg-detail-item" *ngIf="vm.edition.startsAt">
               <span class="detail-label">Date & Time</span>
-              <span class="detail-val">{{ vm.edition.startsAt | date: 'EEEE, MMMM d, y' }}</span>
+              <span class="detail-val">{{ vm.edition.startsAt | egyptDate: 'EEEE, MMMM d, y' }}</span>
             </div>
 
             <div class="reg-detail-item" *ngIf="vm.edition.location">
@@ -402,7 +402,7 @@
 
             <div class="reg-detail-item" *ngIf="vm.edition.registration.closesAt">
               <span class="detail-label">Registration Deadline</span>
-              <span class="detail-val">{{ vm.edition.registration.closesAt | date: 'mediumDate' }}</span>
+              <span class="detail-val">{{ vm.edition.registration.closesAt | egyptDate: 'mediumDate' }}</span>
             </div>
           </div>
 
@@ -412,7 +412,7 @@
             </button>
 
             <button *ngIf="!vm.edition.registration.isAvailable && isRegistrationScheduled(vm.edition)" type="button" class="reg-btn-disabled" disabled>
-              Registration Opens on {{ vm.edition.registration.opensAt | date: 'mediumDate' }}
+              Registration Opens on {{ vm.edition.registration.opensAt | egyptDate: 'mediumDate' }}
             </button>
 
             <button *ngIf="!vm.edition.registration.isAvailable && !isRegistrationScheduled(vm.edition)" type="button" class="reg-btn-disabled" disabled>

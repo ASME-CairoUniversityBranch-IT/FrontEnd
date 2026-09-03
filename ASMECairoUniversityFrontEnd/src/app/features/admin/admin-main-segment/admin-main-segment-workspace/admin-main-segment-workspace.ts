@@ -57,6 +57,7 @@ import {
   toInputDateTime,
   toIsoDateTime,
 } from '../../../../core/utils/main-segment.util';
+import { toEgyptIsoDateTime } from '../../../../core/utils/egypt-time.util';
 
 export type WorkspaceTab = 'overview' | 'program' | 'companies' | 'form-builder' | 'registrations';
 
@@ -1781,8 +1782,7 @@ export class AdminMainSegmentWorkspaceComponent
   private toRegistrationDateBoundary(value: string, endOfDay: boolean): string | null {
     if (!value) return null;
     const suffix = endOfDay ? 'T23:59:59.999' : 'T00:00:00.000';
-    const parsed = new Date(`${value}${suffix}`);
-    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+    return toEgyptIsoDateTime(`${value}${suffix}`);
   }
 
   private privateDocumentError(error: any): string {

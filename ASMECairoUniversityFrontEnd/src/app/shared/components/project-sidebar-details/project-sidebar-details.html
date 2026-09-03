@@ -9,8 +9,8 @@
         <div class="icon-wrapper"><i class="fa-regular fa-calendar"></i></div>
         <div class="text-content">
           <span class="label">DATE & TIME</span>
-          <span class="main-text">{{ p.mainDateAndTime | date:'fullDate' }}</span>
-          <span class="sub-text">{{ p.mainDateAndTime | date:'shortTime' }}</span>
+          <span class="main-text">{{ p.mainDateAndTime | egyptDate:'fullDate' }}</span>
+          <span class="sub-text">{{ p.mainDateAndTime | egyptDate:'shortTime' }}</span>
         </div>
       </div>
 
@@ -28,7 +28,7 @@
         <div class="text-content">
           <span class="label">SESSIONS</span>
           <span class="main-text">{{ p.numberOfSessions }} sessions</span>
-          <span class="sub-text">{{ p.startDate | date }} – {{ p.endDate | date }}</span>
+          <span class="sub-text">{{ p.startDate | egyptDate }} – {{ p.endDate | egyptDate }}</span>
         </div>
       </div>
 

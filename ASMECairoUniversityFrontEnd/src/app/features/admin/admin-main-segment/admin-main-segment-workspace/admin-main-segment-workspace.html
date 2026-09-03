@@ -40,7 +40,7 @@
               <span class="edition-kicker">Main Segment {{ edition.year }}</span>
               <h1 class="workspace-title">{{ edition.title }}</h1>
               <div class="workspace-meta">
-                <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ edition.startsAt | date:'mediumDate' }}</span>
+                <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ edition.startsAt | egyptDate:'mediumDate' }}</span>
                 <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>{{ edition.location }}</span>
                 <span><i class="fa-solid fa-link" aria-hidden="true"></i>/main-segment/{{ edition.year }}</span>
               </div>
@@ -439,7 +439,7 @@
                     <span class="category-badge">{{ programCategoryLabel(item.category) }}</span>
                     <span *ngIf="!item.isVisible" class="hidden-badge">Hidden</span>
                     <span *ngIf="item.startsAt" class="time-badge">
-                      {{ item.startsAt | date:'shortTime' }}<span *ngIf="item.endsAt"> - {{ item.endsAt | date:'shortTime' }}</span>
+                      {{ item.startsAt | egyptDate:'shortTime' }}<span *ngIf="item.endsAt"> - {{ item.endsAt | egyptDate:'shortTime' }}</span>
                     </span>
                     <span *ngIf="item.location" class="location-badge"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ item.location }}</span>
                   </div>
@@ -781,8 +781,8 @@
                       </td>
 
                       <td class="date-cell">
-                        {{ item.submittedAt | date:'mediumDate' }}
-                        <div class="time-sub">{{ item.submittedAt | date:'shortTime' }}</div>
+                        {{ item.submittedAt | egyptDate:'mediumDate' }}
+                        <div class="time-sub">{{ item.submittedAt | egyptDate:'shortTime' }}</div>
                       </td>
 
                       <td class="status-cell">
@@ -965,7 +965,7 @@
                 <div class="timeline-content">
                   <div class="timeline-meta">
                     <strong>{{ registrationStatusLabel(h.fromStatus) }} &rarr; {{ registrationStatusLabel(h.toStatus) }}</strong>
-                    <span class="timeline-by">by {{ h.changedBy }} &bull; {{ h.changedAt | date:'short' }}</span>
+                    <span class="timeline-by">by {{ h.changedBy }} &bull; {{ h.changedAt | egyptDate:'short' }}</span>
                   </div>
                   <div *ngIf="h.note" class="timeline-note">{{ h.note }}</div>
                 </div>

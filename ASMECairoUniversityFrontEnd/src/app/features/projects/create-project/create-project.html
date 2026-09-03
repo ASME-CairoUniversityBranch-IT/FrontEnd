@@ -81,7 +81,7 @@
         </div>
         <div class="form-row two-col">
           <div class="form-group">
-            <label class="field-label" for="date">DATE <span class="req">*</span></label>
+            <label class="field-label" for="date">DATE</label>
             <input id="date" type="date" class="form-input" [(ngModel)]="date" name="date">
           </div>
           <div class="form-group">
@@ -90,7 +90,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="field-label" for="location">LOCATION <span class="req">*</span></label>
+          <label class="field-label" for="location">LOCATION</label>
           <input id="location" type="text" class="form-input" [(ngModel)]="location" name="location">
         </div>
 
@@ -127,7 +127,7 @@
         </div>
 
         <div class="form-group">
-          <label class="field-label" for="coverImage">COVER IMAGE <span class="req" *ngIf="mode === 'create'">*</span><span class="opt" *ngIf="mode === 'edit'">(leave as-is to keep the current cover)</span></label>
+          <label class="field-label" for="coverImage">COVER IMAGE <span class="opt" *ngIf="mode === 'edit'">(leave as-is to keep the current cover)</span></label>
           <div class="dropzone" (dragover)="onDragOver($event)" (drop)="onDrop($event)" [class.drag-over]="isDragOver">
             <ng-container *ngIf="!coverPreview">
               <div class="dz-icon" aria-hidden="true">IMG</div>

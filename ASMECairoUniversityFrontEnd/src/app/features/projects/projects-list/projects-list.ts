@@ -7,6 +7,7 @@ import { catchError, map, startWith } from 'rxjs/operators';
 import { ProjectsService } from '../../../core/services/projects.service';
 import { ProjectSummary, ProjectType } from '../../../core/models/project.model';
 import { ALL_PROJECT_TYPES, projectDetailPath, projectTypeIcon, projectTypeLabel } from '../../../core/utils/project-route.util';
+import { EgyptDatePipe } from '../../../shared/pipes/egypt-date.pipe';
 
 type TypeFilter = ProjectType | 'all';
 
@@ -19,7 +20,7 @@ type ProjectsListVM =
   selector: 'app-projects-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, EgyptDatePipe],
   templateUrl: './projects-list.html',
   styleUrl: './projects-list.css',
 })

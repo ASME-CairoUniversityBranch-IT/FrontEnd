@@ -10,6 +10,7 @@ import { ProjectSummary, ProjectStatus, ProjectType } from '../../../core/models
 import { ProjectAnalytics } from '../../../core/models/analytics.model';
 import { AdminNavComponent } from '../../../shared/components/admin-nav/admin-nav';
 import { ALL_PROJECT_TYPES, projectDetailPath, projectTypeIcon, projectTypeLabel } from '../../../core/utils/project-route.util';
+import { EgyptDatePipe } from '../../../shared/pipes/egypt-date.pipe';
 
 type TypeFilter = ProjectType | 'all';
 
@@ -44,7 +45,7 @@ const STATUS_LABEL: Record<ProjectStatus, string> = {
   selector: 'app-admin-projects',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, FormsModule, AdminNavComponent],
+  imports: [CommonModule, RouterModule, FormsModule, AdminNavComponent, EgyptDatePipe],
   templateUrl: './admin-projects.html',
   styleUrl: './admin-projects.css',
 })
